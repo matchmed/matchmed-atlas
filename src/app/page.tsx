@@ -8,7 +8,6 @@ interface Stats {
   practices: number
   doctors: number
   affiliations: number
-  physicians: number
   jobs: number
 }
 
@@ -53,14 +52,12 @@ export default function HomePage() {
         supabase.from('practices').select('id', { count: 'exact', head: true }),
         supabase.from('doctors').select('id', { count: 'exact', head: true }),
         supabase.from('affiliations').select('id', { count: 'exact', head: true }),
-        supabase.from('profiles').select('id', { count: 'exact', head: true }),
         supabase.from('employer_leads').select('id', { count: 'exact', head: true }),
       ])
       setStats({
         practices: p.count || 0,
         doctors: d.count || 0,
         affiliations: a.count || 0,
-        physicians: ph.count || 0,
         jobs: j.count || 0,
       })
     }
@@ -71,7 +68,6 @@ export default function HomePage() {
     { label: 'Ophthalmology Practices', value: stats?.practices.toLocaleString() ?? '—', href: '/practices', color: '#185FA5', bg: '#E8F0FB' },
     { label: 'Physician Careers Tracked', value: stats?.doctors.toLocaleString() ?? '—', href: '/physicians', color: '#1A6B3A', bg: '#D4EDDA' },
     { label: 'Career Affiliations', value: stats?.affiliations.toLocaleString() ?? '—', href: '/practices', color: '#7B3FA0', bg: '#EEE0F8' },
-    { label: 'Atlas Users', value: stats?.physicians.toLocaleString() ?? '—', href: '/physicians', color: '#C8640A', bg: '#FFF0E0' },
     { label: 'Active Job Listings', value: stats?.jobs.toLocaleString() ?? '—', href: '/jobs', color: '#1A6B6B', bg: '#D4EDED' },
   ]
 
