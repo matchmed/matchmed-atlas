@@ -161,26 +161,45 @@ export default function OnboardingPage() {
     }
     setLoading(true)
     setError('')
-
+  
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-
+    console.log('User:', user?.id, user?.email)
+  
     if (!user) { router.push('/login'); return }
-
-    const { error } = await supabase.from('profiles').upsert({
+  
+    const { error: upsertError } = await supabase.from('profiles').upsert({
       user_id: user.id,
       email: user.email,
       ...form,
       onboarding_complete: true,
       signup_date: new Date().toISOString(),
     }, { onConflict: 'user_id' })
-
-    if (error && !error.message.includes('duplicate') && !error.message.includes('unique')) {
-        setError(error.message)
-        setLoading(false)
-        return
-      }
-
+  
+    console.log('Upsert error:', upsertError)
+  
+    if (upsertError) {
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          user_id: user.id,
+          ...form,
+          onboarding_complete: true,
+        })
+        .eq('email', user.email)
+  
+      console.log('Update error:', updateError)
+    }
+  
+    // Check what's in the DB now
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('onboarding_complete, user_id')
+      .eq('email', user.email)
+      .single()
+    
+    console.log('Profile after save:', profile)
+  
     setShowSuccess(true)
     setTimeout(() => router.push('/'), 2500)
   }
@@ -308,9 +327,9 @@ export default function OnboardingPage() {
                   <input type="checkbox" checked={form.terms_accepted} onChange={e => setForm(f => ({ ...f, terms_accepted: e.target.checked }))} style={{ marginTop: 2, accentColor: '#185FA5' }} />
                   <span style={{ fontSize: 13, color: '#374151', lineHeight: 1.5 }}>
                     I agree to MatchMed's{' '}
-                    <a href="/terms-and-conditions" target="_blank" style={{ color: '#185FA5' }}>Terms of Service</a>
+                    <a href="https://atlas.matchmed.app/terms-and-conditions" target="_blank" rel="noopener noreferrer" style={{ color: '#185FA5' }}>Terms of Service</a>
                     {' '}&{' '}
-                    <a href="/privacy-policy" target="_blank" style={{ color: '#185FA5' }}>Privacy Policy</a>.
+                    <a href="https://atlas.matchmed.app/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: '#185FA5' }}>Privacy Policy</a>.
                   </span>
                 </label>
               </div>
