@@ -48,7 +48,7 @@ export default function HomePage() {
   useEffect(() => {
     async function load() {
     const supabase = createClient()
-      const [p, d, a, ph, j] = await Promise.all([
+      const [p, d, a, j] = await Promise.all([
         supabase.from('practices').select('id', { count: 'exact', head: true }),
         supabase.from('doctors').select('id', { count: 'exact', head: true }),
         supabase.from('affiliations').select('id', { count: 'exact', head: true }),
