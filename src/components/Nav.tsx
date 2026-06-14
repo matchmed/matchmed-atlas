@@ -97,21 +97,36 @@ export default function Nav() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1, overflowX: 'auto' }}>
           {links.map(l => {
             const active = pathname === l.href || pathname.startsWith(l.href + '/')
-            return (
-              <Link
+            const linkStyle = {
+              fontSize: 13,
+              fontWeight: active ? 600 : 400,
+              color: active ? '#185FA5' : '#666',
+              padding: '6px 12px',
+              borderRadius: 6,
+              background: active ? '#e8f0fb' : 'transparent',
+              whiteSpace: 'nowrap' as const,
+              textDecoration: 'none',
+              transition: 'all 0.12s',
+            }
+
+            if (l.href === '/favorites') {
+              return (
+                <a
                 key={l.href}
                 href={l.href}
-                style={{
-                  fontSize: 13,
-                  fontWeight: active ? 600 : 400,
-                  color: active ? '#185FA5' : '#666',
-                  padding: '6px 12px',
-                  borderRadius: 6,
-                  background: active ? '#e8f0fb' : 'transparent',
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.12s',
-                }}
-              >
+                  onClick={e => {
+                    e.preventDefault()
+                    window.location.href = '/favorites'
+                  }}
+                  style={linkStyle}
+                >
+                  {l.label}
+                </a>
+              )
+            }
+
+            return (
+              <Link key={l.href} href={l.href} style={linkStyle}>
                 {l.label}
               </Link>
             )

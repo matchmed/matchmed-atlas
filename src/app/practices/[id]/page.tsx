@@ -80,10 +80,13 @@ export default function PracticeDetailPage() {
   const [loading, setLoading] = useState(true)
   const [showFormer, setShowFormer] = useState(true)
   const [jobsOpen, setJobsOpen] = useState(true)
+  const [isFavorited, setIsFavorited] = useState(false)
+  const [favLoading, setFavLoading] = useState(false)
+  const [favId, setFavId] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
-    const supabase = createClient()
+      const supabase = createClient()
       setLoading(true)
       const [practiceRes, affilRes, jobRes] = await Promise.all([
         supabase.from('practices').select('*').eq('id', id).single(),
@@ -93,10 +96,49 @@ export default function PracticeDetailPage() {
       if (practiceRes.data) setPractice(practiceRes.data)
       if (affilRes.data) setAffiliations(affilRes.data as any)
       if (jobRes.data) setJobs(jobRes.data)
+
+      // Check if favorited
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: fav } = await supabase
+          .from('favorites')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('practice_id', id)
+          .maybeSingle()
+        if (fav) {
+          setIsFavorited(true)
+          setFavId(fav.id)
+        }
+      }
+
       setLoading(false)
     }
     load()
   }, [id])
+
+  async function toggleFavorite() {
+    setFavLoading(true)
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { setFavLoading(false); return }
+
+    if (isFavorited && favId) {
+      await supabase.from('favorites').delete().eq('id', favId)
+      setIsFavorited(false)
+      setFavId(null)
+    } else {
+      const { data } = await supabase.from('favorites').insert({
+        user_id: user.id,
+        practice_id: id,
+      }).select('id').single()
+      if (data) {
+        setIsFavorited(true)
+        setFavId(data.id)
+      }
+    }
+    setFavLoading(false)
+  }
 
   if (loading) return <div className="loading-bar"><div className="loading-bar-inner" /></div>
   if (!practice) return <div style={{ padding: 40, color: '#aaa', textAlign: 'center' }}>Practice not found.</div>
@@ -124,7 +166,6 @@ export default function PracticeDetailPage() {
   const maxVal = Math.max(...Object.values(buckets), 1)
   const barColors = { '8+ yrs': '#1A6B3A', '6-7 yrs': '#4CAF50', '4-5 yrs': '#185FA5', '2-3 yrs': '#7aaee0', '0-1 yrs': '#d0d0d0' }
 
-  // Insight
   const topHeavy = (buckets['8+ yrs'] + buckets['6-7 yrs']) > (buckets['0-1 yrs'] + buckets['2-3 yrs'])
   const agingRoster = (practice.med_yrs_grad || 0) > 30 && churnRate < 0.2
   const keyPersonRisk = (practice.latest_roster_size || 0) === 1 && alltime > 3
@@ -173,7 +214,30 @@ export default function PracticeDetailPage() {
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto' }}>
-      <button onClick={() => router.back()} style={{ fontSize: 13, color: '#185FA5', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 20, padding: 0 }}>← Back to practices</button>
+
+      {/* Back + Favorite */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <button onClick={() => router.back()} style={{ fontSize: 13, color: '#185FA5', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>← Back to practices</button>
+        <button
+          onClick={toggleFavorite}
+          disabled={favLoading}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '9px 18px',
+            background: isFavorited ? '#f0faf4' : '#185FA5',
+            border: `1.5px solid ${isFavorited ? '#1A6B3A' : '#185FA5'}`,
+            borderRadius: 10,
+            fontSize: 14,
+            fontWeight: 600,
+            color: isFavorited ? '#1A6B3A' : 'white',
+            cursor: favLoading ? 'not-allowed' : 'pointer',
+            opacity: favLoading ? 0.6 : 1,
+            transition: 'all 0.15s',
+          }}
+        >
+          {isFavorited ? '★ Saved' : '☆ Add to Favorites'}
+        </button>
+      </div>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20, flexWrap: 'wrap', marginBottom: 32 }}>
