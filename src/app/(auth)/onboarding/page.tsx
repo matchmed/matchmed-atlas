@@ -164,7 +164,6 @@ export default function OnboardingPage() {
   
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    console.log('User:', user?.id, user?.email)
   
     if (!user) { router.push('/login'); return }
   
@@ -175,9 +174,7 @@ export default function OnboardingPage() {
       onboarding_complete: true,
       signup_date: new Date().toISOString(),
     }, { onConflict: 'user_id' })
-  
-    console.log('Upsert error:', upsertError)
-  
+    
     if (upsertError) {
       const { error: updateError } = await supabase
         .from('profiles')
@@ -187,18 +184,7 @@ export default function OnboardingPage() {
           onboarding_complete: true,
         })
         .eq('email', user.email)
-  
-      console.log('Update error:', updateError)
-    }
-  
-    // Check what's in the DB now
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('onboarding_complete, user_id')
-      .eq('email', user.email)
-      .single()
-    
-    console.log('Profile after save:', profile)
+      }
   
     setShowSuccess(true)
     setTimeout(() => router.push('/'), 2500)
@@ -245,7 +231,7 @@ export default function OnboardingPage() {
 
               <div style={fieldStyle}>
                 <label style={labelStyle}>NPI *</label>
-                <input style={inputStyle} type="text" placeholder="10-digit NPI number" value={form.npi} onChange={e => setForm(f => ({ ...f, npi: e.target.value }))} />
+                <input style={inputStyle} type="text" placeholder="10-digit NPI number" value={form.npi} onChange={e => setForm(f => ({ ...f, npi: e.target.value }))} autoComplete="off" />
               </div>
 
               <div style={fieldStyle}>
