@@ -1,22 +1,34 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 
 export default function SignupPage() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
-  const [submitted, setSubmitted] = useState(false)
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault()
+    if (password !== confirm) {
+      setError('Passwords do not match.')
+      return
+    }
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.')
+      return
+    }
     setLoading(true)
     setError('')
 
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error } = await supabase.auth.signUp({
       email,
+      password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
@@ -26,85 +38,78 @@ export default function SignupPage() {
       setError(error.message)
       setLoading(false)
     } else {
-      setSubmitted(true)
-      setLoading(false)
+      router.push('/onboarding')
     }
   }
 
   return (
     <div className="min-h-screen flex">
-      {/* Left panel */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-8 bg-white">
         <div className="w-full max-w-md">
-          <div className="flex items-center gap-2 mb-10">
+          <div className="mb-10">
             <span className="text-xl font-semibold text-gray-900">MatchMed Atlas</span>
           </div>
 
-          {!submitted ? (
-            <>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Create your account</h1>
-              <p className="text-gray-500 mb-8">
-                Free for early-career ophthalmologists. No password needed — we'll email you a magic link.
-              </p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Create your account</h1>
+          <p className="text-gray-500 mb-8">
+            Free for early-career ophthalmologists.
+          </p>
 
-              <form onSubmit={handleSignup} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="Enter your email"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                  />
-                </div>
-
-                {error && (
-                  <p className="text-red-500 text-sm">{error}</p>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                >
-                  {loading ? 'Sending...' : 'Send magic link'}
-                </button>
-              </form>
-
-              <p className="mt-6 text-center text-sm text-gray-500">
-                Already have an account?{' '}
-                <a href="/login" className="text-blue-600 hover:underline">
-                  Log in
-                </a>
-              </p>
-            </>
-          ) : (
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Check your email</h2>
-              <p className="text-gray-500">
-                We sent a magic link to <strong>{email}</strong>. Click it to access Atlas — no password needed.
-              </p>
-              <button
-                onClick={() => setSubmitted(false)}
-                className="mt-6 text-sm text-blue-600 hover:underline"
-              >
-                Use a different email
-              </button>
+          <form onSubmit={handleSignup} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              />
             </div>
-          )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="At least 8 characters"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Confirm password</label>
+              <input
+                type="password"
+                required
+                value={confirm}
+                onChange={e => setConfirm(e.target.value)}
+                placeholder="Repeat your password"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              />
+            </div>
+
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              {loading ? 'Creating account...' : 'Create account'}
+            </button>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-gray-500">
+            Already have an account?{' '}
+            <a href="/login" className="text-blue-600 hover:underline">Sign in</a>
+          </p>
         </div>
       </div>
 
-      {/* Right panel */}
       <div
         className="hidden md:block md:w-1/2 bg-cover bg-center"
         style={{

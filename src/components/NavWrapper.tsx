@@ -5,7 +5,8 @@ import Nav from './Nav'
 
 export default function NavWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const isAuthPage = pathname === '/login' || pathname === '/signup'
+  const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/onboarding'
+
 
   return (
     <>

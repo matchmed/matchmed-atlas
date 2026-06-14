@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase'
 
 const links = [
   { href: '/practices', label: 'Practices' },
@@ -14,6 +15,14 @@ const links = [
 
 export default function Nav() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+  }
 
   return (
     <nav style={{
@@ -70,6 +79,26 @@ export default function Nav() {
             )
           })}
         </div>
+
+        {/* Logout */}
+        <button
+          onClick={handleLogout}
+          style={{
+            marginLeft: 12,
+            padding: '6px 14px',
+            fontSize: 13,
+            fontWeight: 500,
+            color: '#666',
+            background: 'transparent',
+            border: '1px solid #e5e7eb',
+            borderRadius: 6,
+            cursor: 'pointer',
+            flexShrink: 0,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Log out
+        </button>
       </div>
     </nav>
   )

@@ -24,7 +24,21 @@ export async function GET(request: Request) {
         },
       }
     )
-    await supabase.auth.exchangeCodeForSession(code)
+    const { data: { user } } = await supabase.auth.exchangeCodeForSession(code)
+
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('onboarding_complete')
+        .eq('user_id', user.id)
+        .single()
+
+        if (profile?.onboarding_complete) {
+            return NextResponse.redirect(`${origin}/`)
+          } else {
+            return NextResponse.redirect(`${origin}/onboarding`)
+          }
+    }
   }
 
   return NextResponse.redirect(`${origin}/practices`)

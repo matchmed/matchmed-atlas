@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 
@@ -13,6 +14,37 @@ interface Stats {
 
 export default function HomePage() {
   const [stats, setStats] = useState<Stats | null>(null)
+  const router = useRouter()
+
+  useEffect(() => {
+    async function checkOnboarding() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+    
+      // Try by user_id first
+      let { data: profile } = await supabase
+        .from('profiles')
+        .select('onboarding_complete')
+        .eq('user_id', user.id)
+        .maybeSingle()
+    
+      // Fall back to email
+      if (!profile) {
+        const { data: byEmail } = await supabase
+          .from('profiles')
+          .select('onboarding_complete')
+          .eq('email', user.email)
+          .maybeSingle()
+        profile = byEmail
+      }
+    
+      if (!profile?.onboarding_complete) {
+        router.push('/onboarding')
+      }
+    }
+    checkOnboarding()
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -21,7 +53,7 @@ export default function HomePage() {
         supabase.from('practices').select('id', { count: 'exact', head: true }),
         supabase.from('doctors').select('id', { count: 'exact', head: true }),
         supabase.from('affiliations').select('id', { count: 'exact', head: true }),
-        supabase.from('physicians').select('id', { count: 'exact', head: true }),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }),
         supabase.from('employer_leads').select('id', { count: 'exact', head: true }),
       ])
       setStats({
