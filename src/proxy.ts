@@ -27,16 +27,32 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
-
+  
   const publicRoutes = ['/login', '/signup', '/auth/callback']
   const isPublic = publicRoutes.some(route => 
     pathname === route || pathname.startsWith('/auth/')
   )
-
+  
   if (!user && !isPublic) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
+  }
+  
+  // Check if account is deleted
+  if (user && !isPublic) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('deleted_at')
+      .eq('user_id', user.id)
+      .maybeSingle()
+  
+    if (profile?.deleted_at) {
+      await supabase.auth.signOut()
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse
