@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase'
 import { nameToColor, getInitials } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -35,6 +35,7 @@ export default function PhysicianDetailPage() {
 
   useEffect(() => {
     async function load() {
+    const supabase = createClient()
       setLoading(true)
       const [docRes, affilRes] = await Promise.all([
         supabase.from('doctors').select('*').eq('id', id).single(),

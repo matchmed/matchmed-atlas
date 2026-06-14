@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase'
 import { nameToColor, getInitials, scoreClass, scoreLabel, deltaColor, deltaBg, deltaArrow } from '@/lib/utils'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
@@ -44,6 +44,7 @@ export default function PracticesPage() {
   // Load all practices
   useEffect(() => {
     async function load() {
+      const supabase = createClient()
       setLoading(true)
       let all: Practice[] = []
       let from = 0

@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase'
 import { nameToColor, getInitials, scoreColor, scoreBg, deltaColor, deltaBg, deltaArrow } from '@/lib/utils'
 
 interface Practice {
@@ -83,6 +83,7 @@ export default function PracticeDetailPage() {
 
   useEffect(() => {
     async function load() {
+    const supabase = createClient()
       setLoading(true)
       const [practiceRes, affilRes, jobRes] = await Promise.all([
         supabase.from('practices').select('*').eq('id', id).single(),

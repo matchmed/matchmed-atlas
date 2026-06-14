@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase'
 
 interface Job {
   id: string
@@ -50,6 +50,7 @@ export default function JobsPage() {
 
   useEffect(() => {
     async function load() {
+    const supabase = createClient()
       setLoading(true)
       const { data } = await supabase.from('employer_leads').select('*').order('received_at', { ascending: false })
       if (data) setJobs(data)

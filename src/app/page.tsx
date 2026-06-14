@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase'
 
 interface Stats {
   practices: number
@@ -16,6 +16,7 @@ export default function HomePage() {
 
   useEffect(() => {
     async function load() {
+    const supabase = createClient()
       const [p, d, a, ph, j] = await Promise.all([
         supabase.from('practices').select('id', { count: 'exact', head: true }),
         supabase.from('doctors').select('id', { count: 'exact', head: true }),

@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase'
 
 interface Doctor {
   id: string
@@ -21,6 +21,7 @@ export default function PhysiciansPage() {
 
   useEffect(() => {
     async function load() {
+    const supabase = createClient()
       setLoading(true)
       let all: Doctor[] = []
       let from = 0
