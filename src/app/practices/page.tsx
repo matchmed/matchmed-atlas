@@ -82,6 +82,7 @@ export default function PracticesPage() {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapInitedRef = useRef(false)
   const popupRef = useRef<mapboxgl.Popup | null>(null)
+  const mapRestoreRef = useRef<{ center: [number, number]; zoom: number } | null>(null)
 
   // Load all practices with IndexedDB cache
   useEffect(() => {
@@ -112,6 +113,28 @@ export default function PracticesPage() {
     }
     load()
   }, [])
+
+  // Restore map state after returning from practice detail
+  useEffect(() => {
+    if (practices.length === 0) return
+    try {
+      const lastView = sessionStorage.getItem('atlas_last_view')
+      const centerRaw = sessionStorage.getItem('atlas_map_center')
+      const zoomRaw = sessionStorage.getItem('atlas_map_zoom')
+      if (lastView === 'map') {
+        sessionStorage.removeItem('atlas_last_view')
+        sessionStorage.removeItem('atlas_map_center')
+        sessionStorage.removeItem('atlas_map_zoom')
+        if (centerRaw) {
+          mapRestoreRef.current = {
+            center: JSON.parse(centerRaw),
+            zoom: zoomRaw ? parseFloat(zoomRaw) : 4,
+          }
+        }
+        setView('map')
+      }
+    } catch (e) {}
+  }, [practices])
 
   const allStates = Array.from(new Set(practices.map(p => p.state).filter(Boolean) as string[])).sort()
 
@@ -181,19 +204,41 @@ export default function PracticesPage() {
     return { text: s.toFixed(1), bg: '#ffebee', color: '#C0392B' }
   }
 
+  // Save map state and navigate to practice
+  function openPracticeFromMap(practiceId: string) {
+    if (mapRef.current && mapInitedRef.current) {
+      try {
+        const center = mapRef.current.getCenter()
+        const zoom = mapRef.current.getZoom()
+        sessionStorage.setItem('atlas_last_view', 'map')
+        sessionStorage.setItem('atlas_map_center', JSON.stringify([center.lng, center.lat]))
+        sessionStorage.setItem('atlas_map_zoom', String(zoom))
+      } catch (e) {}
+    }
+    router.push(`/practices/${practiceId}`)
+  }
+
+  // Expose to popup HTML string (mapbox popup uses inline onclick)
+  useEffect(() => {
+    (window as any).__openPracticeFromMap = openPracticeFromMap
+  }, [])
+
   // Map init
   useEffect(() => {
     if (view !== 'map' || mapInitedRef.current || !mapContainerRef.current) return
     const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
     if (!token) return
     mapboxgl.accessToken = token
+
+    const restore = mapRestoreRef.current
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
       style: 'mapbox://styles/mapbox/light-v11',
-      center: [-96, 38],
-      zoom: 4,
+      center: restore?.center || [-96, 38],
+      zoom: restore?.zoom || 4,
     })
     mapRef.current = map
+    mapRestoreRef.current = null
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right')
 
     map.on('load', () => {
@@ -232,7 +277,7 @@ export default function PracticesPage() {
             <div style="font-size:12px;color:#888;margin-bottom:4px;">${props.location}</div>
             ${props.phone ? `<div style="font-size:12px;color:#185FA5;margin-bottom:8px;">${props.phone}</div>` : ''}
             <div style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;background:${sl.bg};color:${sl.color};margin-bottom:10px;">${sl.text}</div>
-            <button onclick="window.location.href='/practices/${props.practiceId}'" style="display:block;width:100%;padding:7px;background:#185FA5;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;text-align:center;">Open practice →</button>
+            <button onclick="window.__openPracticeFromMap('${props.practiceId}')" style="display:block;width:100%;padding:7px;background:#185FA5;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;text-align:center;">Open practice →</button>
           `)
           .addTo(map)
       })

@@ -81,13 +81,11 @@ export default function Nav() {
       }}>
         {/* Logo */}
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 24, flexShrink: 0 }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: 6,
-            background: '#185FA5',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <span style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>A</span>
-          </div>
+          <img
+            src="/MatchMed_Logo.jpg"
+            alt="MatchMed Atlas"
+            style={{ width: 28, height: 28, borderRadius: 6 }}
+          />
           <span style={{ fontWeight: 700, fontSize: 15, color: '#1a1a1a', letterSpacing: '-0.01em' }}>
             MatchMed Atlas
           </span>
