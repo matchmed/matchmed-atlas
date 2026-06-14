@@ -3,6 +3,10 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 
+const PAGE_SIZE = 50
+const CACHE_KEY = 'atlas_doctors_v1'
+const CACHE_TTL = 1 * 60 * 60 * 1000 // 1 hour
+
 interface Doctor {
   id: string
   physician_name: string | null
@@ -10,7 +14,45 @@ interface Doctor {
   graduation_year: number | null
 }
 
-const PAGE_SIZE = 50
+// ── IndexedDB helpers ──────────────────────────────────────────────────────────
+
+function openDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('AtlasDoctorsDB', 1)
+    req.onupgradeneeded = e => {
+      const db = (e.target as IDBOpenDBRequest).result
+      if (!db.objectStoreNames.contains('doctors')) db.createObjectStore('doctors')
+    }
+    req.onsuccess = e => resolve((e.target as IDBOpenDBRequest).result)
+    req.onerror = e => reject((e.target as IDBOpenDBRequest).error)
+  })
+}
+
+async function loadCache(): Promise<Doctor[] | null> {
+  try {
+    const db = await openDB()
+    return new Promise(resolve => {
+      const tx = db.transaction('doctors', 'readonly')
+      const req = tx.objectStore('doctors').get(CACHE_KEY)
+      req.onsuccess = e => {
+        const r = (e.target as IDBRequest).result
+        if (!r || Date.now() - r.ts > CACHE_TTL) { resolve(null); return }
+        resolve(r.records)
+      }
+      req.onerror = () => resolve(null)
+    })
+  } catch { return null }
+}
+
+async function saveCache(records: Doctor[]): Promise<void> {
+  try {
+    const db = await openDB()
+    const tx = db.transaction('doctors', 'readwrite')
+    tx.objectStore('doctors').put({ ts: Date.now(), records }, CACHE_KEY)
+  } catch (e) { console.warn('IndexedDB save failed', e) }
+}
+
+// ── Component ──────────────────────────────────────────────────────────────────
 
 export default function PhysiciansPage() {
   const router = useRouter()
@@ -21,7 +63,13 @@ export default function PhysiciansPage() {
 
   useEffect(() => {
     async function load() {
-    const supabase = createClient()
+      const cached = await loadCache()
+      if (cached) {
+        setDoctors(cached)
+        setLoading(false)
+        return
+      }
+      const supabase = createClient()
       setLoading(true)
       let all: Doctor[] = []
       let from = 0
@@ -36,6 +84,7 @@ export default function PhysiciansPage() {
         if (data.length < 1000) break
         from += 1000
       }
+      await saveCache(all)
       setDoctors(all)
       setLoading(false)
     }
@@ -58,7 +107,7 @@ export default function PhysiciansPage() {
           placeholder="Search physician name or NPI..."
           value={search}
           onChange={e => { setSearch(e.target.value); setPage(0) }}
-          style={{ fontSize: 13, padding: '7px 11px', height: 36, border: '1px solid #ddd', borderRadius: 8, outline: 'none', width: '100%', maxWidth: 480 }}
+          style={{ fontSize: 13, padding: '7px 11px', height: 36, border: '1px solid #ddd', borderRadius: 8, outline: 'none', width: '100%' }}
         />
       </div>
 

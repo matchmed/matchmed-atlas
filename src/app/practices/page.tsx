@@ -1,12 +1,14 @@
 'use client'
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { nameToColor, getInitials, scoreClass, scoreLabel, deltaColor, deltaBg, deltaArrow } from '@/lib/utils'
+import { scoreClass, scoreLabel, deltaColor, deltaBg, deltaArrow } from '@/lib/utils'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 const PAGE_SIZE = 50
+const CACHE_KEY = 'atlas_practices_v1'
+const CACHE_TTL = 1 * 60 * 60 * 1000 // 1 hour
 
 interface Practice {
   id: string
@@ -23,6 +25,46 @@ interface Practice {
 }
 
 type SortKey = 'practice_name' | 'city_st' | 'retention_score' | 'retention_score_delta' | 'latest_roster_size'
+
+// ── IndexedDB helpers ──────────────────────────────────────────────────────────
+
+function openDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('AtlasPracticesDB', 1)
+    req.onupgradeneeded = e => {
+      const db = (e.target as IDBOpenDBRequest).result
+      if (!db.objectStoreNames.contains('practices')) db.createObjectStore('practices')
+    }
+    req.onsuccess = e => resolve((e.target as IDBOpenDBRequest).result)
+    req.onerror = e => reject((e.target as IDBOpenDBRequest).error)
+  })
+}
+
+async function loadCache(): Promise<Practice[] | null> {
+  try {
+    const db = await openDB()
+    return new Promise(resolve => {
+      const tx = db.transaction('practices', 'readonly')
+      const req = tx.objectStore('practices').get(CACHE_KEY)
+      req.onsuccess = e => {
+        const r = (e.target as IDBRequest).result
+        if (!r || Date.now() - r.ts > CACHE_TTL) { resolve(null); return }
+        resolve(r.records)
+      }
+      req.onerror = () => resolve(null)
+    })
+  } catch { return null }
+}
+
+async function saveCache(records: Practice[]): Promise<void> {
+  try {
+    const db = await openDB()
+    const tx = db.transaction('practices', 'readwrite')
+    tx.objectStore('practices').put({ ts: Date.now(), records }, CACHE_KEY)
+  } catch (e) { console.warn('IndexedDB save failed', e) }
+}
+
+// ── Component ──────────────────────────────────────────────────────────────────
 
 export default function PracticesPage() {
   const router = useRouter()
@@ -41,9 +83,15 @@ export default function PracticesPage() {
   const mapInitedRef = useRef(false)
   const popupRef = useRef<mapboxgl.Popup | null>(null)
 
-  // Load all practices
+  // Load all practices with IndexedDB cache
   useEffect(() => {
     async function load() {
+      const cached = await loadCache()
+      if (cached) {
+        setPractices(cached)
+        setLoading(false)
+        return
+      }
       const supabase = createClient()
       setLoading(true)
       let all: Practice[] = []
@@ -58,16 +106,15 @@ export default function PracticesPage() {
         if (data.length < 1000) break
         from += 1000
       }
+      await saveCache(all)
       setPractices(all)
       setLoading(false)
     }
     load()
   }, [])
 
-  // All states from data
   const allStates = Array.from(new Set(practices.map(p => p.state).filter(Boolean) as string[])).sort()
 
-  // Filtered + sorted
   const filtered = practices.filter(p => {
     const q = search.toLowerCase()
     const matchesSearch = !q || (p.practice_name || '').toLowerCase().includes(q) || (p.city_st || '').toLowerCase().includes(q)
@@ -125,6 +172,15 @@ export default function PracticesPage() {
     return '#C0392B'
   }
 
+  function scoreLabelLocal(s: number | null): { text: string; bg: string; color: string } {
+    if (s === null) return { text: 'No score', bg: '#f5f5f5', color: '#aaa' }
+    if (s >= 85) return { text: s.toFixed(1), bg: '#d4edda', color: '#1A6B3A' }
+    if (s >= 80) return { text: s.toFixed(1), bg: '#e8f5e9', color: '#2e7d32' }
+    if (s >= 70) return { text: s.toFixed(1), bg: '#fffde7', color: '#7a6800' }
+    if (s >= 60) return { text: s.toFixed(1), bg: '#fff3e0', color: '#b85c00' }
+    return { text: s.toFixed(1), bg: '#ffebee', color: '#C0392B' }
+  }
+
   // Map init
   useEffect(() => {
     if (view !== 'map' || mapInitedRef.current || !mapContainerRef.current) return
@@ -167,7 +223,7 @@ export default function PracticesPage() {
         const props = e.features![0].properties!
         const coords = (e.features![0].geometry as any).coordinates.slice()
         const score = props.score === 'null' || props.score === null ? null : parseFloat(props.score)
-        const sl = scoreLabel(score)
+        const sl = scoreLabelLocal(score)
         if (popupRef.current) popupRef.current.remove()
         popupRef.current = new mapboxgl.Popup({ closeButton: true, maxWidth: '240px' })
           .setLngLat(coords)
@@ -212,15 +268,6 @@ export default function PracticesPage() {
         }
       })
     }
-  }
-
-  function scoreLabel(s: number | null): { text: string; bg: string; color: string } {
-    if (s === null) return { text: 'No score', bg: '#f5f5f5', color: '#aaa' }
-    if (s >= 85) return { text: s.toFixed(1), bg: '#d4edda', color: '#1A6B3A' }
-    if (s >= 80) return { text: s.toFixed(1), bg: '#e8f5e9', color: '#2e7d32' }
-    if (s >= 70) return { text: s.toFixed(1), bg: '#fffde7', color: '#7a6800' }
-    if (s >= 60) return { text: s.toFixed(1), bg: '#fff3e0', color: '#b85c00' }
-    return { text: s.toFixed(1), bg: '#ffebee', color: '#C0392B' }
   }
 
   const thStyle = (key: SortKey): React.CSSProperties => ({
@@ -371,7 +418,6 @@ export default function PracticesPage() {
       {view === 'map' && (
         <div style={{ position: 'relative', height: 600, borderRadius: 10, overflow: 'hidden' }}>
           <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }} />
-          {/* Legend */}
           <div style={{ position: 'absolute', bottom: 12, left: 12, zIndex: 10, background: 'rgba(255,255,255,0.92)', borderRadius: 8, padding: '10px 14px', boxShadow: '0 1px 4px rgba(0,0,0,0.12)', fontSize: 11 }}>
             <div style={{ fontSize: 10, fontWeight: 500, color: '#888', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}>Retention score</div>
             {[['#1A6B3A', '85+'], ['#4CAF50', '80-85'], ['#C8B400', '70-80'], ['#E07B00', '60-70'], ['#C0392B', 'Below 60'], ['#aaa', 'No score']].map(([color, label]) => (
