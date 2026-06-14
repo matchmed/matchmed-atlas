@@ -14,7 +14,7 @@ import time
 import requests
 from supabase import create_client
 
-AIRTABLE_PAT  = "REDACTED_PAT"
+AIRTABLE_PAT  = "patQsUUVvd5DbRBnY.613d805a328b71f5d3966c59994035a0db1a89f0dd029b61e1717539f9902a4b"
 AIRTABLE_BASE = "applI3tAeZR7UltWP"
 SUPABASE_URL  = "https://yisjyqnxaimdaeiylbuy.supabase.co"
 SUPABASE_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlpc2p5cW54YWltZGFlaXlsYnV5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTM2MDc4NCwiZXhwIjoyMDk2OTM2Nzg0fQ.mrfylD7bgplQsHuqSnDx-w0MBJsJtt8rAN7SG0lCVCc"
@@ -26,7 +26,7 @@ print("Building lookup maps...")
 
 # airtable_id → physician UUID
 physician_map = {}
-result = supabase.table("physicians").select("id, airtable_id, email").execute()
+result = supabase.table("profiles").select("id, airtable_id, email").execute()
 for r in result.data:
     if r["airtable_id"]:
         physician_map[r["airtable_id"]] = r["id"]
