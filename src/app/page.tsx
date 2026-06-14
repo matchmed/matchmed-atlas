@@ -20,15 +20,13 @@ export default function HomePage() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-    
-      // Try by user_id first
+  
       let { data: profile } = await supabase
         .from('profiles')
         .select('onboarding_complete')
         .eq('user_id', user.id)
         .maybeSingle()
-    
-      // Fall back to email
+  
       if (!profile) {
         const { data: byEmail } = await supabase
           .from('profiles')
@@ -37,8 +35,8 @@ export default function HomePage() {
           .maybeSingle()
         profile = byEmail
       }
-    
-      if (!profile?.onboarding_complete) {
+  
+      if (profile && !profile.onboarding_complete) {
         router.push('/onboarding')
       }
     }
