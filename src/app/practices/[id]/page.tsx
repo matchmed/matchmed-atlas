@@ -36,7 +36,7 @@ interface Affiliation {
   last_seen_year_at_org: number | null
   tenure_years: number | null
   grad_yr: number | null
-  doctors: { physician_name: string | null; npi: string } | null
+  doctors: { id: string; physician_name: string | null; npi: string } | null
 }
 
 interface JobLead {
@@ -87,7 +87,7 @@ export default function PracticeDetailPage() {
       setLoading(true)
       const [practiceRes, affilRes, jobRes] = await Promise.all([
         supabase.from('practices').select('*').eq('id', id).single(),
-        supabase.from('affiliations').select('id,npi,status,first_seen_year_at_org,last_seen_year_at_org,tenure_years,grad_yr,doctors(physician_name,npi)').eq('practice_id', id).order('last_seen_year_at_org', { ascending: false }),
+        supabase.from('affiliations').select('id,npi,status,first_seen_year_at_org,last_seen_year_at_org,tenure_years,grad_yr,doctors(id,physician_name,npi)').eq('practice_id', id).order('last_seen_year_at_org', { ascending: false }),
         supabase.from('employer_leads').select('*').eq('practice_id', id),
       ])
       if (practiceRes.data) setPractice(practiceRes.data)
@@ -154,7 +154,7 @@ export default function PracticeDetailPage() {
     const tenureLabel = tenure >= 8 ? '8+ yrs' : tenure === 1 ? '1 yr' : `${tenure} yrs`
     const [fg2, bg2] = nameToColor(n)
     return (
-      <div key={a.id} style={{ background: '#fff', border: '1px solid #e8e8e8', borderRadius: 10, padding: '14px 16px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 14 }}>
+      <div key={a.id} onClick={() => a.doctors?.id && router.push(`/physicians/${a.doctors.id}`)} style={{ background: '#fff', border: '1px solid #e8e8e8', borderRadius: 10, padding: '14px 16px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 14, cursor: a.doctors?.id ? 'pointer' : 'default' }}>
         <div style={{ width: 40, height: 40, borderRadius: '50%', background: bg2, color: fg2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
           {getInitials(n)}
         </div>
