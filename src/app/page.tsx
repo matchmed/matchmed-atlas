@@ -25,20 +25,24 @@ export default function HomePage() {
       }
   
       const hash = window.location.hash
+      let sessionUser = null
+  
       if (hash && hash.includes('access_token')) {
-        await new Promise<void>(resolve => {
+        sessionUser = await new Promise<any>(resolve => {
           const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            if (session) {
+            if (session?.user) {
               subscription.unsubscribe()
-              resolve()
+              resolve(session.user)
             }
           })
-          setTimeout(resolve, 3000)
+          setTimeout(() => resolve(null), 3000)
         })
+      } else {
+        const { data: { user } } = await supabase.auth.getUser()
+        sessionUser = user
       }
   
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
+      if (!sessionUser) {
         router.push('/login')
         return
       }
@@ -46,7 +50,7 @@ export default function HomePage() {
       const { data: profile } = await supabase
         .from('profiles')
         .select('onboarding_complete')
-        .eq('user_id', user.id)
+        .eq('user_id', sessionUser.id)
         .maybeSingle()
   
       if (profile && !profile.onboarding_complete) {
