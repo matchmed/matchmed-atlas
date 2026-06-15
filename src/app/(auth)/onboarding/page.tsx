@@ -191,11 +191,11 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
+    <div className="auth-split">
 
-      {/* Left panel */}
-      <div style={{ width: '50%', minHeight: '100vh', overflowY: 'auto', background: 'white', display: 'flex', justifyContent: 'center', padding: '48px 40px' }}>
-        <div style={{ width: '100%', maxWidth: 480 }}>
+      {/* Form panel */}
+      <div className="auth-onboarding-form">
+        <div className="auth-onboarding-inner">
 
           {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32 }}>
@@ -357,13 +357,15 @@ export default function OnboardingPage() {
       </div>
 
       {/* Right panel */}
-      <div style={{ width: '50%', height: '100vh', position: 'fixed', right: 0, top: 0, overflow: 'hidden', background: '#111' }}>
-        <div style={{
-          position: 'absolute', inset: 0,
-          backgroundImage: `url('https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?w=1200&q=80')`,
-          backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.6
-        }} />
-        <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 48, height: '100%', color: 'white' }}>
+      <div className="auth-split-hero">
+        <div
+          className="auth-split-hero-bg"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?w=1200&q=80')`,
+            opacity: 0.6,
+          }}
+        />
+        <div className="auth-split-hero-content">
           <blockquote style={{ fontSize: 20, fontWeight: 500, lineHeight: 1.5, marginBottom: 12, letterSpacing: '-0.2px' }}>
             "Built on 8 years of CMS Medicare data covering 6,400+ ophthalmology practices and 22,000+ physician careers."
           </blockquote>
