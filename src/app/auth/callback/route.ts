@@ -39,8 +39,15 @@ export async function GET(request: Request) {
   }
 
   if (code) {
-    const { data: { user } } = await supabase.auth.exchangeCodeForSession(code)
+    const { data: { user }, error } = await supabase.auth.exchangeCodeForSession(code)
+    if (error) {
+      console.error('[auth/callback] exchangeCodeForSession failed:', error.message, { code: 'present' })
+    }
     if (user) {
+      const next = searchParams.get('next')
+      if (next === '/auth/set-password') {
+        return NextResponse.redirect(`${origin}/auth/set-password`)
+      }
       const { data: profile } = await supabase
         .from('profiles')
         .select('onboarding_complete')
