@@ -19,20 +19,24 @@ export default function HomePage() {
     async function init() {
       const supabase = createClient()
       
-      // Handle ?code= (PKCE flow)
       const code = new URLSearchParams(window.location.search).get('code')
       if (code) {
         await supabase.auth.exchangeCodeForSession(code)
       }
   
-      // Handle #access_token fragment (implicit flow)
       const hash = window.location.hash
       if (hash && hash.includes('access_token')) {
-        // Give Supabase client time to auto-process the fragment
-        await new Promise(resolve => setTimeout(resolve, 800))
+        await new Promise<void>(resolve => {
+          const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (session) {
+              subscription.unsubscribe()
+              resolve()
+            }
+          })
+          setTimeout(resolve, 3000)
+        })
       }
   
-      // Now check session
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push('/login')
