@@ -19,10 +19,17 @@ export default function HomePage() {
     async function init() {
       const supabase = createClient()
       
-      // Handle magic link code first
+      // Handle ?code= (PKCE flow)
       const code = new URLSearchParams(window.location.search).get('code')
       if (code) {
         await supabase.auth.exchangeCodeForSession(code)
+      }
+  
+      // Handle #access_token fragment (implicit flow)
+      const hash = window.location.hash
+      if (hash && hash.includes('access_token')) {
+        // Give Supabase client time to auto-process the fragment
+        await new Promise(resolve => setTimeout(resolve, 800))
       }
   
       // Now check session
@@ -44,7 +51,7 @@ export default function HomePage() {
     }
     init()
   }, [])
-  
+
   useEffect(() => {
     async function load() {
     const supabase = createClient()
