@@ -7,5 +7,9 @@ export function createClient() {
   if (!supabaseUrl) throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL')
   if (!supabaseAnonKey) throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY')
 
-  return createBrowserClient(supabaseUrl, supabaseAnonKey)
+  return createBrowserClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      flowType: 'implicit'
+    }
+  })
 }
