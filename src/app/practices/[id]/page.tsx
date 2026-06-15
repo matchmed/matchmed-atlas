@@ -83,6 +83,7 @@ export default function PracticeDetailPage() {
   const [isFavorited, setIsFavorited] = useState(false)
   const [favLoading, setFavLoading] = useState(false)
   const [favId, setFavId] = useState<string | null>(null)
+  const [profileId, setProfileId] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -97,18 +98,27 @@ export default function PracticeDetailPage() {
       if (affilRes.data) setAffiliations(affilRes.data as any)
       if (jobRes.data) setJobs(jobRes.data)
 
-      // Check if favorited
+      // Get profile id and check if favorited
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const { data: fav } = await supabase
-          .from('favorites')
+        const { data: profile } = await supabase
+          .from('profiles')
           .select('id')
           .eq('user_id', user.id)
-          .eq('practice_id', id)
           .maybeSingle()
-        if (fav) {
-          setIsFavorited(true)
-          setFavId(fav.id)
+
+        if (profile) {
+          setProfileId(profile.id)
+          const { data: fav } = await supabase
+            .from('shortlists')
+            .select('id')
+            .eq('physician_id', profile.id)
+            .eq('practice_id', id)
+            .maybeSingle()
+          if (fav) {
+            setIsFavorited(true)
+            setFavId(fav.id)
+          }
         }
       }
 
@@ -118,18 +128,17 @@ export default function PracticeDetailPage() {
   }, [id])
 
   async function toggleFavorite() {
+    if (!profileId) return
     setFavLoading(true)
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setFavLoading(false); return }
 
     if (isFavorited && favId) {
-      await supabase.from('favorites').delete().eq('id', favId)
+      await supabase.from('shortlists').delete().eq('id', favId)
       setIsFavorited(false)
       setFavId(null)
     } else {
-      const { data } = await supabase.from('favorites').insert({
-        user_id: user.id,
+      const { data } = await supabase.from('shortlists').insert({
+        physician_id: profileId,
         practice_id: id,
       }).select('id').single()
       if (data) {
@@ -220,7 +229,7 @@ export default function PracticeDetailPage() {
         <button onClick={() => router.back()} style={{ fontSize: 13, color: '#185FA5', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>← Back to practices</button>
         <button
           onClick={toggleFavorite}
-          disabled={favLoading}
+          disabled={favLoading || !profileId}
           style={{
             display: 'flex', alignItems: 'center', gap: 8,
             padding: '9px 18px',
@@ -230,8 +239,8 @@ export default function PracticeDetailPage() {
             fontSize: 14,
             fontWeight: 600,
             color: isFavorited ? '#1A6B3A' : 'white',
-            cursor: favLoading ? 'not-allowed' : 'pointer',
-            opacity: favLoading ? 0.6 : 1,
+            cursor: (favLoading || !profileId) ? 'not-allowed' : 'pointer',
+            opacity: (favLoading || !profileId) ? 0.6 : 1,
             transition: 'all 0.15s',
           }}
         >

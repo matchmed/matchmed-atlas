@@ -27,10 +27,19 @@ export default function FavoritesPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
 
-      const { data } = await supabase
-        .from('favorites')
-        .select('id, practice_id, practices(id, practice_name, dba, city_st, retention_score, latest_roster_size)')
+      // Get profile id for this user
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
         .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (!profile) { setLoading(false); return }
+
+      const { data } = await supabase
+        .from('shortlists')
+        .select('id, practice_id, practices(id, practice_name, dba, city_st, retention_score, latest_roster_size)')
+        .eq('physician_id', profile.id)
         .order('created_at', { ascending: false })
 
       if (data) {
@@ -51,7 +60,7 @@ export default function FavoritesPage() {
 
   async function removeFavorite(favId: string) {
     const supabase = createClient()
-    await supabase.from('favorites').delete().eq('id', favId)
+    await supabase.from('shortlists').delete().eq('id', favId)
     setFavorites(prev => prev.filter(f => f.id !== favId))
   }
 
