@@ -109,7 +109,10 @@ function UsersTab() {
     const supabase = createClient()
     await supabase.auth.signInWithOtp({
       email: profile.email,
-      options: { shouldCreateUser: false }
+      options: { 
+        shouldCreateUser: true,
+        emailRedirectTo: 'https://atlas.matchmed.app/auth/confirm'
+      }
     })
     setSentMap(prev => ({ ...prev, [profile.id]: true }))
     setSendingMap(prev => ({ ...prev, [profile.id]: false }))
