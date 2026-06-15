@@ -16,6 +16,20 @@ export default function HomePage() {
   const router = useRouter()
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const code = params.get('code')
+    if (code) {
+      const supabase = createClient()
+      supabase.auth.exchangeCodeForSession(code).then(({ data: { session } }) => {
+        if (session) {
+          router.push('/')
+          router.refresh()
+        }
+      })
+    }
+  }, [])
+
+  useEffect(() => {
     async function checkOnboarding() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
