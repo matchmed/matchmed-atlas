@@ -30,10 +30,8 @@ export default function HomePage() {
       if (hash && hash.includes('access_token')) {
         sessionUser = await new Promise<any>(resolve => {
           const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            if (session?.user) {
-              subscription.unsubscribe()
-              resolve(session.user)
-            }
+            subscription.unsubscribe()
+            resolve(session?.user || null)
           })
           setTimeout(() => resolve(null), 3000)
         })
