@@ -56,11 +56,11 @@ export default function SignupPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
+    <div className="auth-split">
 
       {/* Left panel */}
-      <div style={{ width: '50%', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 40px', background: '#f9fafb' }}>
-        <div style={{ width: '100%', maxWidth: 380 }}>
+      <div className="auth-split-form">
+        <div className="auth-split-inner">
 
           {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 40 }}>
@@ -73,7 +73,7 @@ export default function SignupPage() {
           </div>
 
           {showConfirmation ? (
-            <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06)', border: '1px solid #eee', padding: '40px 32px', textAlign: 'center' }}>
+            <div className="auth-card" style={{ background: 'white', borderRadius: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06)', border: '1px solid #eee', padding: '40px 32px', textAlign: 'center' }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>✉️</div>
               <h2 style={{ fontSize: 20, fontWeight: 700, color: '#111', marginBottom: 8 }}>Check your email</h2>
               <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>
@@ -81,7 +81,7 @@ export default function SignupPage() {
               </p>
             </div>
           ) : (
-            <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06)', border: '1px solid #eee', padding: '32px 32px 28px' }}>
+            <div className="auth-card" style={{ background: 'white', borderRadius: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06)', border: '1px solid #eee', padding: '32px 32px 28px' }}>
 
               <h1 style={{ fontSize: 24, fontWeight: 700, color: '#111', marginBottom: 6, letterSpacing: '-0.4px' }}>Create your account</h1>
               <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 24, lineHeight: 1.5 }}>
@@ -178,13 +178,12 @@ export default function SignupPage() {
       </div>
 
       {/* Right panel */}
-      <div style={{ width: '50%', minHeight: '100vh', position: 'relative', overflow: 'hidden', background: '#111' }}>
-        <div style={{
-          position: 'absolute', inset: 0,
-          backgroundImage: `url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1200&q=80')`,
-          backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.55
-        }} />
-        <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 48, height: '100%', color: 'white' }}>
+      <div className="auth-split-hero">
+        <div
+          className="auth-split-hero-bg"
+          style={{ backgroundImage: `url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1200&q=80')` }}
+        />
+        <div className="auth-split-hero-content">
           <blockquote style={{ fontSize: 20, fontWeight: 500, lineHeight: 1.5, marginBottom: 12, letterSpacing: '-0.2px' }}>
             "The only platform that shows you how practices actually retain physicians — backed by real CMS data."
           </blockquote>
