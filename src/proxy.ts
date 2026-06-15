@@ -28,7 +28,7 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
   
-  const publicRoutes = ['/login', '/signup', '/auth/callback']
+  const publicRoutes = ['/login', '/signup', '/forgot-password']
   const isPublic = publicRoutes.some(route => 
     pathname === route || pathname.startsWith('/auth/')
   )
