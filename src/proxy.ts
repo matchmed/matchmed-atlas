@@ -31,7 +31,7 @@ export async function proxy(request: NextRequest) {
   const publicRoutes = ['/login', '/signup', '/forgot-password']
   const isPublic = publicRoutes.some(route => 
     pathname === route || pathname.startsWith('/auth/')
-  )
+  ) || pathname === '/'  // Allow homepage to handle auth fragments
   
   if (!user && !isPublic) {
     const url = request.nextUrl.clone()
