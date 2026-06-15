@@ -42,7 +42,7 @@ export async function GET(request: Request) {
         .select('onboarding_complete')
         .eq('user_id', user.id)
         .maybeSingle()
-      if (profile?.onboarding_complete) {
+        if (!profile || profile.onboarding_complete) {
         return NextResponse.redirect(`${origin}/`)
       } else {
         return NextResponse.redirect(`${origin}/onboarding`)
