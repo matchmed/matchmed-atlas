@@ -3,6 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import type { Session } from '@supabase/supabase-js'
+
+function clearRecoveryParamsFromUrl() {
+  window.history.replaceState({}, '', '/auth/set-password')
+}
 
 export default function SetPasswordPage() {
   const router = useRouter()
@@ -11,16 +16,84 @@ export default function SetPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [sessionReady, setSessionReady] = useState(false)
+  const [initError, setInitError] = useState('')
 
   useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setSessionReady(true)
-      } else {
-        router.push('/auth/forgot-password')
+    async function establishRecoverySession() {
+      const supabase = createClient()
+      const params = new URLSearchParams(window.location.search)
+      const code = params.get('code')
+      const token_hash = params.get('token_hash')
+      const type = params.get('type')
+      const hash = window.location.hash
+
+      try {
+        if (code) {
+          console.info('[set-password] PKCE code detected, exchanging for session')
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+          if (exchangeError) {
+            console.error('[set-password] exchangeCodeForSession failed:', exchangeError.message, exchangeError)
+            setInitError('This reset link is invalid or has expired. Please request a new one.')
+            return
+          }
+          clearRecoveryParamsFromUrl()
+        } else if (token_hash && type === 'recovery') {
+          console.info('[set-password] token_hash recovery detected, verifying OTP')
+          const { error: verifyError } = await supabase.auth.verifyOtp({
+            token_hash,
+            type: 'recovery',
+          })
+          if (verifyError) {
+            console.error('[set-password] verifyOtp failed:', verifyError.message, verifyError)
+            setInitError('This reset link is invalid or has expired. Please request a new one.')
+            return
+          }
+          clearRecoveryParamsFromUrl()
+        } else if (hash.includes('access_token')) {
+          console.info('[set-password] access_token hash detected, waiting for session')
+          const session = await new Promise<Session | null>((resolve) => {
+            const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+              if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
+                subscription.unsubscribe()
+                resolve(session)
+              }
+            })
+            setTimeout(async () => {
+              subscription.unsubscribe()
+              const { data: { session } } = await supabase.auth.getSession()
+              resolve(session)
+            }, 3000)
+          })
+          if (!session) {
+            console.error('[set-password] no session established from hash tokens')
+            setInitError('This reset link is invalid or has expired. Please request a new one.')
+            return
+          }
+          clearRecoveryParamsFromUrl()
+        }
+
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        if (sessionError) {
+          console.error('[set-password] getSession failed:', sessionError.message, sessionError)
+        }
+        if (session) {
+          console.info('[set-password] recovery session ready, user:', session.user.id)
+          setSessionReady(true)
+        } else {
+          console.error('[set-password] no session after recovery processing', {
+            hadCode: !!code,
+            hadTokenHash: !!token_hash,
+            hadHash: hash.includes('access_token'),
+          })
+          setInitError('This reset link is invalid or has expired. Please request a new one.')
+        }
+      } catch (err) {
+        console.error('[set-password] unexpected error establishing recovery session:', err)
+        setInitError('Something went wrong. Please request a new reset link.')
       }
-    })
+    }
+
+    establishRecoverySession()
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -41,6 +114,7 @@ export default function SetPasswordPage() {
     const { error } = await supabase.auth.updateUser({ password })
 
     if (error) {
+      console.error('[set-password] updateUser failed:', error.message, error)
       setError(error.message)
       setLoading(false)
       return
@@ -61,6 +135,23 @@ export default function SetPasswordPage() {
     } else {
       router.push('/')
     }
+  }
+
+  if (initError) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9fafb', padding: 20, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
+        <div style={{ width: '100%', maxWidth: 380, background: 'white', borderRadius: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06)', border: '1px solid #eee', padding: '32px', textAlign: 'center' }}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#111', marginBottom: 8 }}>Reset link expired</h1>
+          <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.6, marginBottom: 24 }}>{initError}</p>
+          <a
+            href="/forgot-password"
+            style={{ display: 'inline-block', padding: '11px 20px', background: '#185FA5', color: 'white', borderRadius: 8, fontSize: 14, fontWeight: 600, textDecoration: 'none' }}
+          >
+            Request a new reset link
+          </a>
+        </div>
+      </div>
+    )
   }
 
   if (!sessionReady) {

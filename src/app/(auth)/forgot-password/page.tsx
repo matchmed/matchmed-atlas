@@ -15,11 +15,14 @@ export default function ForgotPasswordPage() {
     setError('')
 
     const supabase = createClient()
+    const redirectTo = `${window.location.origin}/auth/set-password`
+    console.info('[forgot-password] sending reset email, redirectTo:', redirectTo)
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://atlas.matchmed.app/auth/set-password',
+      redirectTo,
     })
 
     if (error) {
+      console.error('[forgot-password] resetPasswordForEmail failed:', error.message, error)
       setError(error.message)
       setLoading(false)
     } else {

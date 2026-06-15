@@ -25,12 +25,16 @@ export async function GET(request: Request) {
   )
 
   if (token_hash && (type === 'invite' || type === 'recovery')) {
-    const { data: { user } } = await supabase.auth.verifyOtp({ 
-      token_hash, 
-      type: type as any 
+    const { data: { user }, error } = await supabase.auth.verifyOtp({
+      token_hash,
+      type: type as 'invite' | 'recovery',
     })
+    if (error) {
+      console.error('[auth/callback] verifyOtp failed:', error.message, { type })
+    }
     if (user) {
-      return NextResponse.redirect(`${origin}/`)
+      const destination = type === 'recovery' ? '/auth/set-password' : '/'
+      return NextResponse.redirect(`${origin}${destination}`)
     }
   }
 
