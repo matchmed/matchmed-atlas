@@ -10,9 +10,11 @@ export default function LoginPage() {
   // Handle invite/recovery tokens in URL fragment
   useEffect(() => {
     const hash = window.location.hash
+    console.log('hash:', hash)
     if (hash && hash.includes('access_token')) {
       const supabase = createClient()
       supabase.auth.getSession().then(({ data: { session } }) => {
+        console.log('session:', session)
         if (session) {
           router.push('/')
           router.refresh()
