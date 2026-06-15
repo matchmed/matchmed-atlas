@@ -2,6 +2,13 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
+function authFailureRedirect(origin: string, searchParams: URLSearchParams) {
+  if (searchParams.get('next') === '/auth/set-password') {
+    return NextResponse.redirect(`${origin}/forgot-password`)
+  }
+  return NextResponse.redirect(`${origin}/login?error=auth_failed`)
+}
+
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
@@ -36,6 +43,7 @@ export async function GET(request: Request) {
       const destination = type === 'recovery' ? '/auth/set-password' : '/'
       return NextResponse.redirect(`${origin}${destination}`)
     }
+    return authFailureRedirect(origin, searchParams)
   }
 
   if (code) {
@@ -59,7 +67,8 @@ export async function GET(request: Request) {
         return NextResponse.redirect(`${origin}/`)
       }
     }
+    return authFailureRedirect(origin, searchParams)
   }
 
-  return NextResponse.redirect(`${origin}/practices`)
+  return authFailureRedirect(origin, searchParams)
 }

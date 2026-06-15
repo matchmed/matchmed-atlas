@@ -7,6 +7,13 @@ import { createClient } from '@/lib/supabase'
 export default function LoginPage() {
   const router = useRouter()
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('error') === 'auth_failed') {
+      setError('Your sign-in link has expired or is invalid. Please try signing in again.')
+    }
+  }, [])
+
   // Handle invite/recovery tokens in URL fragment
   useEffect(() => {
     const hash = window.location.hash
