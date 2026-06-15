@@ -111,7 +111,7 @@ function UsersTab() {
       email: profile.email,
       options: { 
         shouldCreateUser: true,
-        emailRedirectTo: 'https://atlas.matchmed.app/auth/confirm'
+        emailRedirectTo: 'https://atlas.matchmed.app/auth/callback'
       }
     })
     setSentMap(prev => ({ ...prev, [profile.id]: true }))
