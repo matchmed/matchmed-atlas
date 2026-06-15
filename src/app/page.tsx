@@ -16,47 +16,35 @@ export default function HomePage() {
   const router = useRouter()
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const code = params.get('code')
-    if (code) {
+    async function init() {
       const supabase = createClient()
-      supabase.auth.exchangeCodeForSession(code).then(({ data: { session } }) => {
-        if (session) {
-          router.push('/')
-          router.refresh()
-        }
-      })
-    }
-  }, [])
-
-  useEffect(() => {
-    async function checkOnboarding() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      
+      // Handle magic link code first
+      const code = new URLSearchParams(window.location.search).get('code')
+      if (code) {
+        await supabase.auth.exchangeCodeForSession(code)
+      }
   
-      let { data: profile } = await supabase
+      // Now check session
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push('/login')
+        return
+      }
+  
+      const { data: profile } = await supabase
         .from('profiles')
         .select('onboarding_complete')
         .eq('user_id', user.id)
         .maybeSingle()
   
-      if (!profile) {
-        const { data: byEmail } = await supabase
-          .from('profiles')
-          .select('onboarding_complete')
-          .eq('email', user.email)
-          .maybeSingle()
-        profile = byEmail
-      }
-  
       if (profile && !profile.onboarding_complete) {
         router.push('/onboarding')
       }
     }
-    checkOnboarding()
+    init()
   }, [])
-
+  
   useEffect(() => {
     async function load() {
     const supabase = createClient()
