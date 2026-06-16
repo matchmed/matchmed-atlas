@@ -178,16 +178,6 @@ export default function PracticesPage() {
 
   const allStates = Array.from(new Set(practices.map(p => p.state).filter(Boolean) as string[])).sort()
 
-  const topStates = Array.from(
-    practices.reduce((map, p) => {
-      if (p.state) map.set(p.state, (map.get(p.state) || 0) + 1)
-      return map
-    }, new Map<string, number>())
-  )
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 6)
-    .map(([state]) => state)
-
   const filtered = practices.filter(p => {
     const q = search.toLowerCase()
     const matchesSearch = !q || (p.practice_name || '').toLowerCase().includes(q) || (p.city_st || '').toLowerCase().includes(q)
@@ -252,11 +242,6 @@ export default function PracticesPage() {
     if (s >= 70) return { text: s.toFixed(1), bg: '#fffde7', color: '#7a6800' }
     if (s >= 60) return { text: s.toFixed(1), bg: '#fff3e0', color: '#b85c00' }
     return { text: s.toFixed(1), bg: '#ffebee', color: '#C0392B' }
-  }
-
-  function selectStateMobile(s: string | null) {
-    setSelectedStates(s ? new Set([s]) : new Set())
-    setPage(0)
   }
 
   function openPractice(practiceId: string) {
@@ -380,6 +365,33 @@ export default function PracticesPage() {
     background: '#f7f7f7',
   })
 
+  const stateFilterPanel = (
+    <>
+      <input
+        type="text"
+        placeholder="Search states..."
+        value={stateSearch}
+        onChange={e => setStateSearch(e.target.value)}
+        style={{ display: 'block', width: '100%', border: '1px solid #e5e7eb', borderRadius: 8, padding: '9px 12px', fontSize: 13, outline: 'none', marginBottom: 8, boxSizing: 'border-box' }}
+      />
+      <div className="practices-state-filter-list">
+        {allStates.filter(s => s.toLowerCase().includes(stateSearch.toLowerCase())).map(s => (
+          <div key={s} onClick={() => toggleState(s)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 4px', fontSize: 14, cursor: 'pointer' }}>
+            <input type="checkbox" checked={selectedStates.has(s)} readOnly style={{ width: 14, height: 14, accentColor: '#185FA5' }} />
+            {s}
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={() => { setSelectedStates(new Set()); setPage(0) }}
+        style={{ display: 'block', width: '100%', padding: '10px 0 0', fontSize: 13, color: '#185FA5', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontWeight: 500 }}
+      >
+        Clear all
+      </button>
+    </>
+  )
+
   return (
     <div>
       {/* Controls */}
@@ -393,6 +405,17 @@ export default function PracticesPage() {
             onChange={e => { setSearch(e.target.value); setPage(0) }}
             style={{ fontSize: 13, padding: '7px 11px', height: 36, border: '1px solid #ddd', borderRadius: 8, outline: 'none', flex: 1, minWidth: 180 }}
           />
+
+          <button
+            type="button"
+            className={`practices-filter-btn-mobile ${selectedStates.size > 0 ? 'practices-filter-btn-mobile-active' : ''}`}
+            onClick={() => setStateOpen(true)}
+            aria-label="Filter by state"
+          >
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+          </button>
 
           <button
             type="button"
@@ -420,25 +443,8 @@ export default function PracticesPage() {
               {selectedStates.size === 0 ? 'All states ▾' : selectedStates.size === 1 ? `${[...selectedStates][0]} ▾` : `${selectedStates.size} states ▾`}
             </button>
             {stateOpen && (
-              <div style={{ position: 'absolute', top: 40, left: 0, background: '#fff', border: '1px solid #ddd', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 9999, width: 180 }}>
-                <input
-                  type="text"
-                  placeholder="Search states..."
-                  value={stateSearch}
-                  onChange={e => setStateSearch(e.target.value)}
-                  style={{ display: 'block', width: '100%', border: 'none', borderBottom: '1px solid #eee', padding: '9px 12px', fontSize: 13, outline: 'none', borderRadius: '8px 8px 0 0' }}
-                />
-                <div style={{ maxHeight: 220, overflowY: 'auto', padding: '4px 0' }}>
-                  {allStates.filter(s => s.toLowerCase().includes(stateSearch.toLowerCase())).map(s => (
-                    <div key={s} onClick={() => toggleState(s)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', fontSize: 13, cursor: 'pointer' }}>
-                      <input type="checkbox" checked={selectedStates.has(s)} readOnly style={{ width: 13, height: 13 }} />
-                      {s}
-                    </div>
-                  ))}
-                </div>
-                <button onClick={() => { setSelectedStates(new Set()); setPage(0) }} style={{ display: 'block', width: '100%', padding: '7px 12px', fontSize: 11, color: '#185FA5', background: 'none', border: 'none', borderTop: '1px solid #eee', cursor: 'pointer', textAlign: 'left' }}>
-                  Clear all
-                </button>
+              <div style={{ position: 'absolute', top: 40, left: 0, background: '#fff', border: '1px solid #ddd', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 9999, width: 220, padding: 12 }}>
+                {stateFilterPanel}
               </div>
             )}
           </div>
@@ -458,27 +464,17 @@ export default function PracticesPage() {
           </div>
         </div>
 
-        {/* State pills — mobile */}
-        {view === 'table' && (
-        <div className="practices-state-pills">
-          <button
-            type="button"
-            className={`practice-state-pill ${selectedStates.size === 0 ? 'practice-state-pill-active' : ''}`}
-            onClick={() => selectStateMobile(null)}
-          >
-            All states
-          </button>
-          {topStates.map(s => (
-            <button
-              key={s}
-              type="button"
-              className={`practice-state-pill ${selectedStates.size === 1 && selectedStates.has(s) ? 'practice-state-pill-active' : ''}`}
-              onClick={() => selectStateMobile(s)}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
+        {stateOpen && (
+          <div className="practices-filter-sheet-root">
+            <div className="practices-filter-sheet-backdrop" onClick={() => setStateOpen(false)} />
+            <div className="practices-filter-sheet">
+              <div className="practices-filter-sheet-header">
+                <span>Filter by state</span>
+                <button type="button" onClick={() => setStateOpen(false)}>Done</button>
+              </div>
+              {stateFilterPanel}
+            </div>
+          </div>
         )}
       </div>
 
