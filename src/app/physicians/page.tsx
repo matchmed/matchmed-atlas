@@ -16,24 +16,10 @@ interface Doctor {
   last_known_affiliation: string | null
 }
 
-function formatPhysicianName(name: string | null): string {
-  if (!name) return '—'
-  if (name !== name.toUpperCase()) return name
-  return name
-    .split(',')
-    .map(part =>
-      part
-        .trim()
-        .toLowerCase()
-        .replace(/\b\w/g, c => c.toUpperCase())
-    )
-    .join(', ')
-}
-
 function PhysicianCard({ doctor, onOpen }: { doctor: Doctor; onOpen: () => void }) {
-  const displayName = formatPhysicianName(doctor.physician_name)
-  const [fg, bg] = nameToColor(displayName)
-  const initials = getInitials(displayName)
+  const name = doctor.physician_name || '—'
+  const [fg, bg] = nameToColor(name)
+  const initials = getInitials(name)
   const meta = doctor.last_known_affiliation
     ? `Ophthalmology · ${doctor.last_known_affiliation}`
     : 'Ophthalmology'
@@ -44,7 +30,7 @@ function PhysicianCard({ doctor, onOpen }: { doctor: Doctor; onOpen: () => void 
         {initials}
       </div>
       <div className="practice-card-body">
-        <div className="practice-card-name">{displayName}</div>
+        <div className="practice-card-name physician-card-name">{name}</div>
         <div className="practice-card-meta">{meta}</div>
       </div>
       <span className="practice-card-chevron" aria-hidden="true">›</span>
