@@ -1,25 +1,20 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
+import { isAuthPage } from '@/lib/auth-paths'
 import Nav from './Nav'
 
 export default function NavWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const isAuthPage = 
-  pathname === '/login' || 
-  pathname === '/signup' || 
-  pathname === '/onboarding' ||
-  pathname === '/forgot-password' ||
-  pathname === '/auth/set-password' ||
-  pathname === '/auth/confirm'
+  const onAuthPage = isAuthPage(pathname)
 
   return (
     <>
-      {!isAuthPage && <Nav />}
-      {isAuthPage ? (
+      {!onAuthPage && <Nav />}
+      {onAuthPage ? (
         children
       ) : (
-        <main style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 20px' }}>
+        <main className="nav-main-content">
           {children}
         </main>
       )}

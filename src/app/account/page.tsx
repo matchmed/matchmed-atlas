@@ -140,6 +140,13 @@ export default function AccountPage() {
   const [initials, setInitials] = useState('?')
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [usesEmailPassword, setUsesEmailPassword] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordSaving, setPasswordSaving] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSaved, setPasswordSaved] = useState(false)
 
   const [form, setForm] = useState({
     first_name: '',
@@ -163,6 +170,7 @@ export default function AccountPage() {
       if (!user) { router.push('/login'); return }
 
       setUserEmail(user.email || '')
+      setUsesEmailPassword(user.identities?.some(identity => identity.provider === 'email') ?? false)
 
       const { data: profile } = await supabase
         .from('profiles')
@@ -210,6 +218,48 @@ export default function AccountPage() {
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
+  }
+
+  async function handlePasswordUpdate(e: React.FormEvent) {
+    e.preventDefault()
+    setPasswordError('')
+    setPasswordSaved(false)
+
+    if (newPassword.length < 8) {
+      setPasswordError('New password must be at least 8 characters.')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New passwords do not match.')
+      return
+    }
+
+    setPasswordSaving(true)
+    const supabase = createClient()
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: userEmail,
+      password: currentPassword,
+    })
+    if (signInError) {
+      setPasswordError('Current password is incorrect.')
+      setPasswordSaving(false)
+      return
+    }
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) {
+      setPasswordError(error.message)
+      setPasswordSaving(false)
+      return
+    }
+
+    setCurrentPassword('')
+    setNewPassword('')
+    setConfirmPassword('')
+    setPasswordSaving(false)
+    setPasswordSaved(true)
+    setTimeout(() => setPasswordSaved(false), 3000)
   }
 
   async function handleDeleteAccount() {
@@ -338,6 +388,85 @@ export default function AccountPage() {
             I agree to be contactable by ophthalmology practices and industry partners. This is what keeps Atlas free for physicians. I can opt out at any time.
           </span>
         </label>
+      </div>
+
+      {/* Password section */}
+      <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 12, padding: 24, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 15, fontWeight: 600, color: '#111', marginBottom: 16 }}>Password</h2>
+
+        {usesEmailPassword ? (
+          <form onSubmit={handlePasswordUpdate}>
+            <div style={fieldStyle}>
+              <label style={labelStyle}>Current password</label>
+              <input
+                style={inputStyle}
+                type="password"
+                value={currentPassword}
+                onChange={e => setCurrentPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+              />
+            </div>
+
+            <div style={fieldStyle}>
+              <label style={labelStyle}>New password</label>
+              <input
+                style={inputStyle}
+                type="password"
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                placeholder="At least 8 characters"
+                autoComplete="new-password"
+                required
+              />
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>Confirm new password</label>
+              <input
+                style={inputStyle}
+                type="password"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                placeholder="Repeat your new password"
+                autoComplete="new-password"
+                required
+              />
+            </div>
+
+            {passwordError && (
+              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', marginBottom: 16 }}>
+                <p style={{ fontSize: 13, color: '#dc2626', margin: 0 }}>{passwordError}</p>
+              </div>
+            )}
+
+            <div className="account-password-actions">
+              <button
+                type="submit"
+                disabled={passwordSaving || !currentPassword || !newPassword || !confirmPassword}
+                style={{
+                  padding: '10px 20px',
+                  background: passwordSaved ? '#16a34a' : passwordSaving ? '#93c5fd' : '#185FA5',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 8,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: passwordSaving ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {passwordSaved ? '✓ Password updated' : passwordSaving ? 'Updating...' : 'Update password'}
+              </button>
+              <a href="/forgot-password" style={{ fontSize: 13, color: '#185FA5', textDecoration: 'none' }}>
+                Forgot your current password?
+              </a>
+            </div>
+          </form>
+        ) : (
+          <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.5, margin: 0 }}>
+            You sign in with Google. Password management is handled through your Google account.
+          </p>
+        )}
       </div>
 
       {/* Save button */}

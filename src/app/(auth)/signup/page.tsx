@@ -84,8 +84,15 @@ export default function SignupPage() {
             <div className="auth-card" style={{ background: 'white', borderRadius: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06)', border: '1px solid #eee', padding: '32px 32px 28px' }}>
 
               <h1 style={{ fontSize: 24, fontWeight: 700, color: '#111', marginBottom: 6, letterSpacing: '-0.4px' }}>Create your account</h1>
-              <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 24, lineHeight: 1.5 }}>
+              <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 8, lineHeight: 1.5 }}>
                 Free for early-career ophthalmologists.
+              </p>
+
+              <p style={{ fontSize: 12, color: '#9ca3af', marginBottom: 24, lineHeight: 1.5 }}>
+                By signing up, you agree to MatchMed&apos;s{' '}
+                <a href="/terms-and-conditions" style={{ color: '#185FA5', textDecoration: 'none' }}>Terms of Service</a>
+                {' '}and{' '}
+                <a href="/privacy-policy" style={{ color: '#185FA5', textDecoration: 'none' }}>Privacy Policy</a>.
               </p>
 
               {/* Google SSO */}

@@ -153,6 +153,168 @@ a { color: inherit; text-decoration: none; }
     align-items: flex-start;
     gap: 4px;
   }
+
+  .account-password-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .account-password-actions button {
+    width: 100%;
+  }
+
+  .account-password-actions a {
+    text-align: center;
+  }
+}
+
+/* App navigation */
+.nav-top {
+  border-bottom: 1px solid #e8e8e8;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-top-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  height: 56px;
+}
+
+.nav-logo-text {
+  font-weight: 700;
+  font-size: 15px;
+  color: #1a1a1a;
+  letter-spacing: -0.01em;
+}
+
+.nav-links-desktop {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  overflow-x: auto;
+}
+
+.nav-link {
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: all 0.12s;
+}
+
+.nav-link-active {
+  font-weight: 600;
+  color: #185FA5;
+  background: #e8f0fb;
+}
+
+.nav-link-inactive {
+  font-weight: 400;
+  color: #666;
+  background: transparent;
+}
+
+.nav-top-spacer {
+  display: none;
+  flex: 1;
+}
+
+.nav-bottom {
+  display: none;
+}
+
+.nav-dropdown-secondary {
+  display: none;
+}
+
+.nav-main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+
+@media (max-width: 768px) {
+  .nav-links-desktop {
+    display: none;
+  }
+
+  .nav-logo-text {
+    display: none;
+  }
+
+  .nav-top-spacer {
+    display: block;
+  }
+
+  .nav-bottom {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: #fff;
+    border-top: 1px solid #e8e8e8;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .nav-bottom-inner {
+    display: flex;
+    width: 100%;
+    height: 56px;
+  }
+
+  .nav-bottom-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    text-decoration: none;
+    font-size: 10px;
+    font-weight: 500;
+    color: #888;
+    padding: 6px 4px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .nav-bottom-tab-active {
+    color: #185FA5;
+    font-weight: 600;
+  }
+
+  .nav-bottom-tab svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .nav-dropdown-secondary {
+    display: block;
+    border-bottom: 1px solid #f0f0f0;
+    margin-bottom: 6px;
+    padding-bottom: 6px;
+  }
+
+  .nav-main-content {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+.account-password-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .mapboxgl-popup-content {
