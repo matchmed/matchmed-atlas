@@ -317,6 +317,245 @@ a { color: inherit; text-decoration: none; }
   flex-wrap: wrap;
 }
 
+.data-table-wrapper {
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.data-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.data-table-practices {
+  min-width: 640px;
+}
+
+.data-table-physicians {
+  min-width: 480px;
+}
+
+.data-table th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e8e8e8;
+  background: #f7f7f7;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.data-table-label-short {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .data-table th,
+  .data-table td {
+    padding: 10px 10px;
+  }
+
+  .data-table-label-full {
+    display: none;
+  }
+
+  .data-table-label-short {
+    display: inline;
+  }
+}
+
+/* Practices list — mobile cards */
+.practices-table-view {
+  display: block;
+}
+
+.practices-card-view {
+  display: none;
+}
+
+.practices-state-pills {
+  display: none;
+}
+
+.practices-view-toggle-mobile {
+  display: none;
+}
+
+.practices-footer-mobile {
+  display: none;
+}
+
+.practice-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s;
+}
+
+.practice-card:active {
+  background: #f9fafb;
+}
+
+.practice-card-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: -0.02em;
+}
+
+.practice-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.practice-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111;
+  line-height: 1.3;
+  margin-bottom: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.practice-card-meta {
+  font-size: 12px;
+  color: #888;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.practice-card-score {
+  flex-shrink: 0;
+  min-width: 52px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.practice-card-score-value {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.practice-card-score-label {
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.85;
+  margin-top: 1px;
+}
+
+@media (max-width: 768px) {
+  .practices-table-view {
+    display: none;
+  }
+
+  .practices-card-view {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .practices-state-pills {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    margin-bottom: 12px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .practices-state-pills::-webkit-scrollbar {
+    display: none;
+  }
+
+  .practices-view-toggle-mobile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    color: #555;
+    cursor: pointer;
+  }
+
+  .practices-controls-row .practices-view-toggle-desktop {
+    display: none;
+  }
+
+  .practices-controls-row .practices-state-dropdown {
+    display: none;
+  }
+
+  .practices-search-input {
+    flex: 1;
+    min-width: 0 !important;
+  }
+
+  .practices-footer-desktop {
+    display: none;
+  }
+
+  .practices-footer-mobile {
+    display: block;
+    margin-top: 12px;
+  }
+
+  .practice-state-pill {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid #ddd;
+    border-radius: 99px;
+    background: #fff;
+    color: #444;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .practice-state-pill-active {
+    background: #185FA5;
+    border-color: #185FA5;
+    color: #fff;
+  }
+}
+
 .mapboxgl-popup-content {
   background: #fff !important;
   border: 1px solid #e8e8e8 !important;

@@ -113,20 +113,22 @@ export default function PhysiciansPage() {
 
       {loading && <div className="loading-bar"><div className="loading-bar-inner" /></div>}
 
-      <div style={{ border: '1px solid #e8e8e8', borderRadius: 10, overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-          <thead style={{ background: '#f7f7f7' }}>
+      <div className="data-table-wrapper">
+        <div className="data-table-scroll">
+        <table className="data-table data-table-physicians">
+          <thead>
             <tr>
-              <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#185FA5', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #e8e8e8' }}>
+              <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#185FA5', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #e8e8e8', background: '#f7f7f7', whiteSpace: 'nowrap' }}>
                 Name ↑
               </th>
-              <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #e8e8e8' }}>
+              <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #e8e8e8', background: '#f7f7f7', whiteSpace: 'nowrap' }}>
                 NPI
               </th>
-              <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #e8e8e8' }}>
-                Med School Grad Year
+              <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #e8e8e8', background: '#f7f7f7', whiteSpace: 'nowrap' }}>
+                <span className="data-table-label-full">Med School Grad Year</span>
+                <span className="data-table-label-short">Grad Year</span>
               </th>
-              <th style={{ padding: '10px 14px', borderBottom: '1px solid #e8e8e8' }} />
+              <th style={{ padding: '10px 14px', borderBottom: '1px solid #e8e8e8', background: '#f7f7f7' }} />
             </tr>
           </thead>
           <tbody>
@@ -156,6 +158,7 @@ export default function PhysiciansPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, fontSize: 12, color: '#aaa', flexWrap: 'wrap', gap: 8 }}>

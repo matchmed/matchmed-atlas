@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { scoreClass, scoreLabel, deltaColor, deltaBg, deltaArrow } from '@/lib/utils'
+import { scoreClass, scoreLabel, deltaColor, deltaBg, deltaArrow, getInitials, nameToColor } from '@/lib/utils'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
@@ -25,6 +25,46 @@ interface Practice {
 }
 
 type SortKey = 'practice_name' | 'city_st' | 'retention_score' | 'retention_score_delta' | 'latest_roster_size'
+
+function sortLabel(key: SortKey): string {
+  const labels: Record<SortKey, string> = {
+    practice_name: 'name',
+    city_st: 'location',
+    retention_score: 'score',
+    retention_score_delta: 'change vs 2019',
+    latest_roster_size: 'roster size',
+  }
+  return labels[key]
+}
+
+function PracticeCard({ practice, onOpen }: { practice: Practice; onOpen: () => void }) {
+  const [fg, bg] = nameToColor(practice.practice_name || '')
+  const initials = getInitials(practice.practice_name || '?')
+  const sl = scoreLabel(practice.retention_score)
+  const location = practice.city_st || '—'
+  const roster = practice.latest_roster_size
+    ? `${practice.latest_roster_size} physician${practice.latest_roster_size === 1 ? '' : 's'}`
+    : null
+  const meta = roster ? `${location} · ${roster}` : location
+
+  return (
+    <button type="button" className="practice-card" onClick={onOpen}>
+      <div className="practice-card-avatar" style={{ color: fg, background: bg }}>
+        {initials}
+      </div>
+      <div className="practice-card-body">
+        <div className="practice-card-name">{practice.practice_name || '—'}</div>
+        <div className="practice-card-meta">{meta}</div>
+      </div>
+      <div className="practice-card-score" style={{ background: sl.bg, color: sl.color }}>
+        <div className="practice-card-score-value">
+          {practice.retention_score !== null ? sl.text : '—'}
+        </div>
+        <div className="practice-card-score-label">score</div>
+      </div>
+    </button>
+  )
+}
 
 // ── IndexedDB helpers ──────────────────────────────────────────────────────────
 
@@ -138,6 +178,16 @@ export default function PracticesPage() {
 
   const allStates = Array.from(new Set(practices.map(p => p.state).filter(Boolean) as string[])).sort()
 
+  const topStates = Array.from(
+    practices.reduce((map, p) => {
+      if (p.state) map.set(p.state, (map.get(p.state) || 0) + 1)
+      return map
+    }, new Map<string, number>())
+  )
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([state]) => state)
+
   const filtered = practices.filter(p => {
     const q = search.toLowerCase()
     const matchesSearch = !q || (p.practice_name || '').toLowerCase().includes(q) || (p.city_st || '').toLowerCase().includes(q)
@@ -204,7 +254,15 @@ export default function PracticesPage() {
     return { text: s.toFixed(1), bg: '#ffebee', color: '#C0392B' }
   }
 
-  // Save map state and navigate to practice
+  function selectStateMobile(s: string | null) {
+    setSelectedStates(s ? new Set([s]) : new Set())
+    setPage(0)
+  }
+
+  function openPractice(practiceId: string) {
+    router.push(`/practices/${practiceId}`)
+  }
+
   function openPracticeFromMap(practiceId: string) {
     if (mapRef.current && mapInitedRef.current) {
       try {
@@ -218,7 +276,6 @@ export default function PracticesPage() {
     router.push(`/practices/${practiceId}`)
   }
 
-  // Expose to popup HTML string (mapbox popup uses inline onclick)
   useEffect(() => {
     (window as any).__openPracticeFromMap = openPracticeFromMap
   }, [])
@@ -326,69 +383,114 @@ export default function PracticesPage() {
   return (
     <div>
       {/* Controls */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12, alignItems: 'center' }}>
-        <input
-          type="text"
-          placeholder="Search practice name or city..."
-          value={search}
-          onChange={e => { setSearch(e.target.value); setPage(0) }}
-          style={{ fontSize: 13, padding: '7px 11px', height: 36, border: '1px solid #ddd', borderRadius: 8, outline: 'none', flex: 1, minWidth: 180 }}
-        />
+      <div style={{ marginBottom: 12 }}>
+        <div className="practices-controls-row" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <input
+            type="text"
+            className="practices-search-input"
+            placeholder="Search practices..."
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(0) }}
+            style={{ fontSize: 13, padding: '7px 11px', height: 36, border: '1px solid #ddd', borderRadius: 8, outline: 'none', flex: 1, minWidth: 180 }}
+          />
 
-        {/* State dropdown */}
-        <div style={{ position: 'relative' }}>
-          <button onClick={() => setStateOpen(o => !o)} style={{
-            fontSize: 13, padding: '7px 11px', height: 36, border: '1px solid #ddd',
-            borderRadius: 8, background: '#fff', cursor: 'pointer', whiteSpace: 'nowrap', minWidth: 130,
-          }}>
-            {selectedStates.size === 0 ? 'All states ▾' : selectedStates.size === 1 ? `${[...selectedStates][0]} ▾` : `${selectedStates.size} states ▾`}
+          <button
+            type="button"
+            className="practices-view-toggle-mobile"
+            onClick={() => setView(view === 'table' ? 'map' : 'table')}
+            aria-label={view === 'table' ? 'Switch to map view' : 'Switch to list view'}
+          >
+            {view === 'table' ? (
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              </svg>
+            ) : (
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
           </button>
-          {stateOpen && (
-            <div style={{ position: 'absolute', top: 40, left: 0, background: '#fff', border: '1px solid #ddd', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 9999, width: 180 }}>
-              <input
-                type="text"
-                placeholder="Search states..."
-                value={stateSearch}
-                onChange={e => setStateSearch(e.target.value)}
-                style={{ display: 'block', width: '100%', border: 'none', borderBottom: '1px solid #eee', padding: '9px 12px', fontSize: 13, outline: 'none', borderRadius: '8px 8px 0 0' }}
-              />
-              <div style={{ maxHeight: 220, overflowY: 'auto', padding: '4px 0' }}>
-                {allStates.filter(s => s.toLowerCase().includes(stateSearch.toLowerCase())).map(s => (
-                  <div key={s} onClick={() => toggleState(s)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', fontSize: 13, cursor: 'pointer' }}>
-                    <input type="checkbox" checked={selectedStates.has(s)} readOnly style={{ width: 13, height: 13 }} />
-                    {s}
-                  </div>
-                ))}
+
+          {/* State dropdown — desktop */}
+          <div className="practices-state-dropdown" style={{ position: 'relative' }}>
+            <button onClick={() => setStateOpen(o => !o)} style={{
+              fontSize: 13, padding: '7px 11px', height: 36, border: '1px solid #ddd',
+              borderRadius: 8, background: '#fff', cursor: 'pointer', whiteSpace: 'nowrap', minWidth: 130,
+            }}>
+              {selectedStates.size === 0 ? 'All states ▾' : selectedStates.size === 1 ? `${[...selectedStates][0]} ▾` : `${selectedStates.size} states ▾`}
+            </button>
+            {stateOpen && (
+              <div style={{ position: 'absolute', top: 40, left: 0, background: '#fff', border: '1px solid #ddd', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 9999, width: 180 }}>
+                <input
+                  type="text"
+                  placeholder="Search states..."
+                  value={stateSearch}
+                  onChange={e => setStateSearch(e.target.value)}
+                  style={{ display: 'block', width: '100%', border: 'none', borderBottom: '1px solid #eee', padding: '9px 12px', fontSize: 13, outline: 'none', borderRadius: '8px 8px 0 0' }}
+                />
+                <div style={{ maxHeight: 220, overflowY: 'auto', padding: '4px 0' }}>
+                  {allStates.filter(s => s.toLowerCase().includes(stateSearch.toLowerCase())).map(s => (
+                    <div key={s} onClick={() => toggleState(s)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', fontSize: 13, cursor: 'pointer' }}>
+                      <input type="checkbox" checked={selectedStates.has(s)} readOnly style={{ width: 13, height: 13 }} />
+                      {s}
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => { setSelectedStates(new Set()); setPage(0) }} style={{ display: 'block', width: '100%', padding: '7px 12px', fontSize: 11, color: '#185FA5', background: 'none', border: 'none', borderTop: '1px solid #eee', cursor: 'pointer', textAlign: 'left' }}>
+                  Clear all
+                </button>
               </div>
-              <button onClick={() => { setSelectedStates(new Set()); setPage(0) }} style={{ display: 'block', width: '100%', padding: '7px 12px', fontSize: 11, color: '#185FA5', background: 'none', border: 'none', borderTop: '1px solid #eee', cursor: 'pointer', textAlign: 'left' }}>
-                Clear all
+            )}
+          </div>
+
+          {/* View toggle — desktop */}
+          <div className="practices-view-toggle-desktop" style={{ display: 'flex', border: '1px solid #ddd', borderRadius: 8, overflow: 'hidden', marginLeft: 'auto' }}>
+            {(['table', 'map'] as const).map(v => (
+              <button key={v} onClick={() => setView(v)} style={{
+                padding: '7px 14px', fontSize: 13, cursor: 'pointer', height: 36, border: 'none',
+                background: view === v ? '#185FA5' : '#fff',
+                color: view === v ? '#fff' : '#888',
+                textTransform: 'capitalize',
+              }}>
+                {v === 'table' ? 'Table' : 'Map'}
               </button>
-            </div>
-          )}
+            ))}
+          </div>
         </div>
 
-        {/* View toggle */}
-        <div style={{ display: 'flex', border: '1px solid #ddd', borderRadius: 8, overflow: 'hidden', marginLeft: 'auto' }}>
-          {(['table', 'map'] as const).map(v => (
-            <button key={v} onClick={() => setView(v)} style={{
-              padding: '7px 14px', fontSize: 13, cursor: 'pointer', height: 36, border: 'none',
-              background: view === v ? '#185FA5' : '#fff',
-              color: view === v ? '#fff' : '#888',
-              textTransform: 'capitalize',
-            }}>
-              {v === 'table' ? 'Table' : 'Map'}
+        {/* State pills — mobile */}
+        {view === 'table' && (
+        <div className="practices-state-pills">
+          <button
+            type="button"
+            className={`practice-state-pill ${selectedStates.size === 0 ? 'practice-state-pill-active' : ''}`}
+            onClick={() => selectStateMobile(null)}
+          >
+            All states
+          </button>
+          {topStates.map(s => (
+            <button
+              key={s}
+              type="button"
+              className={`practice-state-pill ${selectedStates.size === 1 && selectedStates.has(s) ? 'practice-state-pill-active' : ''}`}
+              onClick={() => selectStateMobile(s)}
+            >
+              {s}
             </button>
           ))}
         </div>
+        )}
       </div>
 
       {loading && <div className="loading-bar"><div className="loading-bar-inner" /></div>}
 
-      {/* Table view */}
+      {/* Table / card list view */}
       {view === 'table' && (
         <>
-          <div style={{ border: '1px solid #e8e8e8', borderRadius: 10, overflow: 'hidden' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <div className="practices-table-view">
+          <div className="data-table-wrapper">
+            <div className="data-table-scroll">
+            <table className="data-table data-table-practices">
               <thead>
                 <tr>
                   <th style={thStyle('practice_name')} onClick={() => handleSort('practice_name')}>
@@ -398,7 +500,9 @@ export default function PracticesPage() {
                     Location {sortKey === 'city_st' ? (sortDir === 1 ? '↑' : '↓') : '↕'}
                   </th>
                   <th style={thStyle('retention_score')} onClick={() => handleSort('retention_score')}>
-                    Retention score {sortKey === 'retention_score' ? (sortDir === 1 ? '↑' : '↓') : '↕'}
+                    <span className="data-table-label-full">Retention score</span>
+                    <span className="data-table-label-short">Retention</span>
+                    {' '}{sortKey === 'retention_score' ? (sortDir === 1 ? '↑' : '↓') : '↕'}
                   </th>
                   <th style={thStyle('retention_score_delta')} onClick={() => handleSort('retention_score_delta')}>
                     vs 2019 {sortKey === 'retention_score_delta' ? (sortDir === 1 ? '↑' : '↓') : '↕'}
@@ -444,10 +548,23 @@ export default function PracticesPage() {
                 )}
               </tbody>
             </table>
+            </div>
+          </div>
           </div>
 
-          {/* Footer */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, fontSize: 12, color: '#aaa', flexWrap: 'wrap', gap: 8 }}>
+          <div className="practices-card-view">
+            {pagePractices.map(p => (
+              <PracticeCard key={p.id} practice={p} onOpen={() => openPractice(p.id)} />
+            ))}
+            {!loading && pagePractices.length === 0 && (
+              <div style={{ padding: 40, textAlign: 'center', color: '#aaa', fontSize: 13 }}>
+                No practices match your filters.
+              </div>
+            )}
+          </div>
+
+          {/* Footer — desktop */}
+          <div className="practices-footer-desktop" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, fontSize: 12, color: '#aaa', flexWrap: 'wrap', gap: 8 }}>
             <span>{filtered.length.toLocaleString()} practices{search || selectedStates.size > 0 ? ' (filtered)' : ''}</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{ fontSize: 12, padding: '4px 10px', border: '1px solid #ddd', borderRadius: 6, background: '#fff', cursor: page === 0 ? 'default' : 'pointer', opacity: page === 0 ? 0.35 : 1 }}>← Prev</button>
@@ -455,6 +572,18 @@ export default function PracticesPage() {
               <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} style={{ fontSize: 12, padding: '4px 10px', border: '1px solid #ddd', borderRadius: 6, background: '#fff', cursor: page >= totalPages - 1 ? 'default' : 'pointer', opacity: page >= totalPages - 1 ? 0.35 : 1 }}>Next →</button>
             </div>
             <span>{practices.length.toLocaleString()} total practices</span>
+          </div>
+
+          {/* Footer — mobile */}
+          <div className="practices-footer-mobile">
+            <p style={{ textAlign: 'center', fontSize: 12, color: '#aaa', marginBottom: 10 }}>
+              {filtered.length.toLocaleString()} practices · sorted by {sortLabel(sortKey)}
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
+              <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{ fontSize: 12, padding: '4px 10px', border: '1px solid #ddd', borderRadius: 6, background: '#fff', cursor: page === 0 ? 'default' : 'pointer', opacity: page === 0 ? 0.35 : 1 }}>← Prev</button>
+              <span style={{ fontSize: 12, color: '#888' }}>Page {page + 1} of {totalPages}</span>
+              <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} style={{ fontSize: 12, padding: '4px 10px', border: '1px solid #ddd', borderRadius: 6, background: '#fff', cursor: page >= totalPages - 1 ? 'default' : 'pointer', opacity: page >= totalPages - 1 ? 0.35 : 1 }}>Next →</button>
+            </div>
           </div>
         </>
       )}
