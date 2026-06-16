@@ -3,12 +3,15 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { scoreClass, scoreLabel, deltaColor, deltaBg, deltaArrow, getInitials, nameToColor } from '@/lib/utils'
+import { loadAtlasCache, saveAtlasCache } from '@/lib/atlas-cache'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 const PAGE_SIZE = 50
 const CACHE_KEY = 'atlas_practices_v1'
 const CACHE_TTL = 1 * 60 * 60 * 1000 // 1 hour
+const CACHE_DB = 'AtlasPracticesDB'
+const CACHE_STORE = 'practices'
 
 interface Practice {
   id: string
@@ -66,44 +69,6 @@ function PracticeCard({ practice, onOpen }: { practice: Practice; onOpen: () => 
   )
 }
 
-// ── IndexedDB helpers ──────────────────────────────────────────────────────────
-
-function openDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open('AtlasPracticesDB', 1)
-    req.onupgradeneeded = e => {
-      const db = (e.target as IDBOpenDBRequest).result
-      if (!db.objectStoreNames.contains('practices')) db.createObjectStore('practices')
-    }
-    req.onsuccess = e => resolve((e.target as IDBOpenDBRequest).result)
-    req.onerror = e => reject((e.target as IDBOpenDBRequest).error)
-  })
-}
-
-async function loadCache(): Promise<Practice[] | null> {
-  try {
-    const db = await openDB()
-    return new Promise(resolve => {
-      const tx = db.transaction('practices', 'readonly')
-      const req = tx.objectStore('practices').get(CACHE_KEY)
-      req.onsuccess = e => {
-        const r = (e.target as IDBRequest).result
-        if (!r || Date.now() - r.ts > CACHE_TTL) { resolve(null); return }
-        resolve(r.records)
-      }
-      req.onerror = () => resolve(null)
-    })
-  } catch { return null }
-}
-
-async function saveCache(records: Practice[]): Promise<void> {
-  try {
-    const db = await openDB()
-    const tx = db.transaction('practices', 'readwrite')
-    tx.objectStore('practices').put({ ts: Date.now(), records }, CACHE_KEY)
-  } catch (e) { console.warn('IndexedDB save failed', e) }
-}
-
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export default function PracticesPage() {
@@ -127,7 +92,7 @@ export default function PracticesPage() {
   // Load all practices with IndexedDB cache
   useEffect(() => {
     async function load() {
-      const cached = await loadCache()
+      const cached = await loadAtlasCache<Practice>(CACHE_DB, CACHE_STORE, CACHE_KEY, CACHE_TTL)
       if (cached) {
         setPractices(cached)
         setLoading(false)
@@ -147,7 +112,7 @@ export default function PracticesPage() {
         if (data.length < 1000) break
         from += 1000
       }
-      await saveCache(all)
+      await saveAtlasCache(CACHE_DB, CACHE_STORE, CACHE_KEY, all)
       setPractices(all)
       setLoading(false)
     }

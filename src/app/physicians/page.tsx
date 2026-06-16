@@ -3,10 +3,13 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { getInitials, nameToColor } from '@/lib/utils'
+import { loadAtlasCache, saveAtlasCache } from '@/lib/atlas-cache'
 
 const PAGE_SIZE = 50
 const CACHE_KEY = 'atlas_doctors_v2'
 const CACHE_TTL = 1 * 60 * 60 * 1000 // 1 hour
+const CACHE_DB = 'AtlasDoctorsDB'
+const CACHE_STORE = 'doctors'
 
 interface Doctor {
   id: string
@@ -37,44 +40,6 @@ function PhysicianCard({ doctor, onOpen }: { doctor: Doctor; onOpen: () => void 
   )
 }
 
-// ── IndexedDB helpers ──────────────────────────────────────────────────────────
-
-function openDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open('AtlasDoctorsDB', 1)
-    req.onupgradeneeded = e => {
-      const db = (e.target as IDBOpenDBRequest).result
-      if (!db.objectStoreNames.contains('doctors')) db.createObjectStore('doctors')
-    }
-    req.onsuccess = e => resolve((e.target as IDBOpenDBRequest).result)
-    req.onerror = e => reject((e.target as IDBOpenDBRequest).error)
-  })
-}
-
-async function loadCache(): Promise<Doctor[] | null> {
-  try {
-    const db = await openDB()
-    return new Promise(resolve => {
-      const tx = db.transaction('doctors', 'readonly')
-      const req = tx.objectStore('doctors').get(CACHE_KEY)
-      req.onsuccess = e => {
-        const r = (e.target as IDBRequest).result
-        if (!r || Date.now() - r.ts > CACHE_TTL) { resolve(null); return }
-        resolve(r.records)
-      }
-      req.onerror = () => resolve(null)
-    })
-  } catch { return null }
-}
-
-async function saveCache(records: Doctor[]): Promise<void> {
-  try {
-    const db = await openDB()
-    const tx = db.transaction('doctors', 'readwrite')
-    tx.objectStore('doctors').put({ ts: Date.now(), records }, CACHE_KEY)
-  } catch (e) { console.warn('IndexedDB save failed', e) }
-}
-
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export default function PhysiciansPage() {
@@ -86,7 +51,7 @@ export default function PhysiciansPage() {
 
   useEffect(() => {
     async function load() {
-      const cached = await loadCache()
+      const cached = await loadAtlasCache<Doctor>(CACHE_DB, CACHE_STORE, CACHE_KEY, CACHE_TTL)
       if (cached) {
         setDoctors(cached)
         setLoading(false)
@@ -107,7 +72,7 @@ export default function PhysiciansPage() {
         if (data.length < 1000) break
         from += 1000
       }
-      await saveCache(all)
+      await saveAtlasCache(CACHE_DB, CACHE_STORE, CACHE_KEY, all)
       setDoctors(all)
       setLoading(false)
     }
