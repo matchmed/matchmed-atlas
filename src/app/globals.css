@@ -374,12 +374,14 @@ a { color: inherit; text-decoration: none; }
   }
 }
 
-/* Practices list — mobile cards */
-.practices-table-view {
+/* Directory mobile cards (practices, physicians) */
+.practices-table-view,
+.physicians-table-view {
   display: block;
 }
 
-.practices-card-view {
+.practices-card-view,
+.physicians-card-view {
   display: none;
 }
 
@@ -484,12 +486,23 @@ a { color: inherit; text-decoration: none; }
   margin-top: 1px;
 }
 
+.practice-card-chevron {
+  flex-shrink: 0;
+  font-size: 22px;
+  font-weight: 300;
+  color: #ccc;
+  line-height: 1;
+  padding-left: 4px;
+}
+
 @media (max-width: 768px) {
-  .practices-table-view {
+  .practices-table-view,
+  .physicians-table-view {
     display: none;
   }
 
-  .practices-card-view {
+  .practices-card-view,
+  .physicians-card-view {
     display: flex;
     flex-direction: column;
     gap: 8px;

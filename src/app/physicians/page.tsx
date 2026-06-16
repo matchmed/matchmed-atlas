@@ -2,9 +2,10 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import { getInitials, nameToColor } from '@/lib/utils'
 
 const PAGE_SIZE = 50
-const CACHE_KEY = 'atlas_doctors_v1'
+const CACHE_KEY = 'atlas_doctors_v2'
 const CACHE_TTL = 1 * 60 * 60 * 1000 // 1 hour
 
 interface Doctor {
@@ -12,6 +13,43 @@ interface Doctor {
   physician_name: string | null
   npi: string
   graduation_year: number | null
+  last_known_affiliation: string | null
+}
+
+function formatPhysicianName(name: string | null): string {
+  if (!name) return '—'
+  if (name !== name.toUpperCase()) return name
+  return name
+    .split(',')
+    .map(part =>
+      part
+        .trim()
+        .toLowerCase()
+        .replace(/\b\w/g, c => c.toUpperCase())
+    )
+    .join(', ')
+}
+
+function PhysicianCard({ doctor, onOpen }: { doctor: Doctor; onOpen: () => void }) {
+  const displayName = formatPhysicianName(doctor.physician_name)
+  const [fg, bg] = nameToColor(displayName)
+  const initials = getInitials(displayName)
+  const meta = doctor.last_known_affiliation
+    ? `Ophthalmology · ${doctor.last_known_affiliation}`
+    : 'Ophthalmology'
+
+  return (
+    <button type="button" className="practice-card" onClick={onOpen}>
+      <div className="practice-card-avatar" style={{ color: fg, background: bg }}>
+        {initials}
+      </div>
+      <div className="practice-card-body">
+        <div className="practice-card-name">{displayName}</div>
+        <div className="practice-card-meta">{meta}</div>
+      </div>
+      <span className="practice-card-chevron" aria-hidden="true">›</span>
+    </button>
+  )
 }
 
 // ── IndexedDB helpers ──────────────────────────────────────────────────────────
@@ -76,7 +114,7 @@ export default function PhysiciansPage() {
       while (true) {
         const { data, error } = await supabase
           .from('doctors')
-          .select('id,physician_name,npi,graduation_year')
+          .select('id,physician_name,npi,graduation_year,last_known_affiliation')
           .order('physician_name', { ascending: true })
           .range(from, from + 999)
         if (error || !data || data.length === 0) break
@@ -99,6 +137,10 @@ export default function PhysiciansPage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const pageDoctors = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
+  function openPhysician(doctorId: string) {
+    router.push(`/physicians/${doctorId}`)
+  }
+
   return (
     <div>
       <div style={{ marginBottom: 16 }}>
@@ -113,52 +155,65 @@ export default function PhysiciansPage() {
 
       {loading && <div className="loading-bar"><div className="loading-bar-inner" /></div>}
 
-      <div className="data-table-wrapper">
-        <div className="data-table-scroll">
-        <table className="data-table data-table-physicians">
-          <thead>
-            <tr>
-              <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#185FA5', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #e8e8e8', background: '#f7f7f7', whiteSpace: 'nowrap' }}>
-                Name ↑
-              </th>
-              <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #e8e8e8', background: '#f7f7f7', whiteSpace: 'nowrap' }}>
-                NPI
-              </th>
-              <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #e8e8e8', background: '#f7f7f7', whiteSpace: 'nowrap' }}>
-                <span className="data-table-label-full">Med School Grad Year</span>
-                <span className="data-table-label-short">Grad Year</span>
-              </th>
-              <th style={{ padding: '10px 14px', borderBottom: '1px solid #e8e8e8', background: '#f7f7f7' }} />
-            </tr>
-          </thead>
-          <tbody>
-            {pageDoctors.map(d => (
-              <tr key={d.id} onClick={() => router.push(`/physicians/${d.id}`)} style={{ cursor: 'pointer' }}>
-                <td style={{ padding: '11px 14px', borderTop: '1px solid #f0f0f0', fontWeight: 500 }}>
-                  {d.physician_name || '—'}
-                </td>
-                <td style={{ padding: '11px 14px', borderTop: '1px solid #f0f0f0', color: '#666' }}>
-                  {d.npi}
-                </td>
-                <td style={{ padding: '11px 14px', borderTop: '1px solid #f0f0f0', color: '#666' }}>
-                  {d.graduation_year || '—'}
-                </td>
-                <td style={{ padding: '11px 14px', borderTop: '1px solid #f0f0f0' }}>
-                  <button
-                    onClick={e => { e.stopPropagation(); router.push(`/physicians/${d.id}`) }}
-                    style={{ fontSize: 12, color: '#185FA5', cursor: 'pointer', padding: '4px 10px', border: '1px solid #185FA5', borderRadius: 6, background: 'none', whiteSpace: 'nowrap' }}
-                  >
-                    Open →
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {!loading && pageDoctors.length === 0 && (
-              <tr><td colSpan={4} style={{ padding: 40, textAlign: 'center', color: '#aaa' }}>No physicians match your search.</td></tr>
-            )}
-          </tbody>
-        </table>
+      <div className="physicians-table-view">
+        <div className="data-table-wrapper">
+          <div className="data-table-scroll">
+            <table className="data-table data-table-physicians">
+              <thead>
+                <tr>
+                  <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#185FA5', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #e8e8e8', background: '#f7f7f7', whiteSpace: 'nowrap' }}>
+                    Name ↑
+                  </th>
+                  <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #e8e8e8', background: '#f7f7f7', whiteSpace: 'nowrap' }}>
+                    NPI
+                  </th>
+                  <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #e8e8e8', background: '#f7f7f7', whiteSpace: 'nowrap' }}>
+                    <span className="data-table-label-full">Med School Grad Year</span>
+                    <span className="data-table-label-short">Grad Year</span>
+                  </th>
+                  <th style={{ padding: '10px 14px', borderBottom: '1px solid #e8e8e8', background: '#f7f7f7' }} />
+                </tr>
+              </thead>
+              <tbody>
+                {pageDoctors.map(d => (
+                  <tr key={d.id} onClick={() => openPhysician(d.id)} style={{ cursor: 'pointer' }}>
+                    <td style={{ padding: '11px 14px', borderTop: '1px solid #f0f0f0', fontWeight: 500 }}>
+                      {d.physician_name || '—'}
+                    </td>
+                    <td style={{ padding: '11px 14px', borderTop: '1px solid #f0f0f0', color: '#666' }}>
+                      {d.npi}
+                    </td>
+                    <td style={{ padding: '11px 14px', borderTop: '1px solid #f0f0f0', color: '#666' }}>
+                      {d.graduation_year || '—'}
+                    </td>
+                    <td style={{ padding: '11px 14px', borderTop: '1px solid #f0f0f0' }}>
+                      <button
+                        onClick={e => { e.stopPropagation(); openPhysician(d.id) }}
+                        style={{ fontSize: 12, color: '#185FA5', cursor: 'pointer', padding: '4px 10px', border: '1px solid #185FA5', borderRadius: 6, background: 'none', whiteSpace: 'nowrap' }}
+                      >
+                        Open →
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {!loading && pageDoctors.length === 0 && (
+                  <tr><td colSpan={4} style={{ padding: 40, textAlign: 'center', color: '#aaa' }}>No physicians match your search.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
+      </div>
+
+      <div className="physicians-card-view">
+        {pageDoctors.map(d => (
+          <PhysicianCard key={d.id} doctor={d} onOpen={() => openPhysician(d.id)} />
+        ))}
+        {!loading && pageDoctors.length === 0 && (
+          <div style={{ padding: 40, textAlign: 'center', color: '#aaa', fontSize: 13 }}>
+            No physicians match your search.
+          </div>
+        )}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, fontSize: 12, color: '#aaa', flexWrap: 'wrap', gap: 8 }}>
