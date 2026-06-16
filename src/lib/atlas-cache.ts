@@ -23,7 +23,10 @@ function setMemory<T>(dbName: string, cacheKey: string, records: T[]) {
 
 function openDB(dbName: string, storeName: string): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(dbName, 1)
+    // Omit version so existing DBs open at their current version (avoids VersionError
+    // when an older build already bumped the schema). New DBs are created at version 1
+    // and onupgradeneeded creates the object store if missing.
+    const req = indexedDB.open(dbName)
     req.onupgradeneeded = e => {
       const db = (e.target as IDBOpenDBRequest).result
       if (!db.objectStoreNames.contains(storeName)) {
