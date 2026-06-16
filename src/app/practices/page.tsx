@@ -3,12 +3,12 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { scoreClass, scoreLabel, deltaColor, deltaBg, deltaArrow, getInitials, nameToColor } from '@/lib/utils'
-import { loadAtlasCache, saveAtlasCache } from '@/lib/atlas-cache'
+import { loadAtlasCacheDebug, peekAtlasCache, saveAtlasCache } from '@/lib/atlas-cache'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 const PAGE_SIZE = 50
-const CACHE_KEY = 'atlas_practices_v1'
+const CACHE_KEY = 'atlas_practices_v2'
 const CACHE_TTL = 1 * 60 * 60 * 1000 // 1 hour
 const CACHE_DB = 'AtlasPracticesDB'
 const CACHE_STORE = 'practices'
@@ -73,8 +73,12 @@ function PracticeCard({ practice, onOpen }: { practice: Practice; onOpen: () => 
 
 export default function PracticesPage() {
   const router = useRouter()
-  const [practices, setPractices] = useState<Practice[]>([])
-  const [loading, setLoading] = useState(true)
+  const [practices, setPractices] = useState<Practice[]>(
+    () => peekAtlasCache<Practice>(CACHE_DB, CACHE_KEY, CACHE_TTL) ?? [],
+  )
+  const [loading, setLoading] = useState(
+    () => !peekAtlasCache<Practice>(CACHE_DB, CACHE_KEY, CACHE_TTL),
+  )
   const [search, setSearch] = useState('')
   const [selectedStates, setSelectedStates] = useState<Set<string>>(new Set())
   const [stateSearch, setStateSearch] = useState('')
@@ -92,29 +96,74 @@ export default function PracticesPage() {
   // Load all practices with IndexedDB cache
   useEffect(() => {
     async function load() {
-      const cached = await loadAtlasCache<Practice>(CACHE_DB, CACHE_STORE, CACHE_KEY, CACHE_TTL)
-      if (cached) {
-        setPractices(cached)
+      const renderMemory = peekAtlasCache<Practice>(CACHE_DB, CACHE_KEY, CACHE_TTL)
+
+      try {
+        const cacheResult = await loadAtlasCacheDebug<Practice>(CACHE_DB, CACHE_STORE, CACHE_KEY, CACHE_TTL)
+
+        if (cacheResult.records) {
+          console.info('[Practices cache debug]', {
+            source: cacheResult.source,
+            renderHadMemory: Boolean(renderMemory),
+            recordCount: cacheResult.records.length,
+            chunks: cacheResult.chunks ?? null,
+            idbMetaTotal: cacheResult.total ?? null,
+            error: cacheResult.error ?? null,
+          })
+          setPractices(cacheResult.records)
+          setLoading(false)
+          return
+        }
+
+        console.info('[Practices cache debug]', {
+          source: 'supabase',
+          reason: cacheResult.error ?? 'cache miss',
+          renderHadMemory: Boolean(renderMemory),
+        })
+
+        const supabase = createClient()
+        setLoading(true)
+        let all: Practice[] = []
+        let from = 0
+        while (true) {
+          const { data, error } = await supabase
+            .from('practices')
+            .select('id,practice_name,city_st,state,retention_score,retention_score_delta,latest_roster_size,latitude,longitude,phone,org_pac_id')
+            .range(from, from + 999)
+          if (error) {
+            throw error
+          }
+          if (!data || data.length === 0) break
+          all = all.concat(data)
+          if (data.length < 1000) break
+          from += 1000
+        }
+
+        let indexedDbSaved = false
+        let saveError: string | null = null
+        try {
+          indexedDbSaved = await saveAtlasCache(CACHE_DB, CACHE_STORE, CACHE_KEY, all)
+          if (!indexedDbSaved) saveError = 'saveAtlasCache returned false'
+        } catch (e) {
+          saveError = e instanceof Error ? e.message : String(e)
+        }
+
+        console.info('[Practices cache debug]', {
+          source: 'supabase-fetched',
+          recordCount: all.length,
+          indexedDbSaved,
+          saveError,
+        })
+
+        setPractices(all)
         setLoading(false)
-        return
+      } catch (e) {
+        console.error('[Practices cache debug]', {
+          source: 'error',
+          error: e instanceof Error ? e.message : String(e),
+        })
+        setLoading(false)
       }
-      const supabase = createClient()
-      setLoading(true)
-      let all: Practice[] = []
-      let from = 0
-      while (true) {
-        const { data, error } = await supabase
-          .from('practices')
-          .select('id,practice_name,city_st,state,retention_score,retention_score_delta,latest_roster_size,latitude,longitude,phone,org_pac_id')
-          .range(from, from + 999)
-        if (error || !data || data.length === 0) break
-        all = all.concat(data)
-        if (data.length < 1000) break
-        from += 1000
-      }
-      await saveAtlasCache(CACHE_DB, CACHE_STORE, CACHE_KEY, all)
-      setPractices(all)
-      setLoading(false)
     }
     load()
   }, [])

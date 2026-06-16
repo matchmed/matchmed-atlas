@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { getInitials, nameToColor } from '@/lib/utils'
-import { loadAtlasCache, saveAtlasCache } from '@/lib/atlas-cache'
+import { loadAtlasCache, peekAtlasCache, saveAtlasCache } from '@/lib/atlas-cache'
 
 const PAGE_SIZE = 50
 const CACHE_KEY = 'atlas_doctors_v2'
@@ -44,8 +44,12 @@ function PhysicianCard({ doctor, onOpen }: { doctor: Doctor; onOpen: () => void 
 
 export default function PhysiciansPage() {
   const router = useRouter()
-  const [doctors, setDoctors] = useState<Doctor[]>([])
-  const [loading, setLoading] = useState(true)
+  const [doctors, setDoctors] = useState<Doctor[]>(
+    () => peekAtlasCache<Doctor>(CACHE_DB, CACHE_KEY, CACHE_TTL) ?? [],
+  )
+  const [loading, setLoading] = useState(
+    () => !peekAtlasCache<Doctor>(CACHE_DB, CACHE_KEY, CACHE_TTL),
+  )
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
 
