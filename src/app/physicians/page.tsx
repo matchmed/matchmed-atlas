@@ -20,9 +20,6 @@ function PhysicianCard({ doctor, onOpen }: { doctor: Doctor; onOpen: () => void 
   const name = doctor.physician_name || '—'
   const [fg, bg] = nameToColor(name)
   const initials = getInitials(name)
-  const meta = doctor.last_known_affiliation
-    ? `Ophthalmology · ${doctor.last_known_affiliation}`
-    : 'Ophthalmology'
 
   return (
     <button type="button" className="practice-card" onClick={onOpen}>
@@ -31,7 +28,9 @@ function PhysicianCard({ doctor, onOpen }: { doctor: Doctor; onOpen: () => void 
       </div>
       <div className="practice-card-body">
         <div className="practice-card-name physician-card-name">{name}</div>
-        <div className="practice-card-meta">{meta}</div>
+        {doctor.last_known_affiliation && (
+          <div className="practice-card-meta">{doctor.last_known_affiliation}</div>
+        )}
       </div>
       <span className="practice-card-chevron" aria-hidden="true">›</span>
     </button>
