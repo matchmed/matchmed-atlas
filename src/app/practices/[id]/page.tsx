@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import { invalidateFavoritesCache } from '@/lib/favorites-cache'
 import { nameToColor, getInitials, scoreColor, scoreBg, deltaColor, deltaBg, deltaArrow } from '@/lib/utils'
 
 interface Practice {
@@ -146,6 +147,7 @@ export default function PracticeDetailPage() {
         setFavId(data.id)
       }
     }
+    invalidateFavoritesCache()
     setFavLoading(false)
   }
 

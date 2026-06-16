@@ -105,21 +105,6 @@ export default function Nav() {
   }
 
   function renderDesktopLink(href: string, label: string) {
-    if (href === '/favorites') {
-      return (
-        <a
-          key={href}
-          href={href}
-          onClick={e => {
-            e.preventDefault()
-            window.location.href = '/favorites'
-          }}
-          className={linkClass(pathname, href)}
-        >
-          {label}
-        </a>
-      )
-    }
     return (
       <Link key={href} href={href} className={linkClass(pathname, href)}>
         {label}
@@ -259,34 +244,12 @@ export default function Nav() {
       {!isAuthPage(pathname) && (
         <nav className="nav-bottom" aria-label="Main navigation">
           <div className="nav-bottom-inner">
-            {primaryTabs.map(tab => {
-              const active = isActive(pathname, tab.href)
-              const className = `nav-bottom-tab ${active ? 'nav-bottom-tab-active' : ''}`
-
-              if (tab.href === '/favorites') {
-                return (
-                  <a
-                    key={tab.href}
-                    href={tab.href}
-                    className={className}
-                    onClick={e => {
-                      e.preventDefault()
-                      window.location.href = '/favorites'
-                    }}
-                  >
-                    {tab.icon}
-                    {tab.label}
-                  </a>
-                )
-              }
-
-              return (
-                <Link key={tab.href} href={tab.href} className={className}>
-                  {tab.icon}
-                  {tab.label}
-                </Link>
-              )
-            })}
+            {primaryTabs.map(tab => (
+              <Link key={tab.href} href={tab.href} className={`nav-bottom-tab ${isActive(pathname, tab.href) ? 'nav-bottom-tab-active' : ''}`}>
+                {tab.icon}
+                {tab.label}
+              </Link>
+            ))}
           </div>
         </nav>
       )}

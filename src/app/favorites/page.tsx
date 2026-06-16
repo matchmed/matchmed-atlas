@@ -4,6 +4,11 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { nameToColor, getInitials, scoreColor, scoreBg } from '@/lib/utils'
+import {
+  peekFavoritesCache,
+  isFavoritesCacheForUser,
+  setFavoritesCache,
+} from '@/lib/favorites-cache'
 
 interface FavoritePractice {
   id: string
@@ -15,26 +20,53 @@ interface FavoritePractice {
   practice_id: string
 }
 
+function mapShortlistRows(data: { id: string; practice_id: string; practices: { practice_name: string | null; city_st: string | null; retention_score: number | null; latest_roster_size: number | null } | null }[]): FavoritePractice[] {
+  return data.map(f => ({
+    id: f.id,
+    practice_id: f.practice_id,
+    practice_name: f.practices?.practice_name || null,
+    dba: null,
+    city_st: f.practices?.city_st || null,
+    retention_score: f.practices?.retention_score || null,
+    latest_roster_size: f.practices?.latest_roster_size || null,
+  }))
+}
+
 export default function FavoritesPage() {
   const router = useRouter()
-  const [favorites, setFavorites] = useState<FavoritePractice[]>([])
-  const [loading, setLoading] = useState(true)
+  const [favorites, setFavorites] = useState<FavoritePractice[]>(
+    () => peekFavoritesCache<FavoritePractice>() ?? [],
+  )
+  const [loading, setLoading] = useState(() => !peekFavoritesCache<FavoritePractice>())
 
   useEffect(() => {
     async function load() {
-      setLoading(true)
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
+      if (!user) {
+        router.push('/login')
+        return
+      }
 
-      // Get profile id for this user
+      if (isFavoritesCacheForUser(user.id)) {
+        const cached = peekFavoritesCache<FavoritePractice>()
+        if (cached) {
+          setFavorites(cached)
+          setLoading(false)
+          return
+        }
+      }
+
       const { data: profile } = await supabase
         .from('profiles')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle()
 
-      if (!profile) { setLoading(false); return }
+      if (!profile) {
+        setLoading(false)
+        return
+      }
 
       const { data } = await supabase
         .from('shortlists')
@@ -42,26 +74,21 @@ export default function FavoritesPage() {
         .eq('physician_id', profile.id)
         .order('created_at', { ascending: false })
 
-      if (data) {
-        setFavorites(data.map((f: any) => ({
-          id: f.id,
-          practice_id: f.practice_id,
-          practice_name: f.practices?.practice_name || null,
-          dba: null,
-          city_st: f.practices?.city_st || null,
-          retention_score: f.practices?.retention_score || null,
-          latest_roster_size: f.practices?.latest_roster_size || null,
-        })))
-      }
+      const mapped = data ? mapShortlistRows(data as any) : []
+      setFavoritesCache(user.id, mapped)
+      setFavorites(mapped)
       setLoading(false)
     }
     load()
-  }, [])
+  }, [router])
 
   async function removeFavorite(favId: string) {
     const supabase = createClient()
     await supabase.from('shortlists').delete().eq('id', favId)
-    setFavorites(prev => prev.filter(f => f.id !== favId))
+    const next = favorites.filter(f => f.id !== favId)
+    setFavorites(next)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) setFavoritesCache(user.id, next)
   }
 
   if (loading) return <div className="loading-bar"><div className="loading-bar-inner" /></div>
