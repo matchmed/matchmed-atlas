@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { invalidateFavoritesCache } from '@/lib/favorites-cache'
+import { syncPracticeListCacheFromDetail } from '@/lib/practices-cache'
 import { nameToColor, getInitials, scoreColor, scoreBg, deltaColor, deltaBg, deltaArrow } from '@/lib/utils'
 
 interface Practice {
@@ -95,7 +96,10 @@ export default function PracticeDetailPage() {
         supabase.from('affiliations').select('id,npi,status,first_seen_year_at_org,last_seen_year_at_org,tenure_years,grad_yr,doctors(id,physician_name,npi)').eq('practice_id', id).order('last_seen_year_at_org', { ascending: false }),
         supabase.from('employer_leads').select('*').eq('practice_id', id),
       ])
-      if (practiceRes.data) setPractice(practiceRes.data)
+      if (practiceRes.data) {
+        setPractice(practiceRes.data)
+        void syncPracticeListCacheFromDetail(practiceRes.data)
+      }
       if (affilRes.data) setAffiliations(affilRes.data as any)
       if (jobRes.data) setJobs(jobRes.data)
 

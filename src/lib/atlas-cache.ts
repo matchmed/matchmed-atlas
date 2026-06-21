@@ -17,6 +17,81 @@ export function peekAtlasCache<T>(dbName: string, cacheKey: string, ttlMs: numbe
   return entry.records as T[]
 }
 
+function peekAtlasCacheAnyAge<T>(dbName: string, cacheKey: string): T[] | null {
+  const entry = memory.get(cacheMemKey(dbName, cacheKey))
+  if (!entry || !Array.isArray(entry.records)) return null
+  return entry.records as T[]
+}
+
+async function loadAtlasCacheAnyAge<T>(
+  dbName: string,
+  storeName: string,
+  cacheKey: string,
+): Promise<T[] | null> {
+  const mem = peekAtlasCacheAnyAge<T>(dbName, cacheKey)
+  if (mem) return mem
+
+  try {
+    const db = await openDB(dbName, storeName)
+    return await new Promise<T[] | null>(resolve => {
+      const tx = db.transaction(storeName, 'readonly')
+      const store = tx.objectStore(storeName)
+      const req = store.get(cacheKey)
+
+      req.onsuccess = () => {
+        const entry = req.result as SingleEntry<T> | MetaEntry | undefined
+        if (!entry || typeof entry.ts !== 'number') {
+          resolve(null)
+          return
+        }
+
+        if ('chunks' in entry && typeof entry.chunks === 'number') {
+          loadChunkedRecords(store, cacheKey, entry).then(records => {
+            if (!records) {
+              resolve(null)
+              return
+            }
+            setMemory(dbName, cacheKey, records)
+            resolve(records as T[])
+          })
+          return
+        }
+
+        if ('records' in entry && Array.isArray(entry.records)) {
+          setMemory(dbName, cacheKey, entry.records)
+          resolve(entry.records)
+          return
+        }
+
+        resolve(null)
+      }
+
+      req.onerror = () => resolve(null)
+      tx.onerror = () => resolve(null)
+    })
+  } catch {
+    return null
+  }
+}
+
+export async function patchAtlasCacheRecord<T extends { id: string }>(
+  dbName: string,
+  storeName: string,
+  cacheKey: string,
+  id: string,
+  patch: Partial<T>,
+): Promise<boolean> {
+  const records = await loadAtlasCacheAnyAge<T>(dbName, storeName, cacheKey)
+  if (!records) return false
+
+  const idx = records.findIndex(r => r.id === id)
+  if (idx === -1) return false
+
+  const next = [...records]
+  next[idx] = { ...next[idx], ...patch }
+  return saveAtlasCache(dbName, storeName, cacheKey, next)
+}
+
 function setMemory<T>(dbName: string, cacheKey: string, records: T[]) {
   memory.set(cacheMemKey(dbName, cacheKey), { ts: Date.now(), records })
 }

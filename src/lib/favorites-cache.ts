@@ -24,3 +24,27 @@ export function setFavoritesCache<T>(userId: string, favorites: T[]) {
 export function invalidateFavoritesCache() {
   entry = null
 }
+
+export function patchFavoritesPractice(
+  practiceId: string,
+  patch: {
+    practice_name?: string | null
+    city_st?: string | null
+    retention_score?: number | null
+    latest_roster_size?: number | null
+  },
+): void {
+  if (!entry) return
+
+  let changed = false
+  const favorites = entry.favorites.map(f => {
+    const fav = f as { practice_id?: string }
+    if (fav.practice_id !== practiceId) return f
+    changed = true
+    return { ...fav, ...patch }
+  })
+
+  if (changed) {
+    entry = { ...entry, favorites, ts: Date.now() }
+  }
+}

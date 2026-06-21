@@ -4,28 +4,23 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { scoreClass, scoreLabel, deltaColor, deltaBg, deltaArrow, getInitials, nameToColor } from '@/lib/utils'
 import { loadAtlasCache, peekAtlasCache, saveAtlasCache } from '@/lib/atlas-cache'
+import {
+  PRACTICES_CACHE_DB,
+  PRACTICES_CACHE_STORE,
+  PRACTICES_CACHE_KEY,
+  PRACTICES_CACHE_TTL,
+  type PracticeListRow,
+} from '@/lib/practices-cache'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 const PAGE_SIZE = 50
-const CACHE_KEY = 'atlas_practices_v2'
-const CACHE_TTL = 1 * 60 * 60 * 1000 // 1 hour
-const CACHE_DB = 'AtlasPracticesDB'
-const CACHE_STORE = 'practices'
+const CACHE_KEY = PRACTICES_CACHE_KEY
+const CACHE_TTL = PRACTICES_CACHE_TTL
+const CACHE_DB = PRACTICES_CACHE_DB
+const CACHE_STORE = PRACTICES_CACHE_STORE
 
-interface Practice {
-  id: string
-  practice_name: string | null
-  city_st: string | null
-  state: string | null
-  retention_score: number | null
-  retention_score_delta: number | null
-  latest_roster_size: number | null
-  latitude: number | null
-  longitude: number | null
-  phone: string | null
-  org_pac_id: string | null
-}
+type Practice = PracticeListRow
 
 type SortKey = 'practice_name' | 'city_st' | 'retention_score' | 'retention_score_delta' | 'latest_roster_size'
 
