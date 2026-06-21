@@ -1,9 +1,10 @@
 'use client'
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { getInitials, nameToColor } from '@/lib/utils'
 import { loadAtlasCache, peekAtlasCache, saveAtlasCache } from '@/lib/atlas-cache'
+import { replaceListParams, pageFromParams } from '@/lib/list-url'
 
 const PAGE_SIZE = 50
 const CACHE_KEY = 'atlas_doctors_v2'
@@ -40,18 +41,38 @@ function PhysicianCard({ doctor, onOpen }: { doctor: Doctor; onOpen: () => void 
   )
 }
 
-// ── Component ──────────────────────────────────────────────────────────────────
-
 export default function PhysiciansPage() {
+  return (
+    <Suspense fallback={<div className="loading-bar"><div className="loading-bar-inner" /></div>}>
+      <PhysiciansPageContent />
+    </Suspense>
+  )
+}
+
+function PhysiciansPageContent() {
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [doctors, setDoctors] = useState<Doctor[]>(
     () => peekAtlasCache<Doctor>(CACHE_DB, CACHE_KEY, CACHE_TTL) ?? [],
   )
   const [loading, setLoading] = useState(
     () => !peekAtlasCache<Doctor>(CACHE_DB, CACHE_KEY, CACHE_TTL),
   )
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(0)
+  const search = searchParams.get('q') ?? ''
+  const page = pageFromParams(searchParams)
+
+  function patchUrl(updates: Record<string, string | null | undefined>) {
+    replaceListParams(pathname, router, searchParams, updates)
+  }
+
+  function setSearchQuery(q: string) {
+    patchUrl({ q: q || null, page: null })
+  }
+
+  function goToPage(p: number) {
+    patchUrl({ page: p === 0 ? null : String(p + 1) })
+  }
 
   useEffect(() => {
     async function load() {
@@ -102,7 +123,7 @@ export default function PhysiciansPage() {
           type="text"
           placeholder="Search physician name or NPI..."
           value={search}
-          onChange={e => { setSearch(e.target.value); setPage(0) }}
+          onChange={e => setSearchQuery(e.target.value)}
           style={{ fontSize: 13, padding: '7px 11px', height: 36, border: '1px solid #ddd', borderRadius: 8, outline: 'none', width: '100%' }}
         />
       </div>
@@ -173,9 +194,9 @@ export default function PhysiciansPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, fontSize: 12, color: '#aaa', flexWrap: 'wrap', gap: 8 }}>
         <span>{filtered.length.toLocaleString()} physicians{search ? ' (filtered)' : ''}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{ fontSize: 12, padding: '4px 10px', border: '1px solid #ddd', borderRadius: 6, background: '#fff', cursor: page === 0 ? 'default' : 'pointer', opacity: page === 0 ? 0.35 : 1 }}>← Prev</button>
+          <button onClick={() => goToPage(Math.max(0, page - 1))} disabled={page === 0} style={{ fontSize: 12, padding: '4px 10px', border: '1px solid #ddd', borderRadius: 6, background: '#fff', cursor: page === 0 ? 'default' : 'pointer', opacity: page === 0 ? 0.35 : 1 }}>← Prev</button>
           <span style={{ fontSize: 12, color: '#888' }}>Page {page + 1} of {totalPages}</span>
-          <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} style={{ fontSize: 12, padding: '4px 10px', border: '1px solid #ddd', borderRadius: 6, background: '#fff', cursor: page >= totalPages - 1 ? 'default' : 'pointer', opacity: page >= totalPages - 1 ? 0.35 : 1 }}>Next →</button>
+          <button onClick={() => goToPage(Math.min(totalPages - 1, page + 1))} disabled={page >= totalPages - 1} style={{ fontSize: 12, padding: '4px 10px', border: '1px solid #ddd', borderRadius: 6, background: '#fff', cursor: page >= totalPages - 1 ? 'default' : 'pointer', opacity: page >= totalPages - 1 ? 0.35 : 1 }}>Next →</button>
         </div>
         <span>{doctors.length.toLocaleString()} total physicians</span>
       </div>

@@ -1,6 +1,6 @@
 'use client'
-import { useEffect, useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useState, useRef, useMemo } from 'react'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { scoreClass, scoreLabel, deltaColor, deltaBg, deltaArrow, getInitials, nameToColor } from '@/lib/utils'
 import { loadAtlasCache, peekAtlasCache, saveAtlasCache } from '@/lib/atlas-cache'
@@ -11,6 +11,7 @@ import {
   PRACTICES_CACHE_TTL,
   type PracticeListRow,
 } from '@/lib/practices-cache'
+import { replaceListParams, pageFromParams, statesFromParams } from '@/lib/list-url'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
@@ -67,26 +68,49 @@ function PracticeCard({ practice, onOpen }: { practice: Practice; onOpen: () => 
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export default function PracticesPage() {
+  return (
+    <Suspense fallback={<div className="loading-bar"><div className="loading-bar-inner" /></div>}>
+      <PracticesPageContent />
+    </Suspense>
+  )
+}
+
+function PracticesPageContent() {
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [practices, setPractices] = useState<Practice[]>(
     () => peekAtlasCache<Practice>(CACHE_DB, CACHE_KEY, CACHE_TTL) ?? [],
   )
   const [loading, setLoading] = useState(
     () => !peekAtlasCache<Practice>(CACHE_DB, CACHE_KEY, CACHE_TTL),
   )
-  const [search, setSearch] = useState('')
-  const [selectedStates, setSelectedStates] = useState<Set<string>>(new Set())
-  const [stateSearch, setStateSearch] = useState('')
-  const [stateOpen, setStateOpen] = useState(false)
-  const [sortKey, setSortKey] = useState<SortKey>('retention_score')
-  const [sortDir, setSortDir] = useState<1 | -1>(-1)
-  const [page, setPage] = useState(0)
-  const [view, setView] = useState<'table' | 'map'>('table')
+  const search = searchParams.get('q') ?? ''
+  const selectedStates = useMemo(() => statesFromParams(searchParams), [searchParams])
+  const page = pageFromParams(searchParams)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapInitedRef = useRef(false)
   const popupRef = useRef<mapboxgl.Popup | null>(null)
   const mapRestoreRef = useRef<{ center: [number, number]; zoom: number } | null>(null)
+
+  function patchUrl(updates: Record<string, string | null | undefined>) {
+    replaceListParams(pathname, router, searchParams, updates)
+  }
+
+  function setSearchQuery(q: string) {
+    patchUrl({ q: q || null, page: null })
+  }
+
+  function goToPage(p: number) {
+    patchUrl({ page: p === 0 ? null : String(p + 1) })
+  }
+
+  const [stateSearch, setStateSearch] = useState('')
+  const [stateOpen, setStateOpen] = useState(false)
+  const [sortKey, setSortKey] = useState<SortKey>('retention_score')
+  const [sortDir, setSortDir] = useState<1 | -1>(-1)
+  const [view, setView] = useState<'table' | 'map'>('table')
 
   // Load all practices with IndexedDB cache
   useEffect(() => {
@@ -163,16 +187,20 @@ export default function PracticesPage() {
   function handleSort(key: SortKey) {
     if (sortKey === key) setSortDir(d => d === 1 ? -1 : 1)
     else { setSortKey(key); setSortDir(key === 'retention_score' || key === 'latest_roster_size' ? -1 : 1) }
-    setPage(0)
+    goToPage(0)
   }
 
   function toggleState(s: string) {
-    setSelectedStates(prev => {
-      const next = new Set(prev)
-      next.has(s) ? next.delete(s) : next.add(s)
-      return next
+    const next = new Set(selectedStates)
+    next.has(s) ? next.delete(s) : next.add(s)
+    patchUrl({
+      states: next.size ? [...next].sort().join(',') : null,
+      page: null,
     })
-    setPage(0)
+  }
+
+  function clearStates() {
+    patchUrl({ states: null, page: null })
   }
 
   function deltaChip(d: number | null) {
@@ -348,7 +376,7 @@ export default function PracticesPage() {
       </div>
       <button
         type="button"
-        onClick={() => { setSelectedStates(new Set()); setPage(0) }}
+        onClick={clearStates}
         style={{ display: 'block', width: '100%', padding: '10px 0 0', fontSize: 13, color: '#185FA5', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontWeight: 500 }}
       >
         Clear all
@@ -366,7 +394,7 @@ export default function PracticesPage() {
             className="practices-search-input"
             placeholder="Search practices..."
             value={search}
-            onChange={e => { setSearch(e.target.value); setPage(0) }}
+            onChange={e => setSearchQuery(e.target.value)}
             style={{ fontSize: 13, padding: '7px 11px', height: 36, border: '1px solid #ddd', borderRadius: 8, outline: 'none', flex: 1, minWidth: 180 }}
           />
 
@@ -527,9 +555,9 @@ export default function PracticesPage() {
           <div className="practices-footer-desktop" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, fontSize: 12, color: '#aaa', flexWrap: 'wrap', gap: 8 }}>
             <span>{filtered.length.toLocaleString()} practices{search || selectedStates.size > 0 ? ' (filtered)' : ''}</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{ fontSize: 12, padding: '4px 10px', border: '1px solid #ddd', borderRadius: 6, background: '#fff', cursor: page === 0 ? 'default' : 'pointer', opacity: page === 0 ? 0.35 : 1 }}>← Prev</button>
+              <button onClick={() => goToPage(Math.max(0, page - 1))} disabled={page === 0} style={{ fontSize: 12, padding: '4px 10px', border: '1px solid #ddd', borderRadius: 6, background: '#fff', cursor: page === 0 ? 'default' : 'pointer', opacity: page === 0 ? 0.35 : 1 }}>← Prev</button>
               <span style={{ fontSize: 12, color: '#888' }}>Page {page + 1} of {totalPages}</span>
-              <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} style={{ fontSize: 12, padding: '4px 10px', border: '1px solid #ddd', borderRadius: 6, background: '#fff', cursor: page >= totalPages - 1 ? 'default' : 'pointer', opacity: page >= totalPages - 1 ? 0.35 : 1 }}>Next →</button>
+              <button onClick={() => goToPage(Math.min(totalPages - 1, page + 1))} disabled={page >= totalPages - 1} style={{ fontSize: 12, padding: '4px 10px', border: '1px solid #ddd', borderRadius: 6, background: '#fff', cursor: page >= totalPages - 1 ? 'default' : 'pointer', opacity: page >= totalPages - 1 ? 0.35 : 1 }}>Next →</button>
             </div>
             <span>{practices.length.toLocaleString()} total practices</span>
           </div>
@@ -540,9 +568,9 @@ export default function PracticesPage() {
               {filtered.length.toLocaleString()} practices · sorted by {sortLabel(sortKey)}
             </p>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
-              <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{ fontSize: 12, padding: '4px 10px', border: '1px solid #ddd', borderRadius: 6, background: '#fff', cursor: page === 0 ? 'default' : 'pointer', opacity: page === 0 ? 0.35 : 1 }}>← Prev</button>
+              <button onClick={() => goToPage(Math.max(0, page - 1))} disabled={page === 0} style={{ fontSize: 12, padding: '4px 10px', border: '1px solid #ddd', borderRadius: 6, background: '#fff', cursor: page === 0 ? 'default' : 'pointer', opacity: page === 0 ? 0.35 : 1 }}>← Prev</button>
               <span style={{ fontSize: 12, color: '#888' }}>Page {page + 1} of {totalPages}</span>
-              <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} style={{ fontSize: 12, padding: '4px 10px', border: '1px solid #ddd', borderRadius: 6, background: '#fff', cursor: page >= totalPages - 1 ? 'default' : 'pointer', opacity: page >= totalPages - 1 ? 0.35 : 1 }}>Next →</button>
+              <button onClick={() => goToPage(Math.min(totalPages - 1, page + 1))} disabled={page >= totalPages - 1} style={{ fontSize: 12, padding: '4px 10px', border: '1px solid #ddd', borderRadius: 6, background: '#fff', cursor: page >= totalPages - 1 ? 'default' : 'pointer', opacity: page >= totalPages - 1 ? 0.35 : 1 }}>Next →</button>
             </div>
           </div>
         </>
