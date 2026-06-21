@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase'
 import { getInitials, nameToColor } from '@/lib/utils'
 import { loadAtlasCache, peekAtlasCache, saveAtlasCache } from '@/lib/atlas-cache'
 import { replaceListParams, pageFromParams } from '@/lib/list-url'
+import { useListSearch } from '@/lib/use-list-search'
 
 const PAGE_SIZE = 50
 const CACHE_KEY = 'atlas_doctors_v2'
@@ -59,15 +60,11 @@ function PhysiciansPageContent() {
   const [loading, setLoading] = useState(
     () => !peekAtlasCache<Doctor>(CACHE_DB, CACHE_KEY, CACHE_TTL),
   )
-  const search = searchParams.get('q') ?? ''
+  const { search, setSearch } = useListSearch()
   const page = pageFromParams(searchParams)
 
   function patchUrl(updates: Record<string, string | null | undefined>) {
     replaceListParams(pathname, router, searchParams, updates)
-  }
-
-  function setSearchQuery(q: string) {
-    patchUrl({ q: q || null, page: null })
   }
 
   function goToPage(p: number) {
@@ -123,7 +120,7 @@ function PhysiciansPageContent() {
           type="text"
           placeholder="Search physician name or NPI..."
           value={search}
-          onChange={e => setSearchQuery(e.target.value)}
+          onChange={e => setSearch(e.target.value)}
           style={{ fontSize: 13, padding: '7px 11px', height: 36, border: '1px solid #ddd', borderRadius: 8, outline: 'none', width: '100%' }}
         />
       </div>

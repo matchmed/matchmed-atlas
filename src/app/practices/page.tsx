@@ -12,6 +12,7 @@ import {
   type PracticeListRow,
 } from '@/lib/practices-cache'
 import { replaceListParams, pageFromParams, statesFromParams } from '@/lib/list-url'
+import { useListSearch } from '@/lib/use-list-search'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
@@ -85,7 +86,7 @@ function PracticesPageContent() {
   const [loading, setLoading] = useState(
     () => !peekAtlasCache<Practice>(CACHE_DB, CACHE_KEY, CACHE_TTL),
   )
-  const search = searchParams.get('q') ?? ''
+  const { search, setSearch } = useListSearch()
   const selectedStates = useMemo(() => statesFromParams(searchParams), [searchParams])
   const page = pageFromParams(searchParams)
   const mapRef = useRef<mapboxgl.Map | null>(null)
@@ -96,10 +97,6 @@ function PracticesPageContent() {
 
   function patchUrl(updates: Record<string, string | null | undefined>) {
     replaceListParams(pathname, router, searchParams, updates)
-  }
-
-  function setSearchQuery(q: string) {
-    patchUrl({ q: q || null, page: null })
   }
 
   function goToPage(p: number) {
@@ -394,7 +391,7 @@ function PracticesPageContent() {
             className="practices-search-input"
             placeholder="Search practices..."
             value={search}
-            onChange={e => setSearchQuery(e.target.value)}
+            onChange={e => setSearch(e.target.value)}
             style={{ fontSize: 13, padding: '7px 11px', height: 36, border: '1px solid #ddd', borderRadius: 8, outline: 'none', flex: 1, minWidth: 180 }}
           />
 
