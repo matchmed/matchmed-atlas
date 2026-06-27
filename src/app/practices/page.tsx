@@ -13,6 +13,7 @@ import {
 } from '@/lib/practices-cache'
 import { replaceListParams, pageFromParams, statesFromParams } from '@/lib/list-url'
 import { useListSearch } from '@/lib/use-list-search'
+import { invalidateFavoritesCache } from '@/lib/favorites-cache'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
@@ -35,6 +36,44 @@ function sortLabel(key: SortKey): string {
     latest_roster_size: 'roster size',
   }
   return labels[key]
+}
+
+function ShortlistHeart({ filled, onClick }: { filled: boolean; onClick: (e: React.MouseEvent) => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={filled ? 'Remove from shortlist' : 'Add to shortlist'}
+      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 0, flexShrink: 0 }}
+    >
+      <svg width={18} height={18} viewBox="0 0 24 24" fill={filled ? '#E53935' : 'none'} stroke={filled ? '#E53935' : '#888'} strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+      </svg>
+    </button>
+  )
+}
+
+function practicePopupHtml(
+  props: { name: string; location: string; phone?: string; practiceId: string },
+  sl: { text: string; bg: string; color: string },
+  isShortlisted: boolean,
+) {
+  const fill = isShortlisted ? '#E53935' : 'none'
+  const stroke = isShortlisted ? '#E53935' : '#888'
+  return `
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px;">
+      <div style="font-size:14px;font-weight:600;color:#1a1a1a;">${props.name}</div>
+      <button onclick="window.__toggleShortlist('${props.practiceId}')" style="background:none;border:none;cursor:pointer;padding:0;line-height:0;flex-shrink:0;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="${fill}" stroke="${stroke}" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+        </svg>
+      </button>
+    </div>
+    <div style="font-size:12px;color:#888;margin-bottom:4px;">${props.location}</div>
+    ${props.phone ? `<div style="font-size:12px;color:#185FA5;margin-bottom:8px;">${props.phone}</div>` : ''}
+    <div style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;background:${sl.bg};color:${sl.color};margin-bottom:10px;">${sl.text}</div>
+    <button onclick="window.__openPracticeFromMap('${props.practiceId}')" style="display:block;width:100%;padding:7px;background:#185FA5;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;text-align:center;">Open practice →</button>
+  `
 }
 
 function PracticeCard({ practice, onOpen }: { practice: Practice; onOpen: () => void }) {
@@ -94,6 +133,10 @@ function PracticesPageContent() {
   const mapInitedRef = useRef(false)
   const popupRef = useRef<mapboxgl.Popup | null>(null)
   const mapRestoreRef = useRef<{ center: [number, number]; zoom: number } | null>(null)
+  const lastPopupRef = useRef<{ coords: [number, number]; props: Record<string, any> } | null>(null)
+  const shortlistedPracticeIdsRef = useRef<Set<string>>(new Set())
+  const showPracticePopupRef = useRef<(coords: [number, number], props: Record<string, any>) => void>(() => {})
+  const toggleShortlistRef = useRef<(practiceId: string) => void>(() => {})
 
   function patchUrl(updates: Record<string, string | null | undefined>) {
     replaceListParams(pathname, router, searchParams, updates)
@@ -110,6 +153,8 @@ function PracticesPageContent() {
   const [view, setView] = useState<'table' | 'map'>('table')
   const [clusterPractices, setClusterPractices] = useState<any[]>([])
   const [clusterPanelOpen, setClusterPanelOpen] = useState(false)
+  const [shortlistedPracticeIds, setShortlistedPracticeIds] = useState<Set<string>>(new Set())
+  const [profileId, setProfileId] = useState<string | null>(null)
 
   // Load all practices with IndexedDB cache
   useEffect(() => {
@@ -139,6 +184,36 @@ function PracticesPageContent() {
       setLoading(false)
     }
     load()
+  }, [])
+
+  useEffect(() => {
+    async function loadShortlist() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (!profile) return
+
+      setProfileId(profile.id)
+
+      const { data } = await supabase
+        .from('shortlists')
+        .select('practice_id')
+        .eq('physician_id', profile.id)
+
+      if (data) {
+        const ids = new Set(data.map(r => r.practice_id))
+        shortlistedPracticeIdsRef.current = ids
+        setShortlistedPracticeIds(ids)
+      }
+    }
+    loadShortlist()
   }, [])
 
   // Restore map state after returning from practice detail
@@ -235,6 +310,47 @@ function PracticesPageContent() {
     return { text: s.toFixed(1), bg: '#ffebee', color: '#C0392B' }
   }
 
+  function showPracticePopup(coords: [number, number], props: Record<string, any>) {
+    if (!mapRef.current) return
+    lastPopupRef.current = { coords, props }
+    const score = props.score === 'null' || props.score === null ? null : parseFloat(props.score)
+    const sl = scoreLabelLocal(score)
+    const isShortlisted = shortlistedPracticeIdsRef.current.has(props.practiceId)
+    if (popupRef.current) popupRef.current.remove()
+    popupRef.current = new mapboxgl.Popup({ closeButton: true, maxWidth: '240px' })
+      .setLngLat(coords)
+      .setHTML(practicePopupHtml(props as { name: string; location: string; phone?: string; practiceId: string }, sl, isShortlisted))
+      .addTo(mapRef.current)
+  }
+
+  async function toggleShortlist(practiceId: string) {
+    if (!profileId) return
+    const supabase = createClient()
+    const isShortlisted = shortlistedPracticeIdsRef.current.has(practiceId)
+
+    setShortlistedPracticeIds(prev => {
+      const next = new Set(prev)
+      if (isShortlisted) next.delete(practiceId)
+      else next.add(practiceId)
+      shortlistedPracticeIdsRef.current = next
+      return next
+    })
+
+    if (isShortlisted) {
+      await supabase.from('shortlists').delete().eq('physician_id', profileId).eq('practice_id', practiceId)
+    } else {
+      await supabase.from('shortlists').insert({ physician_id: profileId, practice_id: practiceId })
+    }
+    invalidateFavoritesCache()
+
+    if (lastPopupRef.current?.props.practiceId === practiceId) {
+      showPracticePopupRef.current(lastPopupRef.current.coords, lastPopupRef.current.props)
+    }
+  }
+
+  showPracticePopupRef.current = showPracticePopup
+  toggleShortlistRef.current = toggleShortlist
+
   function openPractice(practiceId: string) {
     router.push(`/practices/${practiceId}`)
   }
@@ -254,6 +370,7 @@ function PracticesPageContent() {
 
   useEffect(() => {
     (window as any).__openPracticeFromMap = openPracticeFromMap
+    ;(window as any).__toggleShortlist = (practiceId: string) => toggleShortlistRef.current(practiceId)
   }, [])
 
   // Map init
@@ -326,20 +443,8 @@ function PracticesPageContent() {
 
       map.on('click', 'unclustered', e => {
         const props = e.features![0].properties!
-        const coords = (e.features![0].geometry as any).coordinates.slice()
-        const score = props.score === 'null' || props.score === null ? null : parseFloat(props.score)
-        const sl = scoreLabelLocal(score)
-        if (popupRef.current) popupRef.current.remove()
-        popupRef.current = new mapboxgl.Popup({ closeButton: true, maxWidth: '240px' })
-          .setLngLat(coords)
-          .setHTML(`
-            <div style="font-size:14px;font-weight:600;color:#1a1a1a;margin-bottom:4px;">${props.name}</div>
-            <div style="font-size:12px;color:#888;margin-bottom:4px;">${props.location}</div>
-            ${props.phone ? `<div style="font-size:12px;color:#185FA5;margin-bottom:8px;">${props.phone}</div>` : ''}
-            <div style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;background:${sl.bg};color:${sl.color};margin-bottom:10px;">${sl.text}</div>
-            <button onclick="window.__openPracticeFromMap('${props.practiceId}')" style="display:block;width:100%;padding:7px;background:#185FA5;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;text-align:center;">Open practice →</button>
-          `)
-          .addTo(map)
+        const coords = (e.features![0].geometry as any).coordinates.slice() as [number, number]
+        showPracticePopupRef.current(coords, props)
       })
 
       map.on('mouseenter', 'unclustered', () => map.getCanvas().style.cursor = 'pointer')
@@ -649,22 +754,28 @@ function PracticesPageContent() {
                   const score = practice.score === 'null' || practice.score === null ? null : parseFloat(practice.score)
                   return (
                   <div key={practice.practiceId || i} style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0' }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: '#111', marginBottom: 4 }}>
-                      {practice.name}
-                      {score !== null && (
-                        <span style={{
-                          display: 'inline-block',
-                          marginLeft: '8px',
-                          fontSize: 12,
-                          fontWeight: 600,
-                          padding: '2px 7px',
-                          borderRadius: 4,
-                          background: scoreLabel(score).bg,
-                          color: scoreLabel(score).color,
-                        }}>
-                          {score.toFixed(1)}
-                        </span>
-                      )}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 4 }}>
+                      <div style={{ flex: 1, fontSize: 14, fontWeight: 600, color: '#111' }}>
+                        {practice.name}
+                        {score !== null && (
+                          <span style={{
+                            display: 'inline-block',
+                            marginLeft: '8px',
+                            fontSize: 12,
+                            fontWeight: 600,
+                            padding: '2px 7px',
+                            borderRadius: 4,
+                            background: scoreLabel(score).bg,
+                            color: scoreLabel(score).color,
+                          }}>
+                            {score.toFixed(1)}
+                          </span>
+                        )}
+                      </div>
+                      <ShortlistHeart
+                        filled={shortlistedPracticeIds.has(practice.practiceId)}
+                        onClick={e => { e.stopPropagation(); toggleShortlist(practice.practiceId) }}
+                      />
                     </div>
                     <div style={{ fontSize: 12, color: '#888', marginBottom: 10 }}>{practice.location}</div>
                     <button
