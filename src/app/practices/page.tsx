@@ -108,6 +108,8 @@ function PracticesPageContent() {
   const [sortKey, setSortKey] = useState<SortKey>('retention_score')
   const [sortDir, setSortDir] = useState<1 | -1>(-1)
   const [view, setView] = useState<'table' | 'map'>('table')
+  const [clusterPractices, setClusterPractices] = useState<any[]>([])
+  const [clusterPanelOpen, setClusterPanelOpen] = useState(false)
 
   // Load all practices with IndexedDB cache
   useEffect(() => {
@@ -257,8 +259,11 @@ function PracticesPageContent() {
   // Map init
   useEffect(() => {
     if (view !== 'map' || mapInitedRef.current || !mapContainerRef.current) return
+
     const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
     if (!token) return
+
+    setTimeout(() => {
     mapboxgl.accessToken = token
 
     const restore = mapRestoreRef.current
@@ -288,10 +293,34 @@ function PracticesPageContent() {
       })
 
       map.on('click', 'clusters', e => {
-        const f = map.queryRenderedFeatures(e.point, { layers: ['clusters'] })
+        e.originalEvent.stopPropagation()
+        const f = map.queryRenderedFeatures(e.point, { layers: ['clusters', 'cluster-count'] })
+        if (!f || !f.length) return
         const src = map.getSource('practices') as mapboxgl.GeoJSONSource
-        src.getClusterExpansionZoom(f[0].properties!.cluster_id, (err, zoom) => {
-          if (!err) map.easeTo({ center: (f[0].geometry as any).coordinates, zoom: zoom! })
+        const clusterId = f[0].properties!.cluster_id
+        src.getClusterLeaves(clusterId, 100, 0, (err, features) => {
+          if (err || !features) return
+          const leaves = features.map(f => f.properties)
+          setTimeout(() => {
+            setClusterPractices(leaves)
+            setClusterPanelOpen(true)
+          }, 0)
+        })
+      })
+
+      map.on('click', 'cluster-count', e => {
+        e.originalEvent.stopPropagation()
+        const f = map.queryRenderedFeatures(e.point, { layers: ['clusters', 'cluster-count'] })
+        if (!f || !f.length) return
+        const src = map.getSource('practices') as mapboxgl.GeoJSONSource
+        const clusterId = f[0].properties!.cluster_id
+        src.getClusterLeaves(clusterId, 100, 0, (err, features) => {
+          if (err || !features) return
+          const leaves = features.map(f => f.properties)
+          setTimeout(() => {
+            setClusterPractices(leaves)
+            setClusterPanelOpen(true)
+          }, 0)
         })
       })
 
@@ -318,6 +347,7 @@ function PracticesPageContent() {
       map.on('mouseenter', 'clusters', () => map.getCanvas().style.cursor = 'pointer')
       map.on('mouseleave', 'clusters', () => map.getCanvas().style.cursor = '')
     })
+    }, 0)
   }, [view])
 
   // Update map when filter changes
@@ -589,6 +619,48 @@ function PracticesPageContent() {
           <div style={{ position: 'absolute', bottom: 12, right: 12, zIndex: 10, background: 'rgba(255,255,255,0.92)', borderRadius: 8, padding: '7px 12px', fontSize: 12, color: '#888', boxShadow: '0 1px 4px rgba(0,0,0,0.12)' }}>
             <span style={{ color: '#333', fontWeight: 500 }}>{filtered.filter(r => r.latitude).length.toLocaleString()}</span> practices
           </div>
+          {clusterPanelOpen && (
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              width: 320,
+              zIndex: 20,
+              background: '#fff',
+              borderLeft: '1px solid #e8e8e8',
+              boxShadow: '-4px 0 16px rgba(0,0,0,0.08)',
+              display: 'flex',
+              flexDirection: 'column',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid #e8e8e8' }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{clusterPractices.length} practices</span>
+                <button
+                  type="button"
+                  onClick={() => { setClusterPanelOpen(false); setClusterPractices([]) }}
+                  aria-label="Close panel"
+                  style={{ background: 'none', border: 'none', fontSize: 20, lineHeight: 1, color: '#888', cursor: 'pointer', padding: '0 4px' }}
+                >
+                  ×
+                </button>
+              </div>
+              <div style={{ flex: 1, overflowY: 'auto' }}>
+                {clusterPractices.map((practice, i) => (
+                  <div key={practice.practiceId || i} style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0' }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: '#111', marginBottom: 4 }}>{practice.name}</div>
+                    <div style={{ fontSize: 12, color: '#888', marginBottom: 10 }}>{practice.location}</div>
+                    <button
+                      type="button"
+                      onClick={() => openPracticeFromMap(practice.practiceId)}
+                      style={{ fontSize: 12, color: '#185FA5', cursor: 'pointer', padding: '4px 10px', border: '1px solid #185FA5', borderRadius: 6, background: 'none', whiteSpace: 'nowrap' }}
+                    >
+                      Open →
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

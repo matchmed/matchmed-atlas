@@ -111,7 +111,7 @@ function UsersTab() {
       email: profile.email,
       options: { 
         shouldCreateUser: true,
-        emailRedirectTo: 'https://atlas.matchmed.app/auth/callback'
+        emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : 'https://atlas.matchmed.app/auth/callback'
       }
     })
     setSentMap(prev => ({ ...prev, [profile.id]: true }))
