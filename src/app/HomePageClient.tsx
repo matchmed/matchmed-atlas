@@ -52,7 +52,7 @@ export default function HomePageClient() {
         .eq('user_id', sessionUser.id)
         .maybeSingle()
 
-      if (profile && !profile.onboarding_complete) {
+      if (!profile || !profile.onboarding_complete) {
         router.replace('/onboarding')
         return
       }
