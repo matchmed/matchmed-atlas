@@ -645,9 +645,27 @@ function PracticesPageContent() {
                 </button>
               </div>
               <div style={{ flex: 1, overflowY: 'auto' }}>
-                {clusterPractices.map((practice, i) => (
+                {clusterPractices.map((practice, i) => {
+                  const score = practice.score === 'null' || practice.score === null ? null : parseFloat(practice.score)
+                  return (
                   <div key={practice.practiceId || i} style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0' }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: '#111', marginBottom: 4 }}>{practice.name}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: '#111', marginBottom: 4 }}>
+                      {practice.name}
+                      {score !== null && (
+                        <span style={{
+                          display: 'inline-block',
+                          marginLeft: '8px',
+                          fontSize: 12,
+                          fontWeight: 600,
+                          padding: '2px 7px',
+                          borderRadius: 4,
+                          background: scoreLabel(score).bg,
+                          color: scoreLabel(score).color,
+                        }}>
+                          {score.toFixed(1)}
+                        </span>
+                      )}
+                    </div>
                     <div style={{ fontSize: 12, color: '#888', marginBottom: 10 }}>{practice.location}</div>
                     <button
                       type="button"
@@ -657,7 +675,8 @@ function PracticesPageContent() {
                       Open →
                     </button>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}
