@@ -39,7 +39,6 @@ const PRACTICE_SETTINGS = [
   'Private Practice (independent)',
   'Private Equity-backed group',
   'Hospital / Health System employed',
-  'Open to multiple',
 ]
 
 const inputStyle = {
@@ -154,7 +153,7 @@ export default function OnboardingPage() {
     start_year: '',
     clinical_focus: [] as string[],
     training_status: '',
-    practice_setting_preference: '',
+    practice_setting_preference: [] as string[],
     current_practice: '',
     procedures_performed: [] as string[],
     procedures_desired: [] as string[],
@@ -291,18 +290,7 @@ export default function OnboardingPage() {
                 </div>
               </div>
 
-              <div style={fieldStyle}>
-                <label style={labelStyle}>Practice setting preference *</label>
-                <div style={{ position: 'relative' }}>
-                  <select style={inputStyle} value={form.practice_setting_preference} onChange={e => setForm(f => ({ ...f, practice_setting_preference: e.target.value }))}>
-                    <option value="">Select...</option>
-                    {PRACTICE_SETTINGS.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                  <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                    <svg width="16" height="16" fill="none" stroke="#6b7280" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                  </div>
-                </div>
-              </div>
+              <MultiSelect label="Practice setting preference *" options={PRACTICE_SETTINGS} value={form.practice_setting_preference} onChange={v => setForm(f => ({ ...f, practice_setting_preference: v }))} />
 
               <div style={fieldStyle}>
                 <label style={labelStyle}>Current training program or practice *</label>
