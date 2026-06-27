@@ -34,6 +34,13 @@ const PROCEDURES = [
 
 const START_YEARS = ['2026','2027','2028','2029','2030','2031 or later']
 const TRAINING_STATUS = ['Resident','Fellow','Attending']
+const PRACTICE_SETTINGS = [
+  'Academic / University',
+  'Private Practice (independent)',
+  'Private Equity-backed group',
+  'Hospital / Health System employed',
+  'Open to multiple',
+]
 
 const inputStyle = {
   width: '100%',
@@ -147,6 +154,7 @@ export default function OnboardingPage() {
     start_year: '',
     clinical_focus: [] as string[],
     training_status: '',
+    practice_setting_preference: '',
     current_practice: '',
     procedures_performed: [] as string[],
     procedures_desired: [] as string[],
@@ -276,6 +284,19 @@ export default function OnboardingPage() {
                   <select style={inputStyle} value={form.training_status} onChange={e => setForm(f => ({ ...f, training_status: e.target.value }))}>
                     <option value="">Select...</option>
                     {TRAINING_STATUS.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                    <svg width="16" height="16" fill="none" stroke="#6b7280" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  </div>
+                </div>
+              </div>
+
+              <div style={fieldStyle}>
+                <label style={labelStyle}>Practice setting preference *</label>
+                <div style={{ position: 'relative' }}>
+                  <select style={inputStyle} value={form.practice_setting_preference} onChange={e => setForm(f => ({ ...f, practice_setting_preference: e.target.value }))}>
+                    <option value="">Select...</option>
+                    {PRACTICE_SETTINGS.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                   <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
                     <svg width="16" height="16" fill="none" stroke="#6b7280" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
