@@ -111,7 +111,7 @@ export default function HomePageClient() {
           Ophthalmology Workforce Intelligence
         </h1>
         <p style={{ fontSize: 15, color: '#666', lineHeight: 1.6, maxWidth: 600 }}>
-          Every score on Atlas is derived from publicly available CMS Medicare data — no surveys, no self-reporting, no recruiter claims.
+          Every score on Atlas is derived from publicly available CMS Medicare data (no surveys, no self-reporting, no recruiter claims).
           Longitudinal physician-practice career data covering 2019 to present.
         </p>
       </div>

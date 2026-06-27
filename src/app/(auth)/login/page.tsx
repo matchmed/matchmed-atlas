@@ -177,9 +177,9 @@ export default function LoginPage() {
         />
         <div className="auth-split-hero-content">
           <blockquote style={{ fontSize: 20, fontWeight: 500, lineHeight: 1.5, marginBottom: 12, letterSpacing: '-0.2px' }}>
-            "The only platform that shows you how practices actually retain physicians — backed by real CMS data."
+            "The only platform that shows you how practices actually retain physicians, backed by real CMS data."
           </blockquote>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', margin: 0 }}>MatchMed Atlas — Ophthalmology Workforce Intelligence</p>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', margin: 0 }}>MatchMed Atlas · Ophthalmology Workforce Intelligence</p>
         </div>
       </div>
     </div>

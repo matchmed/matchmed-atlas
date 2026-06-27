@@ -378,7 +378,7 @@ export default function OnboardingPage() {
           <blockquote style={{ fontSize: 20, fontWeight: 500, lineHeight: 1.5, marginBottom: 12, letterSpacing: '-0.2px' }}>
             "Built on 8 years of CMS Medicare data covering 6,400+ ophthalmology practices and 22,000+ physician careers."
           </blockquote>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', margin: 0 }}>MatchMed Atlas — Ophthalmology Workforce Intelligence</p>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', margin: 0 }}>MatchMed Atlas · Ophthalmology Workforce Intelligence</p>
         </div>
       </div>
 
