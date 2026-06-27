@@ -153,6 +153,7 @@ function PracticesPageContent() {
   const [view, setView] = useState<'table' | 'map'>('table')
   const [clusterPractices, setClusterPractices] = useState<any[]>([])
   const [clusterPanelOpen, setClusterPanelOpen] = useState(false)
+  const [highlightedClusterId, setHighlightedClusterId] = useState<number | null>(null)
   const [shortlistedPracticeIds, setShortlistedPracticeIds] = useState<Set<string>>(new Set())
   const [profileId, setProfileId] = useState<string | null>(null)
 
@@ -398,6 +399,20 @@ function PracticesPageContent() {
       mapInitedRef.current = true
       const geo = buildGeoJSON(filtered)
       map.addSource('practices', { type: 'geojson', data: geo, cluster: true, clusterMaxZoom: 10, clusterRadius: 40 })
+      map.addLayer({
+        id: 'cluster-highlight',
+        type: 'circle',
+        source: 'practices',
+        filter: ['==', ['get', 'cluster_id'], -1],
+        paint: {
+          'circle-color': '#185FA5',
+          'circle-radius': ['+', ['step', ['get', 'point_count'], 16, 10, 22, 50, 28], 14],
+          'circle-opacity': 0.22,
+          'circle-stroke-width': 4,
+          'circle-stroke-color': '#185FA5',
+          'circle-stroke-opacity': 0.55,
+        },
+      })
       map.addLayer({ id: 'clusters', type: 'circle', source: 'practices', filter: ['has', 'point_count'],
         paint: { 'circle-color': '#185FA5', 'circle-radius': ['step', ['get', 'point_count'], 16, 10, 22, 50, 28], 'circle-opacity': 0.85, 'circle-stroke-width': 1.5, 'circle-stroke-color': 'rgba(255,255,255,0.4)' }
       })
@@ -421,6 +436,7 @@ function PracticesPageContent() {
           setTimeout(() => {
             setClusterPractices(leaves)
             setClusterPanelOpen(true)
+            setHighlightedClusterId(clusterId)
           }, 0)
         })
       })
@@ -437,6 +453,7 @@ function PracticesPageContent() {
           setTimeout(() => {
             setClusterPractices(leaves)
             setClusterPanelOpen(true)
+            setHighlightedClusterId(clusterId)
           }, 0)
         })
       })
@@ -454,6 +471,25 @@ function PracticesPageContent() {
     })
     }, 0)
   }, [view])
+
+  useEffect(() => {
+    if (!mapInitedRef.current || !mapRef.current) return
+    const map = mapRef.current
+    if (!map.getLayer('cluster-highlight')) return
+
+    const id = highlightedClusterId ?? -1
+    map.setFilter('cluster-highlight', ['==', ['get', 'cluster_id'], id])
+
+    if (highlightedClusterId !== null) {
+      map.setPaintProperty('clusters', 'circle-opacity', ['case', ['==', ['get', 'cluster_id'], highlightedClusterId], 1, 0.85])
+      map.setPaintProperty('clusters', 'circle-stroke-width', ['case', ['==', ['get', 'cluster_id'], highlightedClusterId], 3.5, 1.5])
+      map.setPaintProperty('clusters', 'circle-stroke-color', ['case', ['==', ['get', 'cluster_id'], highlightedClusterId], '#185FA5', 'rgba(255,255,255,0.4)'])
+    } else {
+      map.setPaintProperty('clusters', 'circle-opacity', 0.85)
+      map.setPaintProperty('clusters', 'circle-stroke-width', 1.5)
+      map.setPaintProperty('clusters', 'circle-stroke-color', 'rgba(255,255,255,0.4)')
+    }
+  }, [highlightedClusterId])
 
   // Update map when filter changes
   useEffect(() => {
@@ -742,7 +778,7 @@ function PracticesPageContent() {
                 <span style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{clusterPractices.length} practices</span>
                 <button
                   type="button"
-                  onClick={() => { setClusterPanelOpen(false); setClusterPractices([]) }}
+                  onClick={() => { setClusterPanelOpen(false); setClusterPractices([]); setHighlightedClusterId(null) }}
                   aria-label="Close panel"
                   style={{ background: 'none', border: 'none', fontSize: 20, lineHeight: 1, color: '#888', cursor: 'pointer', padding: '0 4px' }}
                 >
