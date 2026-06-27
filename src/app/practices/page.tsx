@@ -268,7 +268,7 @@ function PracticesPageContent() {
 
     const restore = mapRestoreRef.current
     const map = new mapboxgl.Map({
-      container: mapContainerRef.current,
+      container: mapContainerRef.current!,
       style: 'mapbox://styles/mapbox/light-v11',
       center: restore?.center || [-96, 38],
       zoom: restore?.zoom || 4,
