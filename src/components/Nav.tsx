@@ -4,6 +4,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { isAuthPage } from '@/lib/auth-paths'
 import { useState, useEffect, useRef } from 'react'
+import Logo from './Logo'
 
 const primaryTabs = [
   {
@@ -116,13 +117,8 @@ export default function Nav() {
     <>
       <nav className="nav-top">
         <div className="nav-top-inner">
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 24, flexShrink: 0, textDecoration: 'none' }}>
-            <img
-              src="/MatchMed_Logo.jpg"
-              alt="MatchMed Atlas"
-              style={{ width: 28, height: 28, borderRadius: 6 }}
-            />
-            <span className="nav-logo-text">MatchMed Atlas</span>
+          <Link href="/" style={{ marginRight: 24, flexShrink: 0, textDecoration: 'none' }}>
+            <Logo size="sm" />
           </Link>
 
           <div className="nav-links-desktop">
@@ -160,16 +156,16 @@ export default function Nav() {
                 right: 0,
                 top: 'calc(100% + 8px)',
                 background: 'white',
-                border: '1px solid #e5e7eb',
+                border: '1px solid #e0ddd8',
                 borderRadius: 10,
-                boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
                 minWidth: 200,
                 zIndex: 200,
                 overflow: 'hidden',
               }}>
-                <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0' }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#111', marginBottom: 2 }}>{initials}</div>
-                  <div style={{ fontSize: 12, color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userEmail}</div>
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid #e0ddd8' }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#141210', marginBottom: 2 }}>{initials}</div>
+                  <div style={{ fontSize: 12, color: '#8A8680', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userEmail}</div>
                 </div>
 
                 <div style={{ padding: '6px 0' }}>
@@ -185,7 +181,7 @@ export default function Nav() {
                           gap: 10,
                           padding: '9px 16px',
                           fontSize: 13,
-                          color: '#374151',
+                          color: '#141210',
                           textDecoration: 'none',
                         }}
                       >
@@ -203,7 +199,7 @@ export default function Nav() {
                       gap: 10,
                       padding: '9px 16px',
                       fontSize: 13,
-                      color: '#374151',
+                      color: '#141210',
                       textDecoration: 'none',
                     }}
                   >
@@ -221,7 +217,7 @@ export default function Nav() {
                       gap: 10,
                       padding: '9px 16px',
                       fontSize: 13,
-                      color: '#374151',
+                      color: '#141210',
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',

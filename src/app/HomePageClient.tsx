@@ -87,10 +87,10 @@ export default function HomePageClient() {
   }
 
   const statCards = [
-    { label: 'Ophthalmology Practices', value: stats?.practices.toLocaleString() ?? '—', href: '/practices', color: '#1C4A45', bg: '#E8F0EF' },
-    { label: 'Physician Careers Tracked', value: stats?.doctors.toLocaleString() ?? '—', href: '/physicians', color: '#1A6B3A', bg: '#D4EDDA' },
-    { label: 'Career Affiliations', value: stats?.affiliations.toLocaleString() ?? '—', href: '/practices', color: '#7B3FA0', bg: '#EEE0F8' },
-    { label: 'Active Job Listings', value: stats?.jobs.toLocaleString() ?? '—', href: '/jobs', color: '#1A6B6B', bg: '#D4EDED' },
+    { label: 'Ophthalmology Practices', value: stats?.practices.toLocaleString() ?? '—', href: '/practices' },
+    { label: 'Physician Careers Tracked', value: stats?.doctors.toLocaleString() ?? '—', href: '/physicians' },
+    { label: 'Career Affiliations', value: stats?.affiliations.toLocaleString() ?? '—', href: '/practices' },
+    { label: 'Active Job Listings', value: stats?.jobs.toLocaleString() ?? '—', href: '/jobs' },
   ]
 
   const quickLinks = [
@@ -119,14 +119,14 @@ export default function HomePageClient() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 40 }}>
         {statCards.map(s => (
           <Link key={s.label} href={s.href} style={{
-            background: s.bg,
+            background: '#ffffff',
             borderRadius: 12,
             padding: '18px 16px',
-            border: `1px solid ${s.color}22`,
+            border: '1px solid #e0ddd8',
             display: 'block',
             transition: 'transform 0.12s, box-shadow 0.12s',
           }}>
-            <div style={{ fontSize: 26, fontWeight: 700, color: s.color, lineHeight: 1.1, marginBottom: 6 }}>
+            <div style={{ fontSize: 26, fontWeight: 700, color: '#1a1a1a', lineHeight: 1.1, marginBottom: 6 }}>
               {s.value}
             </div>
             <div style={{ fontSize: 12, color: '#666', lineHeight: 1.4 }}>{s.label}</div>
