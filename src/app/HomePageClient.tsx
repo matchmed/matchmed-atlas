@@ -3,6 +3,13 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
+import {
+  PracticesIcon,
+  PhysiciansIcon,
+  FavoritesIcon,
+  JobsIcon,
+  ScoringIcon,
+} from '@/components/nav-icons'
 
 interface Stats {
   practices: number
@@ -94,18 +101,18 @@ export default function HomePageClient() {
   ]
 
   const quickLinks = [
-    { href: '/practices', label: 'Browse Practices', desc: 'Search 6,800+ ophthalmology practices with retention scores and career history', icon: '🏥' },
-    { href: '/physicians', label: 'Physician Directory', desc: 'Explore 22,000+ ophthalmologist career records from CMS data', icon: '👤' },
-    { href: '/jobs', label: 'Job Opportunities', desc: 'View open positions from practices actively recruiting', icon: '💼' },
-    { href: '/favorites', label: 'My Favorites', desc: 'Practices you have saved for later review', icon: '★' },
-    { href: '/scoring-methodology', label: 'How Scores Work', desc: 'Understand the data behind Retention Scores and Experience Levels', icon: '📊' },
+    { href: '/practices', label: 'Browse Practices', desc: 'Search 6,800+ ophthalmology practices with retention scores and career history', icon: <PracticesIcon size={20} /> },
+    { href: '/physicians', label: 'Physician Directory', desc: 'Explore 22,000+ ophthalmologist career records from CMS data', icon: <PhysiciansIcon size={20} /> },
+    { href: '/jobs', label: 'Job Opportunities', desc: 'View open positions from practices actively recruiting', icon: <JobsIcon size={20} /> },
+    { href: '/favorites', label: 'My Favorites', desc: 'Practices you have saved for later review', icon: <FavoritesIcon size={20} /> },
+    { href: '/scoring-methodology', label: 'How Scores Work', desc: 'Understand the data behind Retention Scores and Experience Levels', icon: <ScoringIcon size={20} /> },
   ]
 
   return (
     <div>
       <div style={{ marginBottom: 40 }}>
         <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#1C4A45', marginBottom: 10 }}>
-          Atlas by MatchMed
+          Ophthalmology Workforce Intelligence
         </div>
         <h1 className="font-serif" style={{ fontSize: 32, fontWeight: 700, color: '#1a1a1a', letterSpacing: '-0.02em', marginBottom: 10, lineHeight: 1.2 }}>
           Ophthalmology Workforce Intelligence
@@ -141,7 +148,7 @@ export default function HomePageClient() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10 }}>
           {quickLinks.map(l => (
             <Link key={l.href} href={l.href} className="bg-canvas" style={{
-              border: '1px solid #e8e8e8',
+              border: '1px solid #e0ddd8',
               borderRadius: 10,
               padding: '16px 18px',
               display: 'flex',
@@ -149,7 +156,19 @@ export default function HomePageClient() {
               alignItems: 'flex-start',
               transition: 'box-shadow 0.12s, border-color 0.12s',
             }}>
-              <span style={{ fontSize: 22, flexShrink: 0, marginTop: 1 }}>{l.icon}</span>
+              <div style={{
+                width: 36,
+                height: 36,
+                borderRadius: 8,
+                background: '#E8F0EF',
+                color: '#1C4A45',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                {l.icon}
+              </div>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', marginBottom: 4 }}>{l.label}</div>
                 <div style={{ fontSize: 12, color: '#888', lineHeight: 1.5 }}>{l.desc}</div>
