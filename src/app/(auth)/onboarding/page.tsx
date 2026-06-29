@@ -108,9 +108,9 @@ function MultiSelect({ label, options, value, onChange }: {
               <div
                 key={opt}
                 onClick={() => toggle(opt)}
-                style={{ padding: '10px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#111', background: value.includes(opt) ? '#eff6ff' : 'white' }}
+                style={{ padding: '10px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#111', background: value.includes(opt) ? '#E8F0EF' : 'white' }}
               >
-                <div style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${value.includes(opt) ? '#185FA5' : '#d1d5db'}`, background: value.includes(opt) ? '#185FA5' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${value.includes(opt) ? '#1C4A45' : '#d1d5db'}`, background: value.includes(opt) ? '#1C4A45' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   {value.includes(opt) && (
                     <svg width="10" height="10" fill="none" stroke="white" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -126,7 +126,7 @@ function MultiSelect({ label, options, value, onChange }: {
       {value.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
           {value.map(v => (
-            <span key={v} style={{ background: '#eff6ff', color: '#185FA5', fontSize: 12, padding: '3px 8px', borderRadius: 99, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span key={v} style={{ background: '#E8F0EF', color: '#1C4A45', fontSize: 12, padding: '3px 8px', borderRadius: 99, display: 'flex', alignItems: 'center', gap: 4 }}>
               {v}
               <span onClick={() => toggle(v)} style={{ cursor: 'pointer', fontWeight: 700 }}>×</span>
             </span>
@@ -206,7 +206,7 @@ export default function OnboardingPage() {
 
           {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32 }}>
-            <div style={{ width: 32, height: 32, background: '#185FA5', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 32, height: 32, background: '#1C4A45', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="18" height="18" fill="none" stroke="white" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
               </svg>
@@ -217,13 +217,13 @@ export default function OnboardingPage() {
           {/* Progress */}
           <div style={{ display: 'flex', gap: 6, marginBottom: 32 }}>
             {[1,2].map(s => (
-              <div key={s} style={{ flex: 1, height: 3, borderRadius: 99, background: step >= s ? '#185FA5' : '#e5e7eb' }} />
+              <div key={s} style={{ flex: 1, height: 3, borderRadius: 99, background: step >= s ? '#1C4A45' : '#e5e7eb' }} />
             ))}
           </div>
 
           {step === 1 && (
             <>
-              <h1 style={{ fontSize: 26, fontWeight: 700, color: '#111', marginBottom: 4, letterSpacing: '-0.4px' }}>Welcome!</h1>
+              <h1 className="font-serif" style={{ fontSize: 26, fontWeight: 700, color: '#111', marginBottom: 4, letterSpacing: '-0.4px' }}>Welcome!</h1>
               <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 28, lineHeight: 1.5 }}>Please answer a few questions to complete your profile.</p>
 
               <div style={fieldStyle}>
@@ -304,7 +304,7 @@ export default function OnboardingPage() {
               <button
                 onClick={() => setStep(2)}
                 disabled={!form.first_name || !form.last_name || !form.npi || !form.training_status}
-                style={{ width: '100%', padding: '13px 16px', background: (!form.first_name || !form.last_name || !form.npi || !form.training_status) ? '#93c5fd' : '#185FA5', color: 'white', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: 'pointer', marginTop: 8, boxSizing: 'border-box' as const }}
+                style={{ width: '100%', padding: '13px 16px', background: (!form.first_name || !form.last_name || !form.npi || !form.training_status) ? '#8ab4ae' : '#1C4A45', color: 'white', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: 'pointer', marginTop: 8, boxSizing: 'border-box' as const }}
               >
                 Next
               </button>
@@ -313,18 +313,18 @@ export default function OnboardingPage() {
 
           {step === 2 && (
             <>
-              <h1 style={{ fontSize: 26, fontWeight: 700, color: '#111', marginBottom: 4, letterSpacing: '-0.4px' }}>Almost done</h1>
+              <h1 className="font-serif" style={{ fontSize: 26, fontWeight: 700, color: '#111', marginBottom: 4, letterSpacing: '-0.4px' }}>Almost done</h1>
               <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 28, lineHeight: 1.5 }}>Just a couple of agreements before we get started.</p>
 
               <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 20, marginBottom: 16 }}>
                 <p style={{ fontSize: 13, fontWeight: 600, color: '#111', marginBottom: 10 }}>Terms of Service & Privacy Policy *</p>
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
-                  <input type="checkbox" checked={form.terms_accepted} onChange={e => setForm(f => ({ ...f, terms_accepted: e.target.checked }))} style={{ marginTop: 2, accentColor: '#185FA5' }} />
+                  <input type="checkbox" checked={form.terms_accepted} onChange={e => setForm(f => ({ ...f, terms_accepted: e.target.checked }))} style={{ marginTop: 2, accentColor: '#1C4A45' }} />
                   <span style={{ fontSize: 13, color: '#374151', lineHeight: 1.5 }}>
                     I agree to MatchMed's{' '}
-                    <a href="https://atlas.matchmed.app/terms-and-conditions" target="_blank" rel="noopener noreferrer" style={{ color: '#185FA5' }}>Terms of Service</a>
+                    <a href="https://atlas.matchmed.app/terms-and-conditions" target="_blank" rel="noopener noreferrer" style={{ color: '#1C4A45' }}>Terms of Service</a>
                     {' '}&{' '}
-                    <a href="https://atlas.matchmed.app/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: '#185FA5' }}>Privacy Policy</a>.
+                    <a href="https://atlas.matchmed.app/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: '#1C4A45' }}>Privacy Policy</a>.
                   </span>
                 </label>
               </div>
@@ -332,7 +332,7 @@ export default function OnboardingPage() {
               <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 20, marginBottom: 24 }}>
                 <p style={{ fontSize: 13, fontWeight: 600, color: '#111', marginBottom: 10 }}>Introductions & Opportunities</p>
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
-                  <input type="checkbox" checked={form.data_sharing} onChange={e => setForm(f => ({ ...f, data_sharing: e.target.checked }))} style={{ marginTop: 2, accentColor: '#185FA5' }} />
+                  <input type="checkbox" checked={form.data_sharing} onChange={e => setForm(f => ({ ...f, data_sharing: e.target.checked }))} style={{ marginTop: 2, accentColor: '#1C4A45' }} />
                   <span style={{ fontSize: 13, color: '#374151', lineHeight: 1.5 }}>
                     I agree to be contactable by ophthalmology practices and industry partners. This is what keeps Atlas free for physicians. I can opt out at any time.
                   </span>
@@ -355,7 +355,7 @@ export default function OnboardingPage() {
                 <button
                   onClick={handleSubmit}
                   disabled={loading}
-                  style={{ flex: 1, padding: '13px 16px', background: loading ? '#93c5fd' : '#185FA5', color: 'white', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer' }}
+                  style={{ flex: 1, padding: '13px 16px', background: loading ? '#8ab4ae' : '#1C4A45', color: 'white', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer' }}
                 >
                   {loading ? 'Saving...' : 'Submit'}
                 </button>

@@ -133,7 +133,7 @@ function PhysiciansPageContent() {
             <table className="data-table data-table-physicians">
               <thead>
                 <tr>
-                  <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#185FA5', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #e8e8e8', background: '#f7f7f7', whiteSpace: 'nowrap' }}>
+                  <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#1C4A45', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #e8e8e8', background: '#f7f7f7', whiteSpace: 'nowrap' }}>
                     Name ↑
                   </th>
                   <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #e8e8e8', background: '#f7f7f7', whiteSpace: 'nowrap' }}>
@@ -161,7 +161,7 @@ function PhysiciansPageContent() {
                     <td style={{ padding: '11px 14px', borderTop: '1px solid #f0f0f0' }}>
                       <button
                         onClick={e => { e.stopPropagation(); openPhysician(d.id) }}
-                        style={{ fontSize: 12, color: '#185FA5', cursor: 'pointer', padding: '4px 10px', border: '1px solid #185FA5', borderRadius: 6, background: 'none', whiteSpace: 'nowrap' }}
+                        style={{ fontSize: 12, color: '#1C4A45', cursor: 'pointer', padding: '4px 10px', border: '1px solid #1C4A45', borderRadius: 6, background: 'none', whiteSpace: 'nowrap' }}
                       >
                         Open →
                       </button>

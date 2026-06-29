@@ -102,9 +102,9 @@ function MultiSelect({ label, options, value, onChange }: {
               <div
                 key={opt}
                 onClick={() => toggle(opt)}
-                style={{ padding: '10px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#111', background: value.includes(opt) ? '#eff6ff' : 'white' }}
+                style={{ padding: '10px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#111', background: value.includes(opt) ? '#E8F0EF' : 'white' }}
               >
-                <div style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${value.includes(opt) ? '#185FA5' : '#d1d5db'}`, background: value.includes(opt) ? '#185FA5' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${value.includes(opt) ? '#1C4A45' : '#d1d5db'}`, background: value.includes(opt) ? '#1C4A45' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   {value.includes(opt) && (
                     <svg width="10" height="10" fill="none" stroke="white" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -120,7 +120,7 @@ function MultiSelect({ label, options, value, onChange }: {
       {value.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
           {value.map(v => (
-            <span key={v} style={{ background: '#eff6ff', color: '#185FA5', fontSize: 12, padding: '3px 8px', borderRadius: 99, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span key={v} style={{ background: '#E8F0EF', color: '#1C4A45', fontSize: 12, padding: '3px 8px', borderRadius: 99, display: 'flex', alignItems: 'center', gap: 4 }}>
               {v}
               <span onClick={() => toggle(v)} style={{ cursor: 'pointer', fontWeight: 700 }}>×</span>
             </span>
@@ -289,18 +289,18 @@ export default function AccountPage() {
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 8 }}>
-          <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#185FA5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 20, fontWeight: 700 }}>
+          <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#1C4A45', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 20, fontWeight: 700 }}>
             {initials}
           </div>
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: '#111', marginBottom: 2, letterSpacing: '-0.3px' }}>Account settings</h1>
+            <h1 className="font-serif" style={{ fontSize: 22, fontWeight: 700, color: '#111', marginBottom: 2, letterSpacing: '-0.3px' }}>Account settings</h1>
             <p style={{ fontSize: 13, color: '#6b7280' }}>{userEmail}</p>
           </div>
         </div>
       </div>
 
       {/* Profile section */}
-      <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 12, padding: 24, marginBottom: 16 }}>
+      <div className="bg-canvas" style={{ border: '1px solid #e5e7eb', borderRadius: 12, padding: 24, marginBottom: 16 }}>
         <h2 style={{ fontSize: 15, fontWeight: 600, color: '#111', marginBottom: 20 }}>Profile information</h2>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
@@ -375,14 +375,14 @@ export default function AccountPage() {
       </div>
 
       {/* Preferences section */}
-      <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 12, padding: 24, marginBottom: 24 }}>
+      <div className="bg-canvas" style={{ border: '1px solid #e5e7eb', borderRadius: 12, padding: 24, marginBottom: 24 }}>
         <h2 style={{ fontSize: 15, fontWeight: 600, color: '#111', marginBottom: 16 }}>Introductions & Opportunities</h2>
         <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
           <input
             type="checkbox"
             checked={form.data_sharing}
             onChange={e => setForm(f => ({ ...f, data_sharing: e.target.checked }))}
-            style={{ marginTop: 2, accentColor: '#185FA5' }}
+            style={{ marginTop: 2, accentColor: '#1C4A45' }}
           />
           <span style={{ fontSize: 13, color: '#374151', lineHeight: 1.5 }}>
             I agree to be contactable by ophthalmology practices and industry partners. This is what keeps Atlas free for physicians. I can opt out at any time.
@@ -391,7 +391,7 @@ export default function AccountPage() {
       </div>
 
       {/* Password section */}
-      <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 12, padding: 24, marginBottom: 16 }}>
+      <div className="bg-canvas" style={{ border: '1px solid #e5e7eb', borderRadius: 12, padding: 24, marginBottom: 16 }}>
         <h2 style={{ fontSize: 15, fontWeight: 600, color: '#111', marginBottom: 16 }}>Password</h2>
 
         {usesEmailPassword ? (
@@ -446,7 +446,7 @@ export default function AccountPage() {
                 disabled={passwordSaving || !currentPassword || !newPassword || !confirmPassword}
                 style={{
                   padding: '10px 20px',
-                  background: passwordSaved ? '#16a34a' : passwordSaving ? '#93c5fd' : '#185FA5',
+                  background: passwordSaved ? '#16a34a' : passwordSaving ? '#8ab4ae' : '#1C4A45',
                   color: 'white',
                   border: 'none',
                   borderRadius: 8,
@@ -457,7 +457,7 @@ export default function AccountPage() {
               >
                 {passwordSaved ? '✓ Password updated' : passwordSaving ? 'Updating...' : 'Update password'}
               </button>
-              <a href="/forgot-password" style={{ fontSize: 13, color: '#185FA5', textDecoration: 'none' }}>
+              <a href="/forgot-password" style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none' }}>
                 Forgot your current password?
               </a>
             </div>
@@ -475,7 +475,7 @@ export default function AccountPage() {
         disabled={saving}
         style={{
           padding: '11px 28px',
-          background: saved ? '#16a34a' : saving ? '#93c5fd' : '#185FA5',
+          background: saved ? '#16a34a' : saving ? '#8ab4ae' : '#1C4A45',
           color: 'white',
           border: 'none',
           borderRadius: 8,

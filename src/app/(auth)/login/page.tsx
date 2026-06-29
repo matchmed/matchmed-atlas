@@ -75,7 +75,7 @@ export default function LoginPage() {
 
           {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 40 }}>
-            <div style={{ width: 36, height: 36, background: '#185FA5', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 36, height: 36, background: '#1C4A45', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="20" height="20" fill="none" stroke="white" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
               </svg>
@@ -84,9 +84,9 @@ export default function LoginPage() {
           </div>
 
           {/* Card */}
-          <div className="auth-card" style={{ background: 'white', borderRadius: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06)', border: '1px solid #eee', padding: '32px 32px 28px' }}>
+          <div className="auth-card bg-canvas" style={{ borderRadius: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06)', border: '1px solid #eee', padding: '32px 32px 28px' }}>
 
-            <h1 style={{ fontSize: 24, fontWeight: 700, color: '#111', marginBottom: 6, letterSpacing: '-0.4px' }}>Welcome back</h1>
+            <h1 className="font-serif" style={{ fontSize: 24, fontWeight: 700, color: '#111', marginBottom: 6, letterSpacing: '-0.4px' }}>Welcome back</h1>
             <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 24, lineHeight: 1.5 }}>
               Log in to see how well any ophthalmology practice retains its physicians.
             </p>
@@ -130,7 +130,7 @@ export default function LoginPage() {
               <div style={{ marginBottom: 20 }}>
                 <div className="auth-password-row">
                   <label style={{ fontSize: 13, fontWeight: 500, color: '#374151' }}>Password</label>
-                  <a href="/forgot-password" style={{ fontSize: 12, color: '#185FA5', textDecoration: 'none', whiteSpace: 'nowrap' }}>Forgot password?</a>
+                  <a href="/forgot-password" style={{ fontSize: 12, color: '#1C4A45', textDecoration: 'none', whiteSpace: 'nowrap' }}>Forgot password?</a>
                 </div>
                 <input
                   type="password"
@@ -151,7 +151,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                style={{ width: '100%', padding: '11px 16px', background: loading ? '#93c5fd' : '#185FA5', color: 'white', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', letterSpacing: '0.1px', boxSizing: 'border-box' }}
+                style={{ width: '100%', padding: '11px 16px', background: loading ? '#8ab4ae' : '#1C4A45', color: 'white', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', letterSpacing: '0.1px', boxSizing: 'border-box' }}
               >
                 {loading ? 'Signing in...' : 'Sign in'}
               </button>
@@ -159,7 +159,7 @@ export default function LoginPage() {
 
             <p style={{ textAlign: 'center', fontSize: 13, color: '#6b7280', marginTop: 20, marginBottom: 0 }}>
               Don't have an account?{' '}
-              <a href="/signup" style={{ color: '#185FA5', fontWeight: 500, textDecoration: 'none' }}>Sign up free</a>
+              <a href="/signup" style={{ color: '#1C4A45', fontWeight: 500, textDecoration: 'none' }}>Sign up free</a>
             </p>
           </div>
 

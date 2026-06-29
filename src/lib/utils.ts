@@ -1,7 +1,7 @@
 // ── Color helpers ──────────────────────────────────────────
 export function nameToColor(name: string): [string, string] {
   const colors: [string, string][] = [
-    ['#185FA5', '#E8F0FB'],
+    ['#1C4A45', '#E8F0EF'],
     ['#1A6B3A', '#D4EDDA'],
     ['#7B3FA0', '#EEE0F8'],
     ['#C8640A', '#FFF0E0'],

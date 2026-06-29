@@ -3,14 +3,14 @@ import Link from 'next/link'
 export default function ScoringMethodologyPage() {
   return (
     <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', maxWidth: 720, margin: '0 auto', padding: '48px 0 80px', color: '#1a1a1a' }}>
-      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#185FA5', marginBottom: 12 }}>Atlas by MatchMed</div>
-      <h1 style={{ fontSize: 28, fontWeight: 700, margin: '0 0 8px', lineHeight: 1.2 }}>About the scores</h1>
+      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#1C4A45', marginBottom: 12 }}>Atlas by MatchMed</div>
+      <h1 className="font-serif" style={{ fontSize: 28, fontWeight: 700, margin: '0 0 8px', lineHeight: 1.2 }}>About the scores</h1>
       <p style={{ fontSize: 15, color: '#666', margin: '0 0 40px', lineHeight: 1.6 }}>Every number on Atlas is derived from publicly available government data. No surveys, no self-reporting, no recruiter claims. Here's exactly how we calculate what you see.</p>
 
       <SectionLabel>Data source</SectionLabel>
       <div style={{ background: '#f5f5f5', borderRadius: 8, padding: '16px 18px', marginBottom: 24 }}>
         <p style={{ fontSize: 13, color: '#444', lineHeight: 1.6, margin: 0 }}>
-          <strong>Medicare Part B Provider Data, <a href="https://data.cms.gov/" target="_blank" rel="noopener" style={{ color: '#185FA5' }}>Centers for Medicare &amp; Medicaid Services (CMS)</a>.</strong> This dataset captures physician-practice affiliations across annual snapshots. Atlas scores are calculated from 2019 onwards, using the complete longitudinal record of every physician who has appeared on a practice's Medicare roster. No proprietary, self-reported, or third-party data is used. Practices cannot edit, remove, or influence what appears in this data.
+          <strong>Medicare Part B Provider Data, <a href="https://data.cms.gov/" target="_blank" rel="noopener" style={{ color: '#1C4A45' }}>Centers for Medicare &amp; Medicaid Services (CMS)</a>.</strong> This dataset captures physician-practice affiliations across annual snapshots. Atlas scores are calculated from 2019 onwards, using the complete longitudinal record of every physician who has appeared on a practice's Medicare roster. No proprietary, self-reported, or third-party data is used. Practices cannot edit, remove, or influence what appears in this data.
           <br /><br />
           <span style={{ fontSize: 12, color: '#888' }}>Atlas is not affiliated with, endorsed by, or sponsored by the Centers for Medicare &amp; Medicaid Services or any other federal agency.</span>
         </p>
@@ -51,14 +51,14 @@ export default function ScoringMethodologyPage() {
             ))}
           </tbody>
         </table>
-        <div style={{ fontSize: 12, color: '#185FA5', background: '#f0f5fb', borderLeft: '3px solid #185FA5', padding: '8px 12px', borderRadius: '0 6px 6px 0', lineHeight: 1.5 }}>
+        <div style={{ fontSize: 12, color: '#1C4A45', background: '#E8F0EF', borderLeft: '3px solid #1C4A45', padding: '8px 12px', borderRadius: '0 6px 6px 0', lineHeight: 1.5 }}>
           Any individual departure may have a personal explanation. But across 6,400 practices and eight years of data, idiosyncratic reasons average out. A practice with a systematic pattern of departures at a specific career stage is showing something structural, regardless of what any single physician says when they leave.
         </div>
       </ScoreCard>
 
       <ScoreCard title="Tenure Strength" weight="Secondary component">
         <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 12 }}>Measures how long physicians currently at the practice have stayed. Calculated from the active roster only. Physicians who have already left no longer contribute to this metric.</p>
-        <div style={{ fontSize: 12, color: '#185FA5', background: '#f0f5fb', borderLeft: '3px solid #185FA5', padding: '8px 12px', borderRadius: '0 6px 6px 0', lineHeight: 1.5 }}>
+        <div style={{ fontSize: 12, color: '#1C4A45', background: '#E8F0EF', borderLeft: '3px solid #1C4A45', padding: '8px 12px', borderRadius: '0 6px 6px 0', lineHeight: 1.5 }}>
           Departed physicians should not continue to prop up a practice's score after they leave. Tenure Strength reflects the current workforce: the physicians who will actually be your colleagues if you join.
         </div>
       </ScoreCard>
@@ -75,7 +75,7 @@ export default function ScoringMethodologyPage() {
 
       <ScoreCard title="Experience Level" weight="Context only" weightColor="#888" weightBg="#f5f5f5">
         <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 12 }}>Measures the collective seniority of the current roster. Derived from median years since medical school graduation. Displayed as context alongside the Retention Score but not included in the composite.</p>
-        <div style={{ fontSize: 12, color: '#185FA5', background: '#f0f5fb', borderLeft: '3px solid #185FA5', padding: '8px 12px', borderRadius: '0 6px 6px 0', lineHeight: 1.5 }}>
+        <div style={{ fontSize: 12, color: '#1C4A45', background: '#E8F0EF', borderLeft: '3px solid #1C4A45', padding: '8px 12px', borderRadius: '0 6px 6px 0', lineHeight: 1.5 }}>
           Experience level reflects practice maturity. Senior-heavy rosters can carry succession and PE acquisition risk that would be incorrectly rewarded if included in a retention composite.
         </div>
       </ScoreCard>
@@ -84,9 +84,9 @@ export default function ScoringMethodologyPage() {
         <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 12 }}>A weighted composite of Attrition Resistance and Tenure Strength, adjusted by cluster signals.</p>
         <div style={{ background: '#f5f5f5', borderRadius: 8, padding: '16px 20px', fontFamily: 'monospace', fontSize: 13, color: '#1a1a1a', marginBottom: 12, lineHeight: 1.8 }}>
           Retention Score =<br />
-          &nbsp;&nbsp;[(<span style={{ color: '#185FA5', fontWeight: 600 }}>Attrition Resistance</span> × primary weight)<br />
-          &nbsp;&nbsp;+ (<span style={{ color: '#185FA5', fontWeight: 600 }}>Tenure Strength</span> × secondary weight)]<br />
-          &nbsp;&nbsp;× <span style={{ color: '#185FA5', fontWeight: 600 }}>Cluster Modifier</span> (if applicable)
+          &nbsp;&nbsp;[(<span style={{ color: '#1C4A45', fontWeight: 600 }}>Attrition Resistance</span> × primary weight)<br />
+          &nbsp;&nbsp;+ (<span style={{ color: '#1C4A45', fontWeight: 600 }}>Tenure Strength</span> × secondary weight)]<br />
+          &nbsp;&nbsp;× <span style={{ color: '#1C4A45', fontWeight: 600 }}>Cluster Modifier</span> (if applicable)
         </div>
         <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, margin: 0 }}>Specific component weights are proprietary.</p>
       </ScoreCard>
@@ -115,7 +115,7 @@ export default function ScoringMethodologyPage() {
       <div style={{ background: '#f9f9f9', border: '0.5px solid #e0e0e0', borderRadius: 10, padding: '20px 24px', marginBottom: 48 }}>
         <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 10 }}>Atlas scores are derived from CMS Medicare Part B data, which may occasionally contain inaccuracies. If you believe a score reflects a data error, contact us to flag the issue.</p>
         <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, margin: 0 }}>
-          Email <a href="mailto:admin@matchmed.app" style={{ color: '#185FA5' }}>admin@matchmed.app</a> with subject line <strong>Data Inquiry – [Practice Name]</strong>.
+          Email <a href="mailto:admin@matchmed.app" style={{ color: '#1C4A45' }}>admin@matchmed.app</a> with subject line <strong>Data Inquiry – [Practice Name]</strong>.
         </p>
       </div>
 
@@ -123,7 +123,7 @@ export default function ScoringMethodologyPage() {
         <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: '#999', marginBottom: 12 }}>Legal &amp; Methodological Disclaimers</div>
         <p style={{ fontSize: 12, color: '#888', lineHeight: 1.7, margin: '0 0 10px' }}>All scores are derived from CMS Medicare Part B public datasets. MatchMed makes no representations regarding the completeness, accuracy, or timeliness of underlying CMS data.</p>
         <p style={{ fontSize: 12, color: '#888', lineHeight: 1.7, margin: '0 0 10px' }}>Scores are statistical estimates, not factual declarations. They do not establish causation or assign blame for physician departures.</p>
-        <p style={{ fontSize: 12, color: '#888', lineHeight: 1.7, margin: 0 }}>MatchMed, LLC is not liable for any employment, contracting, or other decisions made in reliance on Atlas scores. Use is subject to our <Link href="/terms-and-conditions" style={{ color: '#185FA5' }}>Terms of Service</Link> and <Link href="/privacy-policy" style={{ color: '#185FA5' }}>Privacy Policy</Link>.</p>
+        <p style={{ fontSize: 12, color: '#888', lineHeight: 1.7, margin: 0 }}>MatchMed, LLC is not liable for any employment, contracting, or other decisions made in reliance on Atlas scores. Use is subject to our <Link href="/terms-and-conditions" style={{ color: '#1C4A45' }}>Terms of Service</Link> and <Link href="/privacy-policy" style={{ color: '#1C4A45' }}>Privacy Policy</Link>.</p>
       </div>
     </div>
   )
@@ -137,9 +137,9 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-function ScoreCard({ title, weight, weightColor = '#185FA5', weightBg = '#e6f1fb', children }: { title: string; weight: string; weightColor?: string; weightBg?: string; children: React.ReactNode }) {
+function ScoreCard({ title, weight, weightColor = '#1C4A45', weightBg = '#E8F0EF', children }: { title: string; weight: string; weightColor?: string; weightBg?: string; children: React.ReactNode }) {
   return (
-    <div style={{ border: '0.5px solid #e0e0e0', borderRadius: 10, padding: '20px 24px', marginBottom: 12, background: '#fff' }}>
+    <div className="bg-canvas" style={{ border: '0.5px solid #e0e0e0', borderRadius: 10, padding: '20px 24px', marginBottom: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
         <div style={{ fontSize: 15, fontWeight: 600, color: '#1a1a1a' }}>{title}</div>
         <span style={{ fontSize: 12, fontWeight: 600, color: weightColor, background: weightBg, padding: '3px 10px', borderRadius: 20 }}>{weight}</span>

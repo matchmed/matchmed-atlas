@@ -96,7 +96,7 @@ export default function FavoritesPage() {
   return (
     <div style={{ maxWidth: 800, margin: '0 auto' }}>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', letterSpacing: '-0.3px', marginBottom: 4 }}>My Favorites</h1>
+        <h1 className="font-serif" style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', letterSpacing: '-0.3px', marginBottom: 4 }}>My Favorites</h1>
         <p style={{ fontSize: 13, color: '#888' }}>{favorites.length} saved {favorites.length === 1 ? 'practice' : 'practices'}</p>
       </div>
 
@@ -109,7 +109,7 @@ export default function FavoritesPage() {
           </div>
           <button
             onClick={() => router.push('/practices')}
-            style={{ padding: '10px 20px', background: '#185FA5', color: 'white', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+            style={{ padding: '10px 20px', background: '#1C4A45', color: 'white', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
           >
             Browse practices
           </button>
@@ -125,8 +125,8 @@ export default function FavoritesPage() {
             return (
               <div
                 key={f.id}
+                className="bg-canvas"
                 style={{
-                  background: 'white',
                   border: '1px solid #e8e8e8',
                   borderRadius: 12,
                   padding: '16px 20px',

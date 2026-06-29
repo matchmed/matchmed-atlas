@@ -3,13 +3,13 @@ import Link from 'next/link'
 export default function TermsPage() {
   return (
     <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', maxWidth: 720, margin: '0 auto', padding: '48px 0 80px', color: '#1a1a1a' }}>
-      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#185FA5', marginBottom: 12 }}>MatchMed, LLC</div>
-      <h1 style={{ fontSize: 28, fontWeight: 700, margin: '0 0 8px', lineHeight: 1.2 }}>Terms of Service</h1>
+      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#1C4A45', marginBottom: 12 }}>MatchMed, LLC</div>
+      <h1 className="font-serif" style={{ fontSize: 28, fontWeight: 700, margin: '0 0 8px', lineHeight: 1.2 }}>Terms of Service</h1>
       <p style={{ fontSize: 15, color: '#666', margin: '0 0 40px', lineHeight: 1.6 }}>Effective Date: March 30, 2026</p>
 
-      <div style={{ background: '#f0f5fb', borderLeft: '3px solid #185FA5', padding: '16px 20px', borderRadius: '0 8px 8px 0', marginBottom: 40 }}>
-        <strong style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.05em', color: '#185FA5', marginBottom: 4 }}>Questions?</strong>
-        <p style={{ margin: 0, fontSize: 14, color: '#444' }}>Contact <a href="mailto:admin@matchmed.app" style={{ color: '#185FA5' }}>admin@matchmed.app</a></p>
+      <div style={{ background: '#E8F0EF', borderLeft: '3px solid #1C4A45', padding: '16px 20px', borderRadius: '0 8px 8px 0', marginBottom: 40 }}>
+        <strong style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.05em', color: '#1C4A45', marginBottom: 4 }}>Questions?</strong>
+        <p style={{ margin: 0, fontSize: 14, color: '#444' }}>Contact <a href="mailto:admin@matchmed.app" style={{ color: '#1C4A45' }}>admin@matchmed.app</a></p>
       </div>
 
       {[
@@ -35,7 +35,7 @@ export default function TermsPage() {
       ].map(s => (
         <section key={s.num} id={`s${s.num}`}>
           <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: '#999', margin: '40px 0 16px', paddingBottom: 8, borderBottom: '0.5px solid #e8e8e8', display: 'flex', alignItems: 'center' }}>
-            <span style={{ color: '#185FA5', marginRight: 8, fontWeight: 700 }}>{s.num}</span>
+            <span style={{ color: '#1C4A45', marginRight: 8, fontWeight: 700 }}>{s.num}</span>
             {s.title}
           </div>
           <p style={{ fontSize: 14, lineHeight: 1.7, color: '#444', margin: '0 0 16px' }}>{s.content}</p>

@@ -22,7 +22,7 @@ interface Job {
 
 const PAGE_SIZE = 20
 
-function badge(text: string, color = '#185FA5', bg = '#E8F0FB') {
+function badge(text: string, color = '#1C4A45', bg = '#E8F0EF') {
   return (
     <span
       key={text}
@@ -246,7 +246,7 @@ export default function JobsPage() {
                   width: '100%',
                   padding: '7px 12px',
                   fontSize: 11,
-                  color: '#185FA5',
+                  color: '#1C4A45',
                   background: 'none',
                   border: 'none',
                   borderTop: '1px solid #eee',
@@ -330,7 +330,7 @@ export default function JobsPage() {
                   width: '100%',
                   padding: '7px 12px',
                   fontSize: 11,
-                  color: '#185FA5',
+                  color: '#1C4A45',
                   background: 'none',
                   border: 'none',
                   borderTop: '1px solid #eee',
@@ -378,12 +378,12 @@ export default function JobsPage() {
         {pageJobs.map(j => (
           <div
             key={j.id}
+            className="bg-canvas"
             onClick={() => handleCardClick(j)}
             style={{
               border: '1px solid #e8e8e8',
               borderRadius: 12,
               padding: '18px 20px',
-              background: '#fff',
               boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
               cursor: j.practice_id ? 'pointer' : 'default',
               transition: 'box-shadow 0.15s ease, border-color 0.15s ease',
@@ -391,8 +391,8 @@ export default function JobsPage() {
             onMouseEnter={e => {
               if (!j.practice_id) return
               const el = e.currentTarget as HTMLDivElement
-              el.style.boxShadow = '0 4px 16px rgba(24,95,165,0.12)'
-              el.style.borderColor = '#185FA5'
+              el.style.boxShadow = '0 4px 16px rgba(28,74,69,0.12)'
+              el.style.borderColor = '#1C4A45'
             }}
             onMouseLeave={e => {
               const el = e.currentTarget as HTMLDivElement
@@ -413,7 +413,7 @@ export default function JobsPage() {
                 style={{
                   fontSize: 15,
                   fontWeight: 700,
-                  color: j.practice_id ? '#185FA5' : '#1a1a1a',
+                  color: j.practice_id ? '#1C4A45' : '#1a1a1a',
                   letterSpacing: '-0.01em',
                   lineHeight: 1.3,
                 }}
@@ -424,7 +424,7 @@ export default function JobsPage() {
                 <span
                   style={{
                     fontSize: 12,
-                    color: '#185FA5',
+                    color: '#1C4A45',
                     whiteSpace: 'nowrap',
                     flexShrink: 0,
                     opacity: 0.7,
@@ -489,7 +489,7 @@ export default function JobsPage() {
                   <a
                     href={`mailto:${j.email}`}
                     onClick={e => e.stopPropagation()}
-                    style={{ fontSize: 13, color: '#185FA5', textDecoration: 'none' }}
+                    style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none' }}
                   >
                     ✉️ {j.email}
                   </a>
@@ -498,7 +498,7 @@ export default function JobsPage() {
                   <a
                     href={`tel:${j.phone}`}
                     onClick={e => e.stopPropagation()}
-                    style={{ fontSize: 13, color: '#185FA5', textDecoration: 'none' }}
+                    style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none' }}
                   >
                     📞 {j.phone}
                   </a>

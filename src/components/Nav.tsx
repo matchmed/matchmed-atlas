@@ -140,7 +140,7 @@ export default function Nav() {
                 width: 34,
                 height: 34,
                 borderRadius: '50%',
-                background: '#185FA5',
+                background: '#1C4A45',
                 color: 'white',
                 border: 'none',
                 cursor: 'pointer',

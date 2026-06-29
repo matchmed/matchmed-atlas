@@ -69,7 +69,7 @@ function deltaChip(d: number | null) {
   )
 }
 
-function badge(text: string, color = '#185FA5', bg = '#E8F0FB') {
+function badge(text: string, color = '#1C4A45', bg = '#E8F0EF') {
   return <span key={text} style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, color, background: bg, whiteSpace: 'nowrap' }}>{text}</span>
 }
 
@@ -179,7 +179,7 @@ export default function PracticeDetailPage() {
     '0-1 yrs': practice.tenure_0_1 || 0,
   }
   const maxVal = Math.max(...Object.values(buckets), 1)
-  const barColors = { '8+ yrs': '#1A6B3A', '6-7 yrs': '#4CAF50', '4-5 yrs': '#185FA5', '2-3 yrs': '#7aaee0', '0-1 yrs': '#d0d0d0' }
+  const barColors = { '8+ yrs': '#1A6B3A', '6-7 yrs': '#4CAF50', '4-5 yrs': '#1C4A45', '2-3 yrs': '#6a9e98', '0-1 yrs': '#d0d0d0' }
 
   const topHeavy = (buckets['8+ yrs'] + buckets['6-7 yrs']) > (buckets['0-1 yrs'] + buckets['2-3 yrs'])
   const agingRoster = (practice.med_yrs_grad || 0) > 30 && churnRate < 0.2
@@ -210,7 +210,7 @@ export default function PracticeDetailPage() {
     const tenureLabel = tenure >= 8 ? '8+ yrs' : tenure === 1 ? '1 yr' : `${tenure} yrs`
     const [fg2, bg2] = nameToColor(n)
     return (
-      <div key={a.id} onClick={() => a.doctors?.id && router.push(`/physicians/${a.doctors.id}`)} style={{ background: '#fff', border: '1px solid #e8e8e8', borderRadius: 10, padding: '14px 16px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 14, cursor: a.doctors?.id ? 'pointer' : 'default' }}>
+      <div key={a.id} className="bg-canvas" onClick={() => a.doctors?.id && router.push(`/physicians/${a.doctors.id}`)} style={{ border: '1px solid #e8e8e8', borderRadius: 10, padding: '14px 16px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 14, cursor: a.doctors?.id ? 'pointer' : 'default' }}>
         <div style={{ width: 40, height: 40, borderRadius: '50%', background: bg2, color: fg2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
           {getInitials(n)}
         </div>
@@ -232,15 +232,15 @@ export default function PracticeDetailPage() {
 
       {/* Back + Favorite */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <button onClick={() => router.back()} style={{ fontSize: 13, color: '#185FA5', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>← Back to practices</button>
+        <button onClick={() => router.back()} style={{ fontSize: 13, color: '#1C4A45', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>← Back to practices</button>
         <button
           onClick={toggleFavorite}
           disabled={favLoading || !profileId}
           style={{
             display: 'flex', alignItems: 'center', gap: 8,
             padding: '9px 18px',
-            background: isFavorited ? '#f0faf4' : '#185FA5',
-            border: `1.5px solid ${isFavorited ? '#1A6B3A' : '#185FA5'}`,
+            background: isFavorited ? '#f0faf4' : '#1C4A45',
+            border: `1.5px solid ${isFavorited ? '#1A6B3A' : '#1C4A45'}`,
             borderRadius: 10,
             fontSize: 14,
             fontWeight: 600,
@@ -260,11 +260,11 @@ export default function PracticeDetailPage() {
           {initials}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 24, fontWeight: 700, color: '#1a1a1a', letterSpacing: '-0.02em', marginBottom: 8, lineHeight: 1.2 }}>{name}</div>
+          <div className="font-serif" style={{ fontSize: 24, fontWeight: 700, color: '#1a1a1a', letterSpacing: '-0.02em', marginBottom: 8, lineHeight: 1.2 }}>{name}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {practice.city_st && <div style={{ fontSize: 13, color: '#888' }}>{practice.city_st}</div>}
-            {practice.phone && <a href={`tel:${practice.phone}`} style={{ fontSize: 13, color: '#185FA5', textDecoration: 'none' }}>{practice.phone}</a>}
-            {practice.website && <a href={practice.website} target="_blank" rel="noopener" style={{ fontSize: 13, color: '#185FA5', textDecoration: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 320 }}>{practice.website}</a>}
+            {practice.phone && <a href={`tel:${practice.phone}`} style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none' }}>{practice.phone}</a>}
+            {practice.website && <a href={practice.website} target="_blank" rel="noopener" style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 320 }}>{practice.website}</a>}
           </div>
         </div>
       </div>
@@ -298,7 +298,7 @@ export default function PracticeDetailPage() {
       </div>
 
       {/* Insight */}
-      <div style={{ borderLeft: `3px solid ${hasScore ? '#185FA5' : '#ccc'}`, padding: '12px 16px', background: hasScore ? '#f0f5fb' : '#f9f9f9', borderRadius: '0 8px 8px 0', fontSize: 13, color: hasScore ? '#333' : '#888', lineHeight: 1.6, marginBottom: 24 }}>
+      <div style={{ borderLeft: `3px solid ${hasScore ? '#1C4A45' : '#ccc'}`, padding: '12px 16px', background: hasScore ? '#E8F0EF' : '#f9f9f9', borderRadius: '0 8px 8px 0', fontSize: 13, color: hasScore ? '#333' : '#888', lineHeight: 1.6, marginBottom: 24 }}>
         {insight}
       </div>
 
@@ -309,7 +309,16 @@ export default function PracticeDetailPage() {
           { label: 'Experience Level', value: practice.experience_level, delta: practice.experience_level_delta, composite: false },
           { label: 'Retention Score', value: practice.retention_score, delta: practice.retention_score_delta, composite: true },
         ].map(r => (
-          <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderRadius: 8, marginBottom: 4, background: r.composite ? (hasScore ? scoreBg(r.value) : '#f9f9f9') : '#fff', border: '0.5px solid rgba(0,0,0,0.06)' }}>
+          <div
+            key={r.label}
+            className={r.composite ? undefined : 'bg-canvas'}
+            style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '10px 14px', borderRadius: 8, marginBottom: 4,
+              ...(r.composite ? { background: hasScore ? scoreBg(r.value) : '#f9f9f9' } : {}),
+              border: '0.5px solid rgba(0,0,0,0.06)',
+            }}
+          >
             <span style={{ fontSize: 13, color: '#444', fontWeight: r.composite ? 600 : 400 }}>{r.label}</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: r.composite ? 18 : 15, fontWeight: r.composite ? 700 : 600, color: r.value !== null ? scoreColor(r.value) : '#aaa' }}>
@@ -333,7 +342,7 @@ export default function PracticeDetailPage() {
           {jobsOpen && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {jobs.map(j => (
-                <div key={j.id} style={{ border: '1px solid #e8e8e8', borderRadius: 12, padding: '16px 20px', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                <div key={j.id} className="bg-canvas" style={{ border: '1px solid #e8e8e8', borderRadius: 12, padding: '16px 20px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
                   {j.primary_location && <div style={{ fontSize: 13, color: '#888', marginBottom: 10 }}>📍 {j.primary_location}</div>}
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
                     {(j.subspecialties_interest || []).map(s => badge(s, '#1A6B3A', '#D4EDDA'))}
@@ -347,8 +356,8 @@ export default function PracticeDetailPage() {
                   {(j.point_of_contact || j.email || j.phone) && (
                     <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', borderTop: '1px solid #f0f0f0', paddingTop: 10 }}>
                       {j.point_of_contact && <span style={{ fontSize: 13, fontWeight: 500 }}>👤 {j.point_of_contact}</span>}
-                      {j.email && <a href={`mailto:${j.email}`} style={{ fontSize: 13, color: '#185FA5', textDecoration: 'none' }}>✉️ {j.email}</a>}
-                      {j.phone && <a href={`tel:${j.phone}`} style={{ fontSize: 13, color: '#185FA5', textDecoration: 'none' }}>📞 {j.phone}</a>}
+                      {j.email && <a href={`mailto:${j.email}`} style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none' }}>✉️ {j.email}</a>}
+                      {j.phone && <a href={`tel:${j.phone}`} style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none' }}>📞 {j.phone}</a>}
                     </div>
                   )}
                 </div>

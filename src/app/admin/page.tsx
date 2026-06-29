@@ -44,7 +44,7 @@ function formatDate(iso: string | null) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-function Tag({ children, color = '#185FA5', bg = '#E8F0FB' }: { children: React.ReactNode; color?: string; bg?: string }) {
+function Tag({ children, color = '#1C4A45', bg = '#E8F0EF' }: { children: React.ReactNode; color?: string; bg?: string }) {
   return (
     <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 500, color, background: bg, whiteSpace: 'nowrap' }}>
       {children}
@@ -149,8 +149,8 @@ function UsersTab() {
             onClick={() => setFilter(f)}
             style={{
               fontSize: 12, padding: '6px 14px', height: 36, borderRadius: 8, border: '1px solid',
-              borderColor: filter === f ? '#185FA5' : '#ddd',
-              background: filter === f ? '#185FA5' : '#fff',
+              borderColor: filter === f ? '#1C4A45' : '#ddd',
+              background: filter === f ? '#1C4A45' : '#fff',
               color: filter === f ? '#fff' : '#555',
               cursor: 'pointer', fontWeight: filter === f ? 600 : 400,
             }}
@@ -168,11 +168,11 @@ function UsersTab() {
         {filtered.map(p => (
           <div
             key={p.id}
+            className="bg-canvas"
             style={{
               border: '1px solid #e8e8e8',
               borderRadius: 10,
               padding: '14px 16px',
-              background: '#fff',
               display: 'grid',
               gridTemplateColumns: '1fr auto',
               gap: 12,
@@ -191,7 +191,7 @@ function UsersTab() {
                   : <Tag color="#888" bg="#f0f0f0">Unverified</Tag>
                 }
                 {p.onboarding_complete
-                  ? <Tag color="#185FA5" bg="#E8F0FB">Onboarded</Tag>
+                  ? <Tag color="#1C4A45" bg="#E8F0EF">Onboarded</Tag>
                   : <Tag color="#C8640A" bg="#FFF0E0">Onboarding incomplete</Tag>
                 }
                 {p.training_status && <Tag color="#7B3FA0" bg="#EEE0F8">{p.training_status}</Tag>}
@@ -230,9 +230,9 @@ function UsersTab() {
                 onClick={() => sendMagicLink(p)}
                 disabled={sendingMap[p.id] || sentMap[p.id] || !p.email}
                 style={{
-                  fontSize: 11, padding: '5px 12px', borderRadius: 6, border: '1px solid #185FA5',
-                  color: sentMap[p.id] ? '#1A6B3A' : '#185FA5',
-                  borderColor: sentMap[p.id] ? '#1A6B3A' : '#185FA5',
+                  fontSize: 11, padding: '5px 12px', borderRadius: 6, border: '1px solid #1C4A45',
+                  color: sentMap[p.id] ? '#1A6B3A' : '#1C4A45',
+                  borderColor: sentMap[p.id] ? '#1A6B3A' : '#1C4A45',
                   background: 'none', cursor: p.email ? 'pointer' : 'default', whiteSpace: 'nowrap',
                   opacity: sendingMap[p.id] ? 0.5 : 1,
                 }}
@@ -346,9 +346,11 @@ function LinkJobsTab() {
         {leads.map(lead => (
           <div
             key={lead.id}
+            className={savedMap[lead.id] ? undefined : 'bg-canvas'}
             style={{
               border: '1px solid #e8e8e8', borderRadius: 10, padding: '14px 16px',
-              background: savedMap[lead.id] ? '#f0faf4' : '#fff', transition: 'background 0.3s',
+              ...(savedMap[lead.id] ? { background: '#f0faf4' } : {}),
+              transition: 'background 0.3s',
             }}
           >
             <div style={{ marginBottom: 8 }}>
@@ -378,7 +380,7 @@ function LinkJobsTab() {
                       key={p.id}
                       onClick={() => linkPractice(lead.id, p)}
                       style={{ padding: '9px 12px', fontSize: 13, cursor: 'pointer', borderBottom: '1px solid #f5f5f5', display: 'flex', justifyContent: 'space-between', gap: 8 }}
-                      onMouseEnter={e => (e.currentTarget.style.background = '#f5f8ff')}
+                      onMouseEnter={e => (e.currentTarget.style.background = '#E8F0EF')}
                       onMouseLeave={e => (e.currentTarget.style.background = '#fff')}
                     >
                       <span style={{ fontWeight: 500 }}>{p.practice_name}</span>
@@ -427,8 +429,8 @@ export default function AdminPage() {
               style={{
                 fontSize: 13, fontWeight: 600, padding: '8px 18px',
                 border: 'none', background: 'none', cursor: 'pointer',
-                color: tab === t ? '#185FA5' : '#aaa',
-                borderBottom: tab === t ? '2px solid #185FA5' : '2px solid transparent',
+                color: tab === t ? '#1C4A45' : '#aaa',
+                borderBottom: tab === t ? '2px solid #1C4A45' : '2px solid transparent',
                 marginBottom: -1,
               }}
             >

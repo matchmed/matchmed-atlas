@@ -63,7 +63,7 @@ export default function PhysicianDetailPage() {
     const tenure = a.tenure_years || 0
     const tenureLabel = tenure >= 8 ? '8+ yrs' : tenure === 1 ? '1 yr' : `${tenure} yrs`
     return (
-      <div key={a.id} style={{ background: '#fff', border: '1px solid #e8e8e8', borderRadius: 10, padding: '16px 18px', marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+      <div key={a.id} className="bg-canvas" style={{ border: '1px solid #e8e8e8', borderRadius: 10, padding: '16px 18px', marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{practiceName}</div>
           <div style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>{a.city_st || '—'}</div>
@@ -74,7 +74,7 @@ export default function PhysicianDetailPage() {
           </div>
         </div>
         {a.practice_id && (
-          <Link href={`/practices/${a.practice_id}`} style={{ fontSize: 12, color: '#185FA5', cursor: 'pointer', padding: '4px 10px', border: '1px solid #185FA5', borderRadius: 6, background: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
+          <Link href={`/practices/${a.practice_id}`} style={{ fontSize: 12, color: '#1C4A45', cursor: 'pointer', padding: '4px 10px', border: '1px solid #1C4A45', borderRadius: 6, background: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
             Open →
           </Link>
         )}
@@ -84,7 +84,7 @@ export default function PhysicianDetailPage() {
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto' }}>
-      <button onClick={() => router.back()} style={{ fontSize: 13, color: '#185FA5', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 20, padding: 0 }}>← Back to physicians</button>
+      <button onClick={() => router.back()} style={{ fontSize: 13, color: '#1C4A45', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 20, padding: 0 }}>← Back to physicians</button>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 32 }}>
@@ -92,7 +92,7 @@ export default function PhysicianDetailPage() {
           {initials}
         </div>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.02em', marginBottom: 8 }}>{name}</div>
+          <div className="font-serif" style={{ fontSize: 22, fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.02em', marginBottom: 8 }}>{name}</div>
           {doctor.npi && <div style={{ fontSize: 13, color: '#888', marginBottom: 4 }}>NPI: <span style={{ color: '#444', fontWeight: 500 }}>{doctor.npi}</span></div>}
           {doctor.graduation_year && <div style={{ fontSize: 13, color: '#888', marginBottom: 4 }}>Med school grad: <span style={{ color: '#444', fontWeight: 500 }}>{doctor.graduation_year}</span></div>}
           {doctor.years_since_graduation && <div style={{ fontSize: 13, color: '#888' }}>{doctor.years_since_graduation} yrs since graduation</div>}

@@ -140,12 +140,12 @@ export default function SetPasswordPage() {
   if (initError) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f9fafb', padding: 20, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
-        <div style={{ width: '100%', maxWidth: 380, background: 'white', borderRadius: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06)', border: '1px solid #eee', padding: '32px', textAlign: 'center' }}>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#111', marginBottom: 8 }}>Reset link expired</h1>
+        <div className="bg-canvas" style={{ width: '100%', maxWidth: 380, borderRadius: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06)', border: '1px solid #eee', padding: '32px', textAlign: 'center' }}>
+          <h1 className="font-serif" style={{ fontSize: 20, fontWeight: 700, color: '#111', marginBottom: 8 }}>Reset link expired</h1>
           <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.6, marginBottom: 24 }}>{initError}</p>
           <a
             href="/forgot-password"
-            style={{ display: 'inline-block', padding: '11px 20px', background: '#185FA5', color: 'white', borderRadius: 8, fontSize: 14, fontWeight: 600, textDecoration: 'none' }}
+            style={{ display: 'inline-block', padding: '11px 20px', background: '#1C4A45', color: 'white', borderRadius: 8, fontSize: 14, fontWeight: 600, textDecoration: 'none' }}
           >
             Request a new reset link
           </a>
@@ -167,7 +167,7 @@ export default function SetPasswordPage() {
       <div style={{ width: '100%', maxWidth: 380 }}>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32, justifyContent: 'center' }}>
-          <div style={{ width: 36, height: 36, background: '#185FA5', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 36, height: 36, background: '#1C4A45', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="20" height="20" fill="none" stroke="white" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
             </svg>
@@ -175,8 +175,8 @@ export default function SetPasswordPage() {
           <span style={{ fontSize: 17, fontWeight: 600, color: '#111', letterSpacing: '-0.3px' }}>MatchMed Atlas</span>
         </div>
 
-        <div style={{ background: 'white', borderRadius: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06)', border: '1px solid #eee', padding: '32px' }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#111', marginBottom: 8, letterSpacing: '-0.3px' }}>Set a new password</h1>
+        <div className="bg-canvas" style={{ borderRadius: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06)', border: '1px solid #eee', padding: '32px' }}>
+          <h1 className="font-serif" style={{ fontSize: 22, fontWeight: 700, color: '#111', marginBottom: 8, letterSpacing: '-0.3px' }}>Set a new password</h1>
           <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 24, lineHeight: 1.5 }}>
             Choose a strong password for your Atlas account.
           </p>
@@ -219,7 +219,7 @@ export default function SetPasswordPage() {
               disabled={loading || !password || !confirm}
               style={{
                 width: '100%', padding: '11px 16px',
-                background: loading || !password || !confirm ? '#93c5fd' : '#185FA5',
+                background: loading || !password || !confirm ? '#8ab4ae' : '#1C4A45',
                 color: 'white', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600,
                 cursor: loading || !password || !confirm ? 'not-allowed' : 'pointer',
                 boxSizing: 'border-box'

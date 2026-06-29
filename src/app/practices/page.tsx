@@ -70,9 +70,9 @@ function practicePopupHtml(
       </button>
     </div>
     <div style="font-size:12px;color:#888;margin-bottom:4px;">${props.location}</div>
-    ${props.phone ? `<div style="font-size:12px;color:#185FA5;margin-bottom:8px;">${props.phone}</div>` : ''}
+    ${props.phone ? `<div style="font-size:12px;color:#1C4A45;margin-bottom:8px;">${props.phone}</div>` : ''}
     <div style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;background:${sl.bg};color:${sl.color};margin-bottom:10px;">${sl.text}</div>
-    <button onclick="window.__openPracticeFromMap('${props.practiceId}')" style="display:block;width:100%;padding:7px;background:#185FA5;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;text-align:center;">Open practice →</button>
+    <button onclick="window.__openPracticeFromMap('${props.practiceId}')" style="display:block;width:100%;padding:7px;background:#1C4A45;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;text-align:center;">Open practice →</button>
   `
 }
 
@@ -405,16 +405,16 @@ function PracticesPageContent() {
         source: 'practices',
         filter: ['==', ['get', 'cluster_id'], -1],
         paint: {
-          'circle-color': '#185FA5',
+          'circle-color': '#1C4A45',
           'circle-radius': ['+', ['step', ['get', 'point_count'], 16, 10, 22, 50, 28], 14],
           'circle-opacity': 0.22,
           'circle-stroke-width': 4,
-          'circle-stroke-color': '#185FA5',
+          'circle-stroke-color': '#1C4A45',
           'circle-stroke-opacity': 0.55,
         },
       })
       map.addLayer({ id: 'clusters', type: 'circle', source: 'practices', filter: ['has', 'point_count'],
-        paint: { 'circle-color': '#185FA5', 'circle-radius': ['step', ['get', 'point_count'], 16, 10, 22, 50, 28], 'circle-opacity': 0.85, 'circle-stroke-width': 1.5, 'circle-stroke-color': 'rgba(255,255,255,0.4)' }
+        paint: { 'circle-color': '#1C4A45', 'circle-radius': ['step', ['get', 'point_count'], 16, 10, 22, 50, 28], 'circle-opacity': 0.85, 'circle-stroke-width': 1.5, 'circle-stroke-color': 'rgba(255,255,255,0.4)' }
       })
       map.addLayer({ id: 'cluster-count', type: 'symbol', source: 'practices', filter: ['has', 'point_count'],
         layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-size': 12, 'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'] },
@@ -483,7 +483,7 @@ function PracticesPageContent() {
     if (highlightedClusterId !== null) {
       map.setPaintProperty('clusters', 'circle-opacity', ['case', ['==', ['get', 'cluster_id'], highlightedClusterId], 1, 0.85])
       map.setPaintProperty('clusters', 'circle-stroke-width', ['case', ['==', ['get', 'cluster_id'], highlightedClusterId], 3.5, 1.5])
-      map.setPaintProperty('clusters', 'circle-stroke-color', ['case', ['==', ['get', 'cluster_id'], highlightedClusterId], '#185FA5', 'rgba(255,255,255,0.4)'])
+      map.setPaintProperty('clusters', 'circle-stroke-color', ['case', ['==', ['get', 'cluster_id'], highlightedClusterId], '#1C4A45', 'rgba(255,255,255,0.4)'])
     } else {
       map.setPaintProperty('clusters', 'circle-opacity', 0.85)
       map.setPaintProperty('clusters', 'circle-stroke-width', 1.5)
@@ -519,7 +519,7 @@ function PracticesPageContent() {
 
   const thStyle = (key: SortKey): React.CSSProperties => ({
     padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600,
-    color: sortKey === key ? '#185FA5' : '#888',
+    color: sortKey === key ? '#1C4A45' : '#888',
     textTransform: 'uppercase', letterSpacing: '.05em', cursor: 'pointer',
     userSelect: 'none', whiteSpace: 'nowrap', borderBottom: '1px solid #e8e8e8',
     background: '#f7f7f7',
@@ -537,7 +537,7 @@ function PracticesPageContent() {
       <div className="practices-state-filter-list">
         {allStates.filter(s => s.toLowerCase().includes(stateSearch.toLowerCase())).map(s => (
           <div key={s} onClick={() => toggleState(s)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 4px', fontSize: 14, cursor: 'pointer' }}>
-            <input type="checkbox" checked={selectedStates.has(s)} readOnly style={{ width: 14, height: 14, accentColor: '#185FA5' }} />
+            <input type="checkbox" checked={selectedStates.has(s)} readOnly style={{ width: 14, height: 14, accentColor: '#1C4A45' }} />
             {s}
           </div>
         ))}
@@ -545,7 +545,7 @@ function PracticesPageContent() {
       <button
         type="button"
         onClick={clearStates}
-        style={{ display: 'block', width: '100%', padding: '10px 0 0', fontSize: 13, color: '#185FA5', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontWeight: 500 }}
+        style={{ display: 'block', width: '100%', padding: '10px 0 0', fontSize: 13, color: '#1C4A45', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontWeight: 500 }}
       >
         Clear all
       </button>
@@ -614,7 +614,7 @@ function PracticesPageContent() {
             {(['table', 'map'] as const).map(v => (
               <button key={v} onClick={() => setView(v)} style={{
                 padding: '7px 14px', fontSize: 13, cursor: 'pointer', height: 36, border: 'none',
-                background: view === v ? '#185FA5' : '#fff',
+                background: view === v ? '#1C4A45' : '#fff',
                 color: view === v ? '#fff' : '#888',
                 textTransform: 'capitalize',
               }}>
@@ -692,7 +692,7 @@ function PracticesPageContent() {
                     <td style={{ padding: '11px 14px', borderTop: '1px solid #f0f0f0' }}>
                       <button
                         onClick={e => { e.stopPropagation(); router.push(`/practices/${p.id}`) }}
-                        style={{ fontSize: 12, color: '#185FA5', cursor: 'pointer', padding: '4px 10px', border: '1px solid #185FA5', borderRadius: 6, background: 'none', whiteSpace: 'nowrap' }}
+                        style={{ fontSize: 12, color: '#1C4A45', cursor: 'pointer', padding: '4px 10px', border: '1px solid #1C4A45', borderRadius: 6, background: 'none', whiteSpace: 'nowrap' }}
                       >
                         Open →
                       </button>
@@ -817,7 +817,7 @@ function PracticesPageContent() {
                     <button
                       type="button"
                       onClick={() => openPracticeFromMap(practice.practiceId)}
-                      style={{ fontSize: 12, color: '#185FA5', cursor: 'pointer', padding: '4px 10px', border: '1px solid #185FA5', borderRadius: 6, background: 'none', whiteSpace: 'nowrap' }}
+                      style={{ fontSize: 12, color: '#1C4A45', cursor: 'pointer', padding: '4px 10px', border: '1px solid #1C4A45', borderRadius: 6, background: 'none', whiteSpace: 'nowrap' }}
                     >
                       Open →
                     </button>

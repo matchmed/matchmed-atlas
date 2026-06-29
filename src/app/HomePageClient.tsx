@@ -87,7 +87,7 @@ export default function HomePageClient() {
   }
 
   const statCards = [
-    { label: 'Ophthalmology Practices', value: stats?.practices.toLocaleString() ?? '—', href: '/practices', color: '#185FA5', bg: '#E8F0FB' },
+    { label: 'Ophthalmology Practices', value: stats?.practices.toLocaleString() ?? '—', href: '/practices', color: '#1C4A45', bg: '#E8F0EF' },
     { label: 'Physician Careers Tracked', value: stats?.doctors.toLocaleString() ?? '—', href: '/physicians', color: '#1A6B3A', bg: '#D4EDDA' },
     { label: 'Career Affiliations', value: stats?.affiliations.toLocaleString() ?? '—', href: '/practices', color: '#7B3FA0', bg: '#EEE0F8' },
     { label: 'Active Job Listings', value: stats?.jobs.toLocaleString() ?? '—', href: '/jobs', color: '#1A6B6B', bg: '#D4EDED' },
@@ -104,10 +104,10 @@ export default function HomePageClient() {
   return (
     <div>
       <div style={{ marginBottom: 40 }}>
-        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#185FA5', marginBottom: 10 }}>
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#1C4A45', marginBottom: 10 }}>
           Atlas by MatchMed
         </div>
-        <h1 style={{ fontSize: 32, fontWeight: 700, color: '#1a1a1a', letterSpacing: '-0.02em', marginBottom: 10, lineHeight: 1.2 }}>
+        <h1 className="font-serif" style={{ fontSize: 32, fontWeight: 700, color: '#1a1a1a', letterSpacing: '-0.02em', marginBottom: 10, lineHeight: 1.2 }}>
           Ophthalmology Workforce Intelligence
         </h1>
         <p style={{ fontSize: 15, color: '#666', lineHeight: 1.6, maxWidth: 600 }}>
@@ -140,8 +140,7 @@ export default function HomePageClient() {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10 }}>
           {quickLinks.map(l => (
-            <Link key={l.href} href={l.href} style={{
-              background: '#fff',
+            <Link key={l.href} href={l.href} className="bg-canvas" style={{
               border: '1px solid #e8e8e8',
               borderRadius: 10,
               padding: '16px 18px',
@@ -164,7 +163,7 @@ export default function HomePageClient() {
         <p style={{ fontSize: 12, color: '#888', lineHeight: 1.6, margin: 0 }}>
           <strong style={{ color: '#555' }}>Data source:</strong> Medicare Part B Provider Data, Centers for Medicare &amp; Medicaid Services (CMS).
           Updated periodically as new CMS data becomes available. Atlas is not affiliated with, endorsed by, or sponsored by CMS or any federal agency.{' '}
-          <Link href="/scoring-methodology" style={{ color: '#185FA5' }}>Learn more about our methodology →</Link>
+          <Link href="/scoring-methodology" style={{ color: '#1C4A45' }}>Learn more about our methodology →</Link>
         </p>
       </div>
     </div>
