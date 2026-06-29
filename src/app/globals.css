@@ -1,20 +1,25 @@
 @import "tailwindcss";
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #fff;
-  color: #1a1a1a;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  background: #F7F6F2;
+  color: #141210;
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
 }
+
 a { color: inherit; text-decoration: none; }
+
+/* ── Scoring colors (do not change) ── */
 .s-dg { background: #d4edda; color: #1A6B3A; }
 .s-lg { background: #e8f5e9; color: #2e7d32; }
 .s-yw { background: #fffde7; color: #7a6800; }
 .s-or { background: #fff3e0; color: #b85c00; }
 .s-rd { background: #ffebee; color: #C0392B; }
 .s-na { background: #f5f5f5; color: #aaa; }
+
 .score-pill {
   display: inline-block;
   padding: 3px 10px;
@@ -22,8 +27,10 @@ a { color: inherit; text-decoration: none; }
   font-size: 12px;
   font-weight: 600;
 }
+
+/* ── Loading bar ── */
 .loading-bar {
-  background: #f0f0f0;
+  background: #E8F0EF;
   border-radius: 99px;
   height: 4px;
   margin-bottom: 12px;
@@ -31,7 +38,7 @@ a { color: inherit; text-decoration: none; }
 }
 .loading-bar-inner {
   height: 100%;
-  background: #185FA5;
+  background: #1C4A45;
   border-radius: 99px;
   animation: loadpulse 1.2s ease-in-out infinite;
   width: 40%;
@@ -41,12 +48,12 @@ a { color: inherit; text-decoration: none; }
   100% { margin-left: 100%; }
 }
 
-/* Auth split layout (login, signup) */
+/* ── Auth split layout ── */
 .auth-split {
   min-height: 100vh;
   display: flex;
   flex-direction: row;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
 }
 
 .auth-split-form {
@@ -56,7 +63,7 @@ a { color: inherit; text-decoration: none; }
   align-items: center;
   justify-content: center;
   padding: 48px 40px;
-  background: #f9fafb;
+  background: #F7F6F2;
 }
 
 .auth-split-inner {
@@ -69,7 +76,7 @@ a { color: inherit; text-decoration: none; }
   min-height: 100vh;
   position: relative;
   overflow: hidden;
-  background: #111;
+  background: #153835;
 }
 
 .auth-split-hero-bg {
@@ -100,12 +107,12 @@ a { color: inherit; text-decoration: none; }
   flex-wrap: wrap;
 }
 
-/* Onboarding split layout */
+/* ── Onboarding split layout ── */
 .auth-onboarding-form {
   width: 50%;
   min-height: 100vh;
   overflow-y: auto;
-  background: white;
+  background: #F7F6F2;
   display: flex;
   justify-content: center;
   padding: 48px 40px;
@@ -169,10 +176,10 @@ a { color: inherit; text-decoration: none; }
   }
 }
 
-/* App navigation */
+/* ── App navigation ── */
 .nav-top {
-  border-bottom: 1px solid #e8e8e8;
-  background: #fff;
+  border-bottom: 1px solid #e0ddd8;
+  background: #F7F6F2;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -190,7 +197,7 @@ a { color: inherit; text-decoration: none; }
 .nav-logo-text {
   font-weight: 700;
   font-size: 15px;
-  color: #1a1a1a;
+  color: #141210;
   letter-spacing: -0.01em;
 }
 
@@ -213,13 +220,13 @@ a { color: inherit; text-decoration: none; }
 
 .nav-link-active {
   font-weight: 600;
-  color: #185FA5;
-  background: #e8f0fb;
+  color: #1C4A45;
+  background: #E8F0EF;
 }
 
 .nav-link-inactive {
   font-weight: 400;
-  color: #666;
+  color: #8A8680;
   background: transparent;
 }
 
@@ -262,8 +269,8 @@ a { color: inherit; text-decoration: none; }
     left: 0;
     right: 0;
     z-index: 100;
-    background: #fff;
-    border-top: 1px solid #e8e8e8;
+    background: #F7F6F2;
+    border-top: 1px solid #e0ddd8;
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
 
@@ -283,13 +290,13 @@ a { color: inherit; text-decoration: none; }
     text-decoration: none;
     font-size: 10px;
     font-weight: 500;
-    color: #888;
+    color: #8A8680;
     padding: 6px 4px;
     -webkit-tap-highlight-color: transparent;
   }
 
   .nav-bottom-tab-active {
-    color: #185FA5;
+    color: #1C4A45;
     font-weight: 600;
   }
 
@@ -300,7 +307,7 @@ a { color: inherit; text-decoration: none; }
 
   .nav-dropdown-secondary {
     display: block;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid #e0ddd8;
     margin-bottom: 6px;
     padding-bottom: 6px;
   }
@@ -317,8 +324,9 @@ a { color: inherit; text-decoration: none; }
   flex-wrap: wrap;
 }
 
+/* ── Data tables ── */
 .data-table-wrapper {
-  border: 1px solid #e8e8e8;
+  border: 1px solid #e0ddd8;
   border-radius: 10px;
   overflow: hidden;
 }
@@ -349,8 +357,8 @@ a { color: inherit; text-decoration: none; }
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border-bottom: 1px solid #e8e8e8;
-  background: #f7f7f7;
+  border-bottom: 1px solid #e0ddd8;
+  background: #F7F6F2;
   white-space: nowrap;
   vertical-align: bottom;
 }
@@ -374,7 +382,7 @@ a { color: inherit; text-decoration: none; }
   }
 }
 
-/* Directory mobile cards (practices, physicians) */
+/* ── Directory mobile cards ── */
 .practices-table-view,
 .physicians-table-view {
   display: block;
@@ -412,8 +420,8 @@ a { color: inherit; text-decoration: none; }
   gap: 12px;
   width: 100%;
   padding: 14px;
-  background: #fff;
-  border: 1px solid #e8e8e8;
+  background: #F7F6F2;
+  border: 1px solid #e0ddd8;
   border-radius: 12px;
   cursor: pointer;
   text-align: left;
@@ -424,7 +432,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .practice-card:active {
-  background: #f9fafb;
+  background: #E8F0EF;
 }
 
 .practice-card-avatar {
@@ -448,7 +456,7 @@ a { color: inherit; text-decoration: none; }
 .practice-card-name {
   font-size: 14px;
   font-weight: 600;
-  color: #111;
+  color: #141210;
   line-height: 1.3;
   margin-bottom: 3px;
   overflow: hidden;
@@ -458,7 +466,7 @@ a { color: inherit; text-decoration: none; }
 
 .practice-card-meta {
   font-size: 12px;
-  color: #888;
+  color: #8A8680;
   line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -520,18 +528,18 @@ a { color: inherit; text-decoration: none; }
     width: 36px;
     height: 36px;
     flex-shrink: 0;
-    border: 1px solid #ddd;
+    border: 1px solid #e0ddd8;
     border-radius: 8px;
-    background: #fff;
-    color: #555;
+    background: #F7F6F2;
+    color: #8A8680;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
 
   .practices-filter-btn-mobile-active {
-    border-color: #185FA5;
-    color: #185FA5;
-    background: #eff6ff;
+    border-color: #1C4A45;
+    color: #1C4A45;
+    background: #E8F0EF;
   }
 
   .practices-filter-sheet-root {
@@ -551,7 +559,7 @@ a { color: inherit; text-decoration: none; }
     left: 0;
     right: 0;
     z-index: 201;
-    background: #fff;
+    background: #F7F6F2;
     border-radius: 16px 16px 0 0;
     padding: 16px 20px calc(16px + env(safe-area-inset-bottom, 0px));
     max-height: 75vh;
@@ -566,13 +574,13 @@ a { color: inherit; text-decoration: none; }
     margin-bottom: 14px;
     font-size: 16px;
     font-weight: 600;
-    color: #111;
+    color: #141210;
   }
 
   .practices-filter-sheet-header button {
     font-size: 14px;
     font-weight: 600;
-    color: #185FA5;
+    color: #1C4A45;
     background: none;
     border: none;
     cursor: pointer;
@@ -593,10 +601,10 @@ a { color: inherit; text-decoration: none; }
     width: 36px;
     height: 36px;
     flex-shrink: 0;
-    border: 1px solid #ddd;
+    border: 1px solid #e0ddd8;
     border-radius: 8px;
-    background: #fff;
-    color: #555;
+    background: #F7F6F2;
+    color: #8A8680;
     cursor: pointer;
   }
 
@@ -623,17 +631,18 @@ a { color: inherit; text-decoration: none; }
   }
 }
 
+/* ── Mapbox popups ── */
 .mapboxgl-popup-content {
-  background: #fff !important;
-  border: 1px solid #e8e8e8 !important;
+  background: #F7F6F2 !important;
+  border: 1px solid #e0ddd8 !important;
   border-radius: 10px !important;
   padding: 14px 16px !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  font-family: var(--font-sans), system-ui, sans-serif !important;
   min-width: 200px !important;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important;
 }
 .mapboxgl-popup-close-button {
-  color: #aaa !important;
+  color: #8A8680 !important;
   font-size: 16px !important;
   right: 8px !important;
   top: 8px !important;
