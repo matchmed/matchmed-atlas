@@ -196,11 +196,11 @@ export default function PracticeDetailPage() {
 
   const metricCards = [
     { label: 'Retention score', value: hasScore ? score!.toFixed(1) : '—', color: scoreColor(score), bg: scoreBg(score), sub: deltaChip(practice.retention_score_delta) },
-    { label: 'Current roster', value: String(practice.latest_roster_size || 0), color: '#1a1a1a', bg: '#f5f5f5', sub: null },
-    { label: 'All-time physicians', value: String(alltime), color: '#1a1a1a', bg: '#f5f5f5', sub: null },
-    { label: 'Short exits', value: String(churn), color: churnRate > 0.4 ? '#C0392B' : '#1a1a1a', bg: churnRate > 0.4 ? '#fdf2f2' : '#f5f5f5', sub: null },
-    { label: 'Veterans (8+ yrs)', value: String(practice.veteran_count || 0), color: (practice.veteran_count || 0) > 0 ? '#1A6B3A' : '#888', bg: (practice.veteran_count || 0) > 0 ? '#f0faf4' : '#f5f5f5', sub: null },
-    { label: 'Median yrs since MD', value: `${practice.med_yrs_grad || 0} yrs`, color: '#1a1a1a', bg: '#f5f5f5', sub: null },
+    { label: 'Current roster', value: String(practice.latest_roster_size || 0), color: '#1a1a1a', bg: '#ffffff', sub: null },
+    { label: 'All-time physicians', value: String(alltime), color: '#1a1a1a', bg: '#ffffff', sub: null },
+    { label: 'Short exits', value: String(churn), color: churnRate > 0.4 ? '#C0392B' : '#1a1a1a', bg: churnRate > 0.4 ? '#fdf2f2' : '#ffffff', sub: null },
+    { label: 'Veterans (8+ yrs)', value: String(practice.veteran_count || 0), color: (practice.veteran_count || 0) > 0 ? '#1A6B3A' : '#888', bg: (practice.veteran_count || 0) > 0 ? '#f0faf4' : '#ffffff', sub: null },
+    { label: 'Median yrs since MD', value: `${practice.med_yrs_grad || 0} yrs`, color: '#1a1a1a', bg: '#ffffff', sub: null },
   ]
 
   function renderPhysicianCard(a: Affiliation) {
@@ -210,7 +210,7 @@ export default function PracticeDetailPage() {
     const tenureLabel = tenure >= 8 ? '8+ yrs' : tenure === 1 ? '1 yr' : `${tenure} yrs`
     const [fg2, bg2] = nameToColor(n)
     return (
-      <div key={a.id} className="bg-canvas" onClick={() => a.doctors?.id && router.push(`/physicians/${a.doctors.id}`)} style={{ border: '1px solid #e8e8e8', borderRadius: 10, padding: '14px 16px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 14, cursor: a.doctors?.id ? 'pointer' : 'default' }}>
+      <div key={a.id} onClick={() => a.doctors?.id && router.push(`/physicians/${a.doctors.id}`)} style={{ background: '#ffffff', border: '1px solid #e8e8e8', borderRadius: 10, padding: '14px 16px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 14, cursor: a.doctors?.id ? 'pointer' : 'default' }}>
         <div style={{ width: 40, height: 40, borderRadius: '50%', background: bg2, color: fg2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
           {getInitials(n)}
         </div>
@@ -311,11 +311,10 @@ export default function PracticeDetailPage() {
         ].map(r => (
           <div
             key={r.label}
-            className={r.composite ? undefined : 'bg-canvas'}
             style={{
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               padding: '10px 14px', borderRadius: 8, marginBottom: 4,
-              ...(r.composite ? { background: hasScore ? scoreBg(r.value) : '#f9f9f9' } : {}),
+              background: r.composite ? (hasScore ? scoreBg(r.value) : '#f9f9f9') : '#ffffff',
               border: '0.5px solid rgba(0,0,0,0.06)',
             }}
           >
@@ -342,7 +341,7 @@ export default function PracticeDetailPage() {
           {jobsOpen && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {jobs.map(j => (
-                <div key={j.id} className="bg-canvas" style={{ border: '1px solid #e8e8e8', borderRadius: 12, padding: '16px 20px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                <div key={j.id} style={{ border: '1px solid #e8e8e8', borderRadius: 12, padding: '16px 20px', background: '#ffffff', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
                   {j.primary_location && <div style={{ fontSize: 13, color: '#888', marginBottom: 10 }}>📍 {j.primary_location}</div>}
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
                     {(j.subspecialties_interest || []).map(s => badge(s, '#1A6B3A', '#D4EDDA'))}

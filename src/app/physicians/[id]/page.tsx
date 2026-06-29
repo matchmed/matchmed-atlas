@@ -63,7 +63,7 @@ export default function PhysicianDetailPage() {
     const tenure = a.tenure_years || 0
     const tenureLabel = tenure >= 8 ? '8+ yrs' : tenure === 1 ? '1 yr' : `${tenure} yrs`
     return (
-      <div key={a.id} className="bg-canvas" style={{ border: '1px solid #e8e8e8', borderRadius: 10, padding: '16px 18px', marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+      <div key={a.id} style={{ background: '#ffffff', border: '1px solid #e8e8e8', borderRadius: 10, padding: '16px 18px', marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{practiceName}</div>
           <div style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>{a.city_st || '—'}</div>

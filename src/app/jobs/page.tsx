@@ -378,12 +378,12 @@ export default function JobsPage() {
         {pageJobs.map(j => (
           <div
             key={j.id}
-            className="bg-canvas"
             onClick={() => handleCardClick(j)}
             style={{
               border: '1px solid #e8e8e8',
               borderRadius: 12,
               padding: '18px 20px',
+              background: '#ffffff',
               boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
               cursor: j.practice_id ? 'pointer' : 'default',
               transition: 'box-shadow 0.15s ease, border-color 0.15s ease',

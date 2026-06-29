@@ -125,8 +125,8 @@ export default function FavoritesPage() {
             return (
               <div
                 key={f.id}
-                className="bg-canvas"
                 style={{
+                  background: '#ffffff',
                   border: '1px solid #e8e8e8',
                   borderRadius: 12,
                   padding: '16px 20px',
