@@ -13,7 +13,6 @@ import {
 interface FavoritePractice {
   id: string
   practice_name: string | null
-  dba: string | null
   city_st: string | null
   retention_score: number | null
   latest_roster_size: number | null
@@ -25,7 +24,6 @@ function mapShortlistRows(data: { id: string; practice_id: string; practices: { 
     id: f.id,
     practice_id: f.practice_id,
     practice_name: f.practices?.practice_name || null,
-    dba: null,
     city_st: f.practices?.city_st || null,
     retention_score: f.practices?.retention_score || null,
     latest_roster_size: f.practices?.latest_roster_size || null,
@@ -70,7 +68,7 @@ export default function FavoritesPage() {
 
       const { data } = await supabase
         .from('shortlists')
-        .select('id, practice_id, practices(id, practice_name, dba, city_st, retention_score, latest_roster_size)')
+        .select('id, practice_id, practices(id, practice_name, city_st, retention_score, latest_roster_size)')
         .eq('physician_id', profile.id)
         .order('created_at', { ascending: false })
 
@@ -117,7 +115,7 @@ export default function FavoritesPage() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {favorites.map(f => {
-            const name = f.practice_name || f.dba || 'Unknown Practice'
+            const name = f.practice_name || 'Unknown Practice'
             const [fg, bg] = nameToColor(name)
             const initials = getInitials(name)
             const hasScore = f.retention_score !== null

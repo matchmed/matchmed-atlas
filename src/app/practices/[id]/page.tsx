@@ -9,7 +9,6 @@ import { nameToColor, getInitials, scoreColor, scoreBg, deltaColor, deltaBg, del
 interface Practice {
   id: string
   practice_name: string | null
-  dba: string | null
   city_st: string | null
   phone: string | null
   website: string | null
@@ -158,7 +157,7 @@ export default function PracticeDetailPage() {
   if (loading) return <div className="loading-bar"><div className="loading-bar-inner" /></div>
   if (!practice) return <div style={{ padding: 40, color: '#aaa', textAlign: 'center' }}>Practice not found.</div>
 
-  const name = practice.practice_name || practice.dba || 'Unknown Practice'
+  const name = practice.practice_name || 'Unknown Practice'
   const [fg, bg] = nameToColor(name)
   const initials = getInitials(name)
   const hasScore = practice.retention_score !== null
