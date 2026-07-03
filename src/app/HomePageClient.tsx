@@ -180,7 +180,7 @@ export default function HomePageClient() {
 
       <div style={{ marginTop: 40, padding: '16px 20px', background: '#f9f9f9', borderRadius: 8, border: '0.5px solid #e8e8e8' }}>
         <p style={{ fontSize: 12, color: '#888', lineHeight: 1.6, margin: 0 }}>
-          <strong style={{ color: '#555' }}>Data source:</strong> Medicare Part B Provider Data, Centers for Medicare &amp; Medicaid Services (CMS).
+          <strong style={{ color: '#555' }}>Data source: </strong> Medicare Part B Provider Data, Centers for Medicare &amp; Medicaid Services (CMS).
           Updated periodically as new CMS data becomes available. Atlas is not affiliated with, endorsed by, or sponsored by CMS or any federal agency.{' '}
           <Link href="/scoring-methodology" style={{ color: '#1C4A45' }}>Learn more about our methodology →</Link>
         </p>
