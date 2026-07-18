@@ -2,8 +2,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
 
-const ADMIN_EMAIL = 'admin@matchmed.app' // 🔒 change to your login email
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Profile {
@@ -408,7 +406,16 @@ export default function AdminPage() {
     async function check() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
-      setAuthorized(!!user && user.email === ADMIN_EMAIL)
+      if (!user) {
+        setAuthorized(false)
+        return
+      }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      setAuthorized(!!profile?.is_admin)
     }
     check()
   }, [])

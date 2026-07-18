@@ -123,6 +123,20 @@ a { color: inherit; text-decoration: none; }
   max-width: 480px;
 }
 
+@media (min-width: 769px) {
+  .auth-onboarding-split {
+    height: 100vh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .auth-onboarding-split .auth-onboarding-form,
+  .auth-onboarding-split .auth-split-hero {
+    height: 100vh;
+    min-height: 0;
+  }
+}
+
 @media (max-width: 768px) {
   .auth-split {
     flex-direction: column;

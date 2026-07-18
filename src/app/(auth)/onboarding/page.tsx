@@ -199,7 +199,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="auth-split">
+    <div className="auth-split auth-onboarding-split">
 
       {/* Form panel */}
       <div className="auth-onboarding-form">

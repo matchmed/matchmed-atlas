@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase'
 import { invalidateFavoritesCache } from '@/lib/favorites-cache'
 import { syncPracticeListCacheFromDetail } from '@/lib/practices-cache'
 import { nameToColor, getInitials, scoreColor, scoreBg, deltaColor, deltaBg, deltaArrow } from '@/lib/utils'
+import PracticeErrorReportModal from '@/components/PracticeErrorReportModal'
 
 interface Practice {
   id: string
@@ -231,7 +232,18 @@ export default function PracticeDetailPage() {
 
       {/* Back + Favorite */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <button onClick={() => router.back()} style={{ fontSize: 13, color: '#1C4A45', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>← Back to practices</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <button onClick={() => router.back()} style={{ fontSize: 13, color: '#1C4A45', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>← Back to practices</button>
+          <PracticeErrorReportModal
+            practiceId={practice.id}
+            snapshot={{
+              practice_name: practice.practice_name,
+              city_st: practice.city_st,
+              phone: practice.phone,
+              website: practice.website,
+            }}
+          />
+        </div>
         <button
           onClick={toggleFavorite}
           disabled={favLoading || !profileId}
@@ -367,6 +379,9 @@ export default function PracticeDetailPage() {
 
       {/* Physicians */}
       <div>
+        <p style={{ fontSize: 11, color: '#999', lineHeight: 1.5, margin: '0 0 12px' }}>
+          Physician rosters reflect the latest CMS data and may lag recent departures or additions.
+        </p>
         {onRoster.length > 0 && (
           <>
             <div style={{ fontSize: 11, fontWeight: 600, color: '#1A6B3A', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
