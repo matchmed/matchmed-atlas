@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
@@ -9,6 +9,7 @@ import {
   FavoritesIcon,
   JobsIcon,
   ScoringIcon,
+  ShieldCheckIcon,
 } from '@/components/nav-icons'
 
 interface Stats {
@@ -16,6 +17,30 @@ interface Stats {
   doctors: number
   affiliations: number
   jobs: number
+}
+
+const navCardStyle: CSSProperties = {
+  border: '1px solid #e0ddd8',
+  borderRadius: 10,
+  padding: '16px 18px',
+  display: 'flex',
+  gap: 14,
+  alignItems: 'flex-start',
+  transition: 'box-shadow 0.12s, border-color 0.12s',
+  height: '100%',
+  boxSizing: 'border-box',
+}
+
+const iconTileStyle: CSSProperties = {
+  width: 36,
+  height: 36,
+  borderRadius: 8,
+  background: '#E8F0EF',
+  color: '#1C4A45',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
 }
 
 export default function HomePageClient() {
@@ -105,7 +130,6 @@ export default function HomePageClient() {
     { href: '/physicians', label: 'Physician Directory', desc: 'Explore 22,000+ ophthalmologist career records from CMS data', icon: <PhysiciansIcon size={20} /> },
     { href: '/jobs', label: 'Job Opportunities', desc: 'View open positions from practices actively recruiting', icon: <JobsIcon size={20} /> },
     { href: '/favorites', label: 'My Favorites', desc: 'Practices you have saved for later review', icon: <FavoritesIcon size={20} /> },
-    { href: '/scoring-methodology', label: 'How Scores Work', desc: 'Understand the data behind Retention Scores and Experience Levels', icon: <ScoringIcon size={20} /> },
   ]
 
   return (
@@ -145,28 +169,10 @@ export default function HomePageClient() {
         <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: '#999', marginBottom: 16, paddingBottom: 8, borderBottom: '0.5px solid #e8e8e8' }}>
           Navigate Atlas
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10 }}>
+        <div className="navigate-atlas-grid">
           {quickLinks.map(l => (
-            <Link key={l.href} href={l.href} className="bg-canvas" style={{
-              border: '1px solid #e0ddd8',
-              borderRadius: 10,
-              padding: '16px 18px',
-              display: 'flex',
-              gap: 14,
-              alignItems: 'flex-start',
-              transition: 'box-shadow 0.12s, border-color 0.12s',
-            }}>
-              <div style={{
-                width: 36,
-                height: 36,
-                borderRadius: 8,
-                background: '#E8F0EF',
-                color: '#1C4A45',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}>
+            <Link key={l.href} href={l.href} className="bg-canvas navigate-atlas-card" style={navCardStyle}>
+              <div style={iconTileStyle}>
                 {l.icon}
               </div>
               <div>
@@ -175,6 +181,42 @@ export default function HomePageClient() {
               </div>
             </Link>
           ))}
+
+          <Link
+            href="/scoring-methodology"
+            className="bg-canvas navigate-atlas-card navigate-atlas-span-full"
+            style={navCardStyle}
+          >
+            <div style={iconTileStyle}>
+              <ScoringIcon size={20} />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', marginBottom: 4 }}>How Scores Work</div>
+              <div style={{ fontSize: 12, color: '#888', lineHeight: 1.5 }}>Understand the data behind Retention Scores and Experience Levels</div>
+            </div>
+          </Link>
+
+          <Link
+            href="/partners"
+            className="bg-canvas navigate-atlas-card navigate-atlas-span-full navigate-atlas-span-3"
+            style={navCardStyle}
+          >
+            <div style={iconTileStyle}>
+              <ShieldCheckIcon size={20} />
+            </div>
+            <div className="navigate-atlas-partners-body">
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', marginBottom: 4 }}>Keeping Atlas Free</div>
+                <div style={{ fontSize: 12, color: '#888', lineHeight: 1.5 }}>
+                  Partner support helps keep Atlas free for physicians. Partners never influence practice profiles, scores, methodology, or private physician activity.
+                </div>
+              </div>
+              <div className="navigate-atlas-partners-mark">
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#888', lineHeight: 1.3 }}>Sample Partner</div>
+                <div style={{ fontSize: 11, color: '#999', lineHeight: 1.4, marginTop: 4 }}>Illustrative partnership concept</div>
+              </div>
+            </div>
+          </Link>
         </div>
       </div>
 
