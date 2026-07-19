@@ -7,10 +7,11 @@ Requirements:
     pip install requests supabase python-dateutil
 
 Usage:
-    1. Fill in SUPABASE_SERVICE_KEY below (do not share this key)
+    1. Set SUPABASE_URL and SUPABASE_SECRET_KEY in the environment
     2. Run: python migrate_atlas.py
 """
 
+import os
 import time
 import re
 from datetime import datetime, timezone
@@ -19,14 +20,23 @@ import requests
 from supabase import create_client, Client
 
 # ─────────────────────────────────────────────
-# CONFIG — fill in your service_role key below
+# CONFIG
 # ─────────────────────────────────────────────
 AIRTABLE_PAT   = "REDACTED_PAT"
 AIRTABLE_BASE  = "applI3tAeZR7UltWP"
-SUPABASE_URL   = "https://yisjyqnxaimdaeiylbuy.supabase.co"
-SUPABASE_KEY   = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlpc2p5cW54YWltZGFlaXlsYnV5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTM2MDc4NCwiZXhwIjoyMDk2OTM2Nzg0fQ.mrfylD7bgplQsHuqSnDx-w0MBJsJtt8rAN7SG0lCVCc"   # ← paste locally, do not share
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+def require_env(name: str) -> str:
+    value = os.environ.get(name)
+    if not value:
+        raise RuntimeError(f"Missing required environment variable: {name}")
+    return value
+
+
+SUPABASE_URL = require_env("SUPABASE_URL")
+SUPABASE_SECRET_KEY = require_env("SUPABASE_SECRET_KEY")
+
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_SECRET_KEY)
 
 # ─────────────────────────────────────────────
 # HELPERS
@@ -360,10 +370,6 @@ if __name__ == "__main__":
     print("=" * 55)
     print("  MatchMed Atlas Migration — Airtable → Supabase")
     print("=" * 55)
-
-    if SUPABASE_KEY == "PASTE_YOUR_SERVICE_ROLE_KEY_HERE":
-        print("\n[ERROR] Please paste your Supabase service_role key into the script first.")
-        exit(1)
 
     practice_map  = migrate_practices()
     doctor_map    = migrate_doctors()

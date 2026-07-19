@@ -13,16 +13,26 @@ Usage:
     python migrate_affiliations_fixed.py
 """
 
+import os
 import time
 from supabase import create_client
 import requests
 
 AIRTABLE_PAT  = "REDACTED_PAT"
 AIRTABLE_BASE = "applI3tAeZR7UltWP"
-SUPABASE_URL  = "https://yisjyqnxaimdaeiylbuy.supabase.co"
-SUPABASE_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlpc2p5cW54YWltZGFlaXlsYnV5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTM2MDc4NCwiZXhwIjoyMDk2OTM2Nzg0fQ.mrfylD7bgplQsHuqSnDx-w0MBJsJtt8rAN7SG0lCVCc"
 
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+def require_env(name: str) -> str:
+    value = os.environ.get(name)
+    if not value:
+        raise RuntimeError(f"Missing required environment variable: {name}")
+    return value
+
+
+SUPABASE_URL = require_env("SUPABASE_URL")
+SUPABASE_SECRET_KEY = require_env("SUPABASE_SECRET_KEY")
+
+supabase = create_client(SUPABASE_URL, SUPABASE_SECRET_KEY)
 
 # ── Step 1: Build lookup maps from Supabase ──────────────────
 print("Building lookup maps from Supabase...")
