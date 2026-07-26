@@ -154,21 +154,21 @@ export default function PracticeErrorReportModal({
             alignItems: 'center',
             justifyContent: 'center',
             padding: 20,
-            background: 'rgba(20, 18, 16, 0.45)',
+            background: 'rgba(20, 18, 16, 0.55)',
           }}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            className="bg-canvas"
             style={{
               width: '100%',
               maxWidth: 480,
+              background: '#ffffff',
               border: '1px solid #e0ddd8',
               borderRadius: 14,
               padding: 24,
-              boxShadow: '0 18px 50px rgba(0,0,0,0.18)',
+              boxShadow: '0 18px 50px rgba(0,0,0,0.22)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: submitted ? 12 : 20 }}>
