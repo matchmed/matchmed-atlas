@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import posthog from 'posthog-js'
 
 type Step = 'input' | 'review' | 'report'
 
@@ -476,7 +477,10 @@ export default function ReportBuilderPage() {
     try {
       const res = await fetch('/api/generate-report', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-posthog-distinct-id': posthog.get_distinct_id() ?? 'anonymous',
+        },
         body: JSON.stringify({ prompt: buildPrompt(parsed, form) }),
       })
       const data = await res.json()

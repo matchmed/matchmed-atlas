@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useState } from 'react'
 import { createClient } from '@/lib/supabase'
+import posthog from 'posthog-js'
 
 type FieldFlagged = 'practice_name' | 'address' | 'phone' | 'website' | 'other'
 
@@ -118,6 +119,10 @@ export default function PracticeErrorReportModal({
       return
     }
 
+    posthog.capture('practice_error_report_submitted', {
+      practice_id: practiceId,
+      field_flagged: fieldFlagged,
+    })
     setSubmitted(true)
   }
 

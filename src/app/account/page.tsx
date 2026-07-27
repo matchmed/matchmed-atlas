@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import posthog from 'posthog-js'
 
 const US_STATES = ['AK','AL','AR','AZ','CA','CO','CT','DC','DE','FL','GA','HI','IA','ID','IL','IN','KS','KY','LA','MA','MD','ME','MI','MN','MO','MS','MT','NC','ND','NE','NH','NJ','NM','NV','NY','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VA','VT','WA','WI','WV','WY']
 
@@ -215,6 +216,10 @@ export default function AccountPage() {
       .update({ ...form })
       .eq('user_id', user.id)
 
+    posthog.capture('account_profile_saved', {
+      training_status: form.training_status,
+      data_sharing: form.data_sharing,
+    })
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
@@ -272,7 +277,9 @@ export default function AccountPage() {
       .from('profiles')
       .update({ deleted_at: new Date().toISOString() })
       .eq('user_id', user.id)
-  
+
+    posthog.capture('account_deleted')
+    posthog.reset()
     await supabase.auth.signOut()
     router.push('/login')
   }

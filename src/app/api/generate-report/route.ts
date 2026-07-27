@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getPostHogClient } from '@/lib/posthog-server'
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,6 +37,15 @@ export async function POST(req: NextRequest) {
         { status: response.status },
       )
     }
+
+    const distinctId = req.headers.get('x-posthog-distinct-id') ?? 'anonymous'
+    const posthog = getPostHogClient()
+    posthog.capture({
+      distinctId,
+      event: 'report_generated',
+      properties: { prompt_length: prompt.length },
+    })
+    await posthog.flush()
 
     return NextResponse.json(data)
   } catch (error) {

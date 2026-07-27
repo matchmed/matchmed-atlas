@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import Logo from '@/components/Logo'
+import posthog from 'posthog-js'
 
 const US_STATES = ['AK','AL','AR','AZ','CA','CO','CT','DC','DE','FL','GA','HI','IA','ID','IL','IN','KS','KY','LA','MA','MD','ME','MI','MN','MO','MS','MT','NC','ND','NE','NH','NJ','NM','NV','NY','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VA','VT','WA','WI','WV','WY']
 
@@ -193,7 +194,19 @@ export default function OnboardingPage() {
         })
         .eq('email', user.email)
       }
-  
+
+    posthog.identify(user.id, {
+      training_status: form.training_status,
+      start_year: form.start_year,
+      preferred_state: form.preferred_state,
+      data_sharing: form.data_sharing,
+    })
+    posthog.capture('onboarding_completed', {
+      training_status: form.training_status,
+      start_year: form.start_year,
+      data_sharing: form.data_sharing,
+    })
+
     setShowSuccess(true)
     setTimeout(() => router.push('/'), 2500)
   }

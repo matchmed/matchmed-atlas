@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import Logo from '@/components/Logo'
+import posthog from 'posthog-js'
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
@@ -38,12 +39,14 @@ export default function SignupPage() {
       setError(error.message)
       setLoading(false)
     } else {
+      posthog.capture('user_signed_up', { method: 'email' })
       setLoading(false)
       setShowConfirmation(true)
     }
   }
 
   async function handleGoogleSignup() {
+    posthog.capture('google_oauth_initiated', { context: 'signup' })
     const supabase = createClient()
     await supabase.auth.signInWithOAuth({
       provider: 'google',

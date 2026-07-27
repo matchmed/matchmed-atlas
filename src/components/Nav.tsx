@@ -6,6 +6,7 @@ import { isAuthPage } from '@/lib/auth-paths'
 import { useState, useEffect, useRef } from 'react'
 import Logo from './Logo'
 import { PracticesIcon, PhysiciansIcon, FavoritesIcon, JobsIcon } from './nav-icons'
+import posthog from 'posthog-js'
 
 const primaryTabs = [
   {
@@ -60,7 +61,7 @@ export default function Nav() {
         setUserEmail(user.email)
         const { data: profile } = await supabase
           .from('profiles')
-          .select('first_name, last_name')
+          .select('first_name, last_name, training_status')
           .eq('user_id', user.id)
           .maybeSingle()
         if (profile?.first_name) {
@@ -68,6 +69,10 @@ export default function Nav() {
         } else {
           setInitials(user.email[0].toUpperCase())
         }
+        posthog.identify(user.id, {
+          email: user.email,
+          training_status: profile?.training_status ?? undefined,
+        })
       }
     }
     getUser()
@@ -84,6 +89,7 @@ export default function Nav() {
   }, [])
 
   async function handleLogout() {
+    posthog.reset()
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/login')
