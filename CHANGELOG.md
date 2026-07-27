@@ -6,6 +6,7 @@ This file records user- and operator-visible changes. The project has not yet ad
 
 ### Documentation
 
+- Added data limitations and coverage gaps documentation for CMS billing coverage, location/geocoding caveats, and out-of-scope items.
 - Replaced scaffold documentation with project-specific setup, security, contribution, testing, and frontend guidance.
 
 ## Repository history

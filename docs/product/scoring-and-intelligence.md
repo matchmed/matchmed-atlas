@@ -150,30 +150,83 @@ Affiliation tenure labels independently collapse every value `>= 8` to “8+ yrs
 
 - **Owner confirmation required:** Define which population the tenure buckets represent (current, departed, or all-time), ensure bucket counts reconcile with summary fields, and define how missing tenure is represented.
 
-## UI-generated intelligence
+## Insights & Observations
 
-The practice detail page generates one deterministic text insight in the browser. This is not an AI model output. Branches run in this order:
+### What Atlas Insights Are (and Are Not)
 
-1. No score: says insufficient history and claims a two-physician minimum.
-2. Key-person risk: latest roster size equals one and all-time physicians exceed three.
-3. “Exceptionally stable”: score is at least 85 and 6+ year bucket counts exceed 0–3 year counts; text calls this “near-zero attrition” without checking the short-exit count.
-4. “Strong retention”: score is at least 70; includes short exits/all-time count.
-5. “High churn”: short exits divided by all-time physicians exceeds 40%.
-6. “Experienced, stable”: median years since graduation exceeds 30 and churn is below 20%.
-7. Otherwise: “Moderate retention.”
+**Insights ARE:**
 
-Important consequences:
+- Factual observations from CMS data;
+- Descriptions of patterns in physician tenure and retention;
+- Transparent about their data sources.
 
-- branch order means all scores `>= 70` bypass high-churn and aging-roster branches unless the earlier key-person or exceptionally-stable branches apply;
-- “near-zero attrition” is inferred from score and tenure shape rather than directly verified;
-- “succession pressure over the next decade” is a forward-looking interpretation based only on median years since graduation and churn;
-- “significant historical turnover” in the key-person branch is inferred from all-time count greater than three, not an explicit turnover threshold;
-- the short-exit rate uses `short_tenure_departure_count / all-time physicians`, but exact source definitions are absent.
+**Insights ARE NOT:**
 
-These strings should be treated as heuristics, not validated findings.
+- Predictions of future performance;
+- Risk assessments or warnings;
+- Prescriptive recommendations (“you should do X”);
+- Clinical or business advice.
+
+### How Insights Are Generated
+
+The practice detail page generates one deterministic insight in the browser. This is not an AI model output. Each insight follows this logic:
+
+1. Extract **facts** from CMS-derived fields (tenure distribution, roster size, churn rate, score).
+2. Identify **observations** / pattern flags (e.g., top-heavy tenure, significant roster reduction, high churn rate).
+3. Describe the observation factually in a **narrative** string.
+4. List **assumptions** that could affect interpretation.
+5. Specify **confidence** (currently always `high` for observed facts).
+
+### Implemented branch order
+
+Branches run in this order:
+
+1. Insufficient data: no score or fewer than 2 all-time physicians.
+2. Significant roster reduction: current roster size equals 1 and all-time physicians exceed 3.
+3. Concentrated long-tenure: score ≥ 85 and 6+ year bucket counts exceed 0–3 year counts.
+4. Strong retention display: score ≥ 70 (states score and short-exit / all-time counts).
+5. High churn rate: short exits ÷ all-time physicians > 40%.
+6. Aging roster pattern: median years since graduation > 30 and churn rate < 20%.
+7. Otherwise: mixed tenure distribution.
+
+Important consequence of branch order: scores `≥ 70` bypass the high-churn and aging-roster branches unless an earlier branch applies.
+
+### Insight Types & Their Assumptions
+
+#### Concentrated Long-Tenure Workforce
+
+**Observation:** 8+ years + 6–7 years cohorts > newer cohorts + high retention score  
+**What it describes:** Concentrated experience and historical stability  
+**Assumption:** Long tenure may correlate with stability  
+**Alternative interpretation:** Could reflect limited growth, geographic constraints, or market conditions
+
+#### Significant Roster Reduction
+
+**Observation:** Current roster size = 1; all-time historical size > 3  
+**What it describes:** Observed reduction in active physician count  
+**Assumption:** Reduction is factual and measurable  
+**Alternative interpretation:** Could be natural transition, acquisition, consolidation, or retirement
+
+#### High Churn Rate
+
+**Observation:** >40% of all-time physicians exited within 4 years  
+**What it describes:** Elevated short-tenure exit rate  
+**Assumption:** High exit rate may reflect challenging environment  
+**Alternative interpretation:** Could be normal early-career rotation, competitive market, or voluntary transitions
+
+#### Insufficient Data
+
+**Observation:** Fewer than 2 all-time physicians (or no retention score)  
+**What it describes:** Lack of historical data for pattern analysis  
+**Assumption:** None  
+**Confidence:** High (absence of data is factual)
+
+### Key Principle
+
+Atlas shows what the data reveals about physician tenure patterns. It does not predict outcomes or prescribe actions.
 
 - **Owner confirmation required:** Approve, revise, or remove each heuristic and define evidence, wording, priority, and legal review requirements.
-- **Owner confirmation required:** Define whether insight generation needs versioning, confidence, explainability, monitoring, and user-visible caveats.
+- **Owner confirmation required:** Confirm whether confidence should remain fixed at `high` or vary by sample size / data completeness.
 
 ## Count and time-span inconsistencies
 

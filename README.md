@@ -113,7 +113,7 @@ Atlas is designed to be understandable. We prefer explicit architecture, explain
 
 ## Current known limitations
 
-- CMS physician movement data lags real-world changes.
+- CMS physician movement data lags real-world changes. See [data limitations and coverage gaps](docs/data/data-limitations.md).
 - Practice error reports currently cover practice metadata rather than scoring or physician-history corrections.
 - The market-report builder depends on Anthropic.
 - The production database schema and most RLS policies are not fully represented in this repository.
@@ -146,6 +146,7 @@ Atlas is designed to be understandable. We prefer explicit architecture, explain
 - [Authentication and session lifecycle](docs/security/authentication-and-session-lifecycle.md)
 - [Domain model and authorization](docs/data/domain-model-and-authorization.md)
 - [Provenance, ingestion, and refresh](docs/data/provenance-ingestion-and-refresh.md)
+- [Data limitations and coverage gaps](docs/data/data-limitations.md)
 - [Privacy, retention, and processor map](docs/data/privacy-retention-and-processor-map.md)
 
 ### Engineering and operations

@@ -23,6 +23,8 @@ The scoring methodology and Terms pages state that:
 
 These are **code-derived published claims**, not repository-verifiable pipeline facts. Exact CMS dataset names, file/release IDs, covered years, licenses, download timestamps, checksums, and transformations are absent. “No third-party data” also needs clarification because entity resolution or enrichment could use reference data even if scoring inputs do not.
 
+For known coverage gaps (VA/military, multi-location billing, geocoding, solos, temporal lag) see `docs/data/data-limitations.md`.
+
 ## Observed published data products
 
 ### Practices

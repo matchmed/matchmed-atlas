@@ -192,11 +192,19 @@ export default function PracticeDetailPage() {
   const name = practice.practice_name || 'Unknown Practice'
   const [fg, bg] = nameToColor(name)
   const initials = getInitials(name)
-  const hasScore = practice.retention_score !== null
-  const score = practice.retention_score
-  const alltime = practice.total_physicians_all_time || affiliations.length
-  const churn = practice.short_tenure_departure_count || 0
-  const churnRate = alltime > 0 ? churn / alltime : 0
+
+  // ── FACTS (raw data from DB) ──────────────────────────────────────────────
+  const facts = {
+    hasScore: practice.retention_score !== null,
+    score: practice.retention_score,
+    alltime: practice.total_physicians_all_time || affiliations.length,
+    churn: practice.short_tenure_departure_count || 0,
+    churnRate: 0,
+    rosterSize: practice.latest_roster_size || 0,
+  }
+  facts.churnRate = facts.alltime > 0 ? facts.churn / facts.alltime : 0
+
+  const { hasScore, score, alltime, churn, churnRate, rosterSize } = facts
 
   const onRoster = affiliations.filter(a => (a.status || '').toLowerCase() === 'on roster')
   const notRoster = affiliations.filter(a => (a.status || '').toLowerCase() !== 'on roster')
@@ -212,24 +220,89 @@ export default function PracticeDetailPage() {
   const maxVal = Math.max(...Object.values(buckets), 1)
   const barColors = { '8+ yrs': '#1A6B3A', '6-7 yrs': '#4CAF50', '4-5 yrs': '#1C4A45', '2-3 yrs': '#6a9e98', '0-1 yrs': '#d0d0d0' }
 
-  const topHeavy = (buckets['8+ yrs'] + buckets['6-7 yrs']) > (buckets['0-1 yrs'] + buckets['2-3 yrs'])
+  // ── OBSERVATIONS (boolean pattern flags) ──────────────────────────────────
+  const observations = {
+    topHeavy: (buckets['8+ yrs'] + buckets['6-7 yrs']) > (buckets['0-1 yrs'] + buckets['2-3 yrs']),
+    significantReduction: rosterSize === 1 && alltime > 3,
+    highChurnRate: churnRate > 0.4,
+  }
   const agingRoster = (practice.med_yrs_grad || 0) > 30 && churnRate < 0.2
-  const keyPersonRisk = (practice.latest_roster_size || 0) === 1 && alltime > 3
 
-  let insight = ''
-  if (!hasScore) insight = 'Not enough historical data to generate a Retention Score. A minimum of two all-time physicians is required to measure retention dynamics.'
-  else if (keyPersonRisk) insight = 'Single-physician practice with significant historical turnover. Key-person concentration risk.'
-  else if ((score || 0) >= 85 && topHeavy) insight = `Exceptionally stable. ${buckets['8+ yrs']} of ${alltime} all-time physicians reached 8+ years. Near-zero attrition.`
-  else if ((score || 0) >= 70) insight = `Strong retention profile. ${churn} short-tenure exit${churn !== 1 ? 's' : ''} out of ${alltime} all-time physicians.`
-  else if (churnRate > 0.4) insight = `High churn signal. ${churn} of ${alltime} physicians left within 4 years — ${Math.round(churnRate * 100)}% short-tenure exit rate.`
-  else if (agingRoster) insight = 'Experienced, stable roster. Senior-heavy workforce may face succession pressure over the next decade.'
-  else insight = `Moderate retention profile with mixed tenure distribution across ${alltime} all-time physicians.`
+  // ── NARRATIVE (factual insight text + assumptions + confidence) ───────────
+  type InsightNarrative = {
+    text: string
+    assumptions: string[]
+    confidence: 'high'
+  }
+
+  let insight: InsightNarrative
+  if (!hasScore || alltime < 2) {
+    insight = {
+      text: 'Fewer than 2 all-time physicians observed. Insufficient historical data for pattern analysis.',
+      assumptions: [],
+      confidence: 'high',
+    }
+  } else if (observations.significantReduction) {
+    insight = {
+      text: `Currently ${rosterSize} physician${rosterSize === 1 ? '' : 's'}; ${alltime} all-time. Significant roster reduction observed.`,
+      assumptions: [
+        'Reduction is factual and measurable from CMS roster counts.',
+        'Could reflect natural transition, acquisition, consolidation, or retirement.',
+      ],
+      confidence: 'high',
+    }
+  } else if ((score || 0) >= 85 && observations.topHeavy) {
+    insight = {
+      text: `${buckets['8+ yrs']} of ${alltime} all-time physicians reached 8+ years. Concentrated long-tenure workforce.`,
+      assumptions: [
+        'Long tenure may correlate with historical stability.',
+        'Could also reflect limited growth, geographic constraints, or market conditions.',
+      ],
+      confidence: 'high',
+    }
+  } else if ((score || 0) >= 70) {
+    insight = {
+      text: `Retention score ${score!.toFixed(1)}. ${churn} short-tenure exit${churn !== 1 ? 's' : ''} out of ${alltime} all-time physicians.`,
+      assumptions: [
+        'Retention score summarizes observed stay patterns, not practice quality.',
+        'Short-exit counts depend on CMS affiliation completeness and lag.',
+      ],
+      confidence: 'high',
+    }
+  } else if (observations.highChurnRate) {
+    insight = {
+      text: `${churn} of ${alltime} physicians exited within 4 years — ${Math.round(churnRate * 100)}% short-tenure exit rate. Elevated short-tenure exit rate observed.`,
+      assumptions: [
+        'High exit rate may reflect a challenging environment.',
+        'Could also reflect early-career rotation, competitive market, or voluntary transitions.',
+      ],
+      confidence: 'high',
+    }
+  } else if (agingRoster) {
+    insight = {
+      text: `Median graduation ${practice.med_yrs_grad} years ago. Aging roster pattern.`,
+      assumptions: [
+        'Median years since graduation describes roster age, not future outcomes.',
+        'Senior physicians may remain active without an imminent transition.',
+      ],
+      confidence: 'high',
+    }
+  } else {
+    insight = {
+      text: `Mixed tenure distribution across ${alltime} all-time physicians.`,
+      assumptions: [
+        'Mixed tenure does not imply a single dominant pattern.',
+        'Sample size and CMS reporting lag can affect interpretation.',
+      ],
+      confidence: 'high',
+    }
+  }
 
   const metricCards = [
     { label: 'Retention score', value: hasScore ? score!.toFixed(1) : '—', color: scoreColor(score), bg: scoreBg(score), sub: deltaChip(practice.retention_score_delta) },
-    { label: 'Current roster', value: String(practice.latest_roster_size || 0), color: '#1a1a1a', bg: '#ffffff', sub: null },
+    { label: 'Current roster', value: String(rosterSize), color: '#1a1a1a', bg: '#ffffff', sub: null },
     { label: 'All-time physicians', value: String(alltime), color: '#1a1a1a', bg: '#ffffff', sub: null },
-    { label: 'Short exits', value: String(churn), color: churnRate > 0.4 ? '#C0392B' : '#1a1a1a', bg: churnRate > 0.4 ? '#fdf2f2' : '#ffffff', sub: null },
+    { label: 'Short exits', value: String(churn), color: observations.highChurnRate ? '#C0392B' : '#1a1a1a', bg: observations.highChurnRate ? '#fdf2f2' : '#ffffff', sub: null },
     { label: 'Veterans (8+ yrs)', value: String(practice.veteran_count || 0), color: (practice.veteran_count || 0) > 0 ? '#1A6B3A' : '#888', bg: (practice.veteran_count || 0) > 0 ? '#f0faf4' : '#ffffff', sub: null },
     { label: 'Median yrs since MD', value: `${practice.med_yrs_grad || 0} yrs`, color: '#1a1a1a', bg: '#ffffff', sub: null },
   ]
@@ -397,8 +470,39 @@ export default function PracticeDetailPage() {
       </div>
 
       {/* Insight */}
-      <div style={{ borderLeft: `3px solid ${hasScore ? '#1C4A45' : '#ccc'}`, padding: '12px 16px', background: hasScore ? '#E8F0EF' : '#f9f9f9', borderRadius: '0 8px 8px 0', fontSize: 13, color: hasScore ? '#333' : '#888', lineHeight: 1.6, marginBottom: 24 }}>
-        {insight}
+      <div style={{ borderLeft: `3px solid ${hasScore ? '#1C4A45' : '#ccc'}`, padding: '12px 16px', background: hasScore ? '#E8F0EF' : '#f9f9f9', borderRadius: '0 8px 8px 0', marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: insight.assumptions.length ? 8 : 0 }}>
+          <p style={{ fontSize: 13, color: hasScore ? '#333' : '#888', lineHeight: 1.6, margin: 0, flex: 1 }}>
+            {insight.text}
+          </p>
+          <span style={{
+            flexShrink: 0,
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: '.04em',
+            textTransform: 'uppercase',
+            color: '#1C4A45',
+            background: '#fff',
+            border: '1px solid #c5d8d5',
+            borderRadius: 20,
+            padding: '3px 9px',
+            whiteSpace: 'nowrap',
+          }}>
+            Confidence: {insight.confidence}
+          </span>
+        </div>
+        {insight.assumptions.length > 0 && (
+          <details style={{ marginTop: 4 }}>
+            <summary style={{ fontSize: 12, color: '#1C4A45', cursor: 'pointer', userSelect: 'none', listStyle: 'none' }}>
+              Assumptions ({insight.assumptions.length})
+            </summary>
+            <ul style={{ margin: '8px 0 0', paddingLeft: 18, fontSize: 12, color: '#555', lineHeight: 1.55 }}>
+              {insight.assumptions.map(a => (
+                <li key={a} style={{ marginBottom: 4 }}>{a}</li>
+              ))}
+            </ul>
+          </details>
+        )}
       </div>
 
       {/* Score rows */}

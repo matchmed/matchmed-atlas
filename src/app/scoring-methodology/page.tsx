@@ -122,6 +122,85 @@ export default function ScoringMethodologyPage() {
         ))}
       </div>
 
+      <SectionLabel>Insights &amp; Observations</SectionLabel>
+      <p style={{ fontSize: 14, lineHeight: 1.7, color: '#444', marginBottom: 16 }}>Practice detail pages include a short insight derived from the same CMS-derived fields shown in the metrics. Insights are deterministic observations, not AI-generated advice.</p>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+        <div style={{ background: '#E8F0EF', borderRadius: 8, padding: '14px 16px' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#1C4A45', marginBottom: 8, letterSpacing: '.04em', textTransform: 'uppercase' }}>Insights are</div>
+          <ul style={{ fontSize: 13, color: '#444', lineHeight: 1.6, margin: 0, paddingLeft: 18 }}>
+            <li style={{ marginBottom: 4 }}>Factual observations from CMS data</li>
+            <li style={{ marginBottom: 4 }}>Descriptions of tenure and retention patterns</li>
+            <li>Transparent about their data sources</li>
+          </ul>
+        </div>
+        <div style={{ background: '#fff8f0', borderRadius: 8, padding: '14px 16px', border: '0.5px solid #f0d0a0' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#8a5a00', marginBottom: 8, letterSpacing: '.04em', textTransform: 'uppercase' }}>Insights are not</div>
+          <ul style={{ fontSize: 13, color: '#555', lineHeight: 1.6, margin: 0, paddingLeft: 18 }}>
+            <li style={{ marginBottom: 4 }}>Predictions of future performance</li>
+            <li style={{ marginBottom: 4 }}>Risk assessments or warnings</li>
+            <li style={{ marginBottom: 4 }}>Prescriptive recommendations</li>
+            <li>Clinical or business advice</li>
+          </ul>
+        </div>
+      </div>
+
+      <p style={{ fontSize: 14, lineHeight: 1.7, color: '#444', marginBottom: 12 }}>Each insight follows this logic:</p>
+      <ol style={{ fontSize: 13.5, lineHeight: 1.7, color: '#444', margin: '0 0 16px', paddingLeft: 20 }}>
+        <li style={{ marginBottom: 4 }}>Extract facts from CMS data (tenure distribution, roster size, churn rate)</li>
+        <li style={{ marginBottom: 4 }}>Identify patterns (for example top-heavy tenure or significant roster reduction)</li>
+        <li style={{ marginBottom: 4 }}>Describe the observation factually</li>
+        <li style={{ marginBottom: 4 }}>List assumptions that could affect interpretation</li>
+        <li>Specify confidence (high for observed facts)</li>
+      </ol>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+        {[
+          {
+            title: 'Concentrated long-tenure workforce',
+            observation: 'Longer-tenure cohorts exceed newer cohorts with a high retention score.',
+            describes: 'Concentrated experience and historical stability.',
+            assumption: 'Long tenure may correlate with stability.',
+            alt: 'Could reflect limited growth, geographic constraints, or market conditions.',
+          },
+          {
+            title: 'Significant roster reduction',
+            observation: 'Current roster size is 1 while all-time historical size exceeds 3.',
+            describes: 'Observed reduction in active physician count.',
+            assumption: 'Reduction is factual and measurable.',
+            alt: 'Could be natural transition, acquisition, consolidation, or retirement.',
+          },
+          {
+            title: 'High churn rate',
+            observation: 'More than 40% of all-time physicians exited within 4 years.',
+            describes: 'Elevated short-tenure exit rate.',
+            assumption: 'High exit rate may reflect a challenging environment.',
+            alt: 'Could be early-career rotation, competitive market, or voluntary transitions.',
+          },
+          {
+            title: 'Insufficient data',
+            observation: 'Fewer than 2 all-time physicians.',
+            describes: 'Lack of historical data for pattern analysis.',
+            assumption: 'None.',
+            alt: 'Absence of data is itself factual.',
+          },
+        ].map(item => (
+          <div key={item.title} style={{ border: '0.5px solid #e0e0e0', borderRadius: 8, padding: '14px 16px', background: '#fff' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', marginBottom: 6 }}>{item.title}</div>
+            <p style={{ fontSize: 12.5, color: '#555', lineHeight: 1.55, margin: '0 0 4px' }}><strong>Observation:</strong> {item.observation}</p>
+            <p style={{ fontSize: 12.5, color: '#555', lineHeight: 1.55, margin: '0 0 4px' }}><strong>What it describes:</strong> {item.describes}</p>
+            <p style={{ fontSize: 12.5, color: '#555', lineHeight: 1.55, margin: '0 0 4px' }}><strong>Assumption:</strong> {item.assumption}</p>
+            <p style={{ fontSize: 12.5, color: '#555', lineHeight: 1.55, margin: 0 }}><strong>Alternative interpretation:</strong> {item.alt}</p>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ background: '#E8F0EF', borderLeft: '3px solid #1C4A45', borderRadius: '0 8px 8px 0', padding: '14px 18px', marginBottom: 24 }}>
+        <p style={{ fontSize: 13, color: '#333', lineHeight: 1.6, margin: 0 }}>
+          <strong>Key principle:</strong> Atlas shows what the data reveals about physician tenure patterns. It does not predict outcomes or prescribe actions.
+        </p>
+      </div>
+
       <SectionLabel>What the score is not</SectionLabel>
       <div style={{ background: '#fff8f0', border: '0.5px solid #f0d0a0', borderRadius: 10, padding: '18px 22px', marginBottom: 24 }}>
         <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, margin: 0 }}>

@@ -91,6 +91,7 @@ Read:
 - Do not assume production RLS from client query predicates.
 - Do not change score meaning, thresholds, colors, labels, or explanatory copy casually.
 - Do not present CMS-derived workforce movement as real-time ground truth.
+- Prefer billing-truth framing for locations and rosters; see `docs/data/data-limitations.md` for known coverage gaps (VA/military, multi-department billing, geocoding, solos).
 - Keep workforce doctors, authenticated profiles, and Supabase Auth users conceptually distinct.
 - Preserve the distinction between code-derived facts, published claims, and owner-approved policy.
 
@@ -98,6 +99,7 @@ Read:
 
 - `docs/data/domain-model-and-authorization.md`
 - `docs/data/provenance-ingestion-and-refresh.md`
+- `docs/data/data-limitations.md`
 - `docs/product/scoring-and-intelligence.md`
 - `docs/product/content-governance.md`
 
