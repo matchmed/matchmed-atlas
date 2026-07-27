@@ -4,8 +4,16 @@ import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { invalidateFavoritesCache } from '@/lib/favorites-cache'
 import { syncPracticeListCacheFromDetail } from '@/lib/practices-cache'
+import {
+  formatCityState,
+  formatPracticeLocationAddress,
+  formatPracticeLocationSummary,
+  normalizePracticeLocation,
+  type PracticeLocation,
+} from '@/lib/practice-locations'
 import { nameToColor, getInitials, scoreColor, scoreBg, deltaColor, deltaBg, deltaArrow } from '@/lib/utils'
 import PracticeErrorReportModal from '@/components/PracticeErrorReportModal'
+import PracticeLocationsDisclaimer from '@/components/PracticeLocationsDisclaimer'
 
 interface Practice {
   id: string
@@ -77,6 +85,8 @@ export default function PracticeDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const [practice, setPractice] = useState<Practice | null>(null)
+  const [locations, setLocations] = useState<PracticeLocation[]>([])
+  const [locationsExpanded, setLocationsExpanded] = useState(false)
   const [affiliations, setAffiliations] = useState<Affiliation[]>([])
   const [jobs, setJobs] = useState<JobLead[]>([])
   const [loading, setLoading] = useState(true)
@@ -91,14 +101,35 @@ export default function PracticeDetailPage() {
     async function load() {
       const supabase = createClient()
       setLoading(true)
-      const [practiceRes, affilRes, jobRes] = await Promise.all([
+      setLocationsExpanded(false)
+      const [practiceRes, locationsRes, affilRes, jobRes] = await Promise.all([
         supabase.from('practices').select('*').eq('id', id).single(),
+        supabase
+          .from('practice_locations')
+          .select('id,practice_id,address,city,state,zip,latitude,longitude,doctor_count,rank_by_doctors')
+          .eq('practice_id', id),
         supabase.from('affiliations').select('id,npi,status,first_seen_year_at_org,last_seen_year_at_org,tenure_years,grad_yr,doctors(id,physician_name,npi)').eq('practice_id', id).order('last_seen_year_at_org', { ascending: false }),
         supabase.from('employer_leads').select('*').eq('practice_id', id),
       ])
       if (practiceRes.data) {
         setPractice(practiceRes.data)
         void syncPracticeListCacheFromDetail(practiceRes.data)
+      }
+      if (locationsRes.data) {
+        const normalized = (locationsRes.data as Record<string, unknown>[])
+          .map(normalizePracticeLocation)
+          .filter((row): row is PracticeLocation => row !== null)
+          .sort((a, b) => {
+            const aCount = a.doctor_count ?? -1
+            const bCount = b.doctor_count ?? -1
+            if (bCount !== aCount) return bCount - aCount
+            const aRank = a.rank_by_doctors ?? Number.POSITIVE_INFINITY
+            const bRank = b.rank_by_doctors ?? Number.POSITIVE_INFINITY
+            return aRank - bRank
+          })
+        setLocations(normalized)
+      } else {
+        setLocations([])
       }
       if (affilRes.data) setAffiliations(affilRes.data as any)
       if (jobRes.data) setJobs(jobRes.data)
@@ -238,7 +269,10 @@ export default function PracticeDetailPage() {
             practiceId={practice.id}
             snapshot={{
               practice_name: practice.practice_name,
-              city_st: practice.city_st,
+              city_st:
+                formatPracticeLocationSummary(locations) ||
+                formatCityState(locations[0]?.city ?? null, locations[0]?.state ?? null) ||
+                practice.city_st,
               phone: practice.phone,
               website: practice.website,
             }}
@@ -272,8 +306,62 @@ export default function PracticeDetailPage() {
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="font-serif" style={{ fontSize: 24, fontWeight: 700, color: '#1a1a1a', letterSpacing: '-0.02em', marginBottom: 8, lineHeight: 1.2 }}>{name}</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {practice.city_st && <div style={{ fontSize: 13, color: '#888' }}>{practice.city_st}</div>}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {locations.length > 0 && (
+              locations.length === 1 ? (
+                <div style={{ fontSize: 13, color: '#888', display: 'inline' }}>
+                  {formatPracticeLocationAddress(locations[0]) || formatPracticeLocationSummary(locations)}
+                  {' '}
+                  <PracticeLocationsDisclaimer />
+                </div>
+              ) : (
+                <div>
+                  <div style={{ fontSize: 13, color: '#888' }}>
+                    <button
+                      type="button"
+                      onClick={() => setLocationsExpanded(open => !open)}
+                      aria-expanded={locationsExpanded}
+                      style={{
+                        fontSize: 13,
+                        color: '#888',
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                      }}
+                    >
+                      {formatPracticeLocationSummary(locations)}
+                      <span style={{ marginLeft: 6, color: '#1C4A45' }}>
+                        {locationsExpanded ? 'Hide' : 'Show all'}
+                      </span>
+                    </button>
+                    {' '}
+                    <PracticeLocationsDisclaimer />
+                  </div>
+                  {locationsExpanded && (
+                    <ul
+                      style={{
+                        listStyle: 'none',
+                        margin: '12px 0 2px',
+                        padding: 0,
+                        display: 'grid',
+                        gap: 8,
+                      }}
+                    >
+                      {locations.map(loc => (
+                        <li
+                          key={loc.id}
+                          style={{ fontSize: 13, color: '#666', lineHeight: 1.4 }}
+                        >
+                          {formatPracticeLocationAddress(loc) || 'Location'}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )
+            )}
             {practice.phone && <a href={`tel:${practice.phone}`} style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none' }}>{practice.phone}</a>}
             {practice.website && <a href={practice.website} target="_blank" rel="noopener" style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 320 }}>{practice.website}</a>}
           </div>

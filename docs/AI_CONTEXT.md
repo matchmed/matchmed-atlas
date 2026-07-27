@@ -73,6 +73,7 @@ Start with:
 Atlas currently uses:
 
 - in-memory and IndexedDB caching for practice-list data;
+- in-memory and IndexedDB caching for `practice_locations` (separate DB/key, same one-hour reuse TTL);
 - a one-hour practice-cache reuse TTL;
 - a separate in-memory favorites cache;
 - `sessionStorage` for map-view restoration.

@@ -90,14 +90,14 @@ The account menu calls Supabase signout and routes to `/login`.
 ## 4. Research practices
 
 1. The user opens `/practices`.
-2. The client first checks an IndexedDB/in-memory cache. If absent or stale, it reads all practice rows in batches of 1,000 and caches them.
-3. Search matches practice name or `city_st`; state filters allow multiple values.
-4. Sorting supports name, location, retention score, score change versus 2019, and latest roster size.
+2. The client first checks IndexedDB/in-memory caches for practices and `practice_locations`. If absent or stale, it reads each table in batches of 1,000 and caches them.
+3. Search matches practice name or any linked location city/state/zip/address; state filters match any location for the practice.
+4. Sorting supports name, retention score, score change versus 2019, and latest roster size. The list table no longer shows a Location column; mobile cards show a location summary.
 5. Results are paginated at 50 rows. Search, state, and page are represented in URL parameters; sort and view are local state.
-6. The user can choose a table/card presentation or map. Missing Mapbox configuration leaves the map container without a dedicated error message.
+6. The user can choose a table/card presentation or map. The map places one pin per geocoded location. Clicking a multi-location pin draws dashed spider lines from that pin to the practice’s other sites; closing the popup or clicking empty map clears them. Missing Mapbox configuration leaves the map container without a dedicated error message.
 7. Opening a result routes to `/practices/[id]`. Map position and zoom are temporarily stored in session storage and restored when returning.
 
-The detail screen concurrently loads the practice, affiliations, and linked employer leads. It then loads the current profile and favorite state. Missing practice data shows “Practice not found”; query errors otherwise have little dedicated feedback.
+The detail screen concurrently loads the practice, its `practice_locations`, affiliations, and linked employer leads. Multi-location practices show a clickable summary (for example `7 locations · GA · FL`) that expands to a spaced vertical city/state list. It then loads the current profile and favorite state. Missing practice data shows “Practice not found”; query errors otherwise have little dedicated feedback.
 
 From the detail screen, the user can:
 
@@ -127,7 +127,7 @@ The persistence entity is `shortlists`, keyed by profile and practice. Current u
 - practice list/map accessibility labels say “shortlist”;
 - code and database use `shortlists`.
 
-From practice list/map or detail, saving inserts a shortlist row; removing deletes it. A client cache for the Favorites page is invalidated or updated. The Favorites screen orders records newest first, displays practice name/location/roster/score, routes to detail on card click, and supports removal. A user without a session is routed to login; a missing profile yields an empty page after loading.
+From practice list/map or detail, saving inserts a shortlist row; removing deletes it. A client cache for the Favorites page is invalidated or updated. The Favorites screen orders records newest first, displays practice name, a `practice_locations` summary (for example `7 locations · GA · FL`), roster, and score, routes to detail on card click, and supports removal. A user without a session is routed to login; a missing profile yields an empty page after loading.
 
 - **Owner confirmation required:** Choose the canonical “Favorites” or “Shortlist” terminology.
 - **Owner confirmation required:** Define duplicate prevention and expected error/rollback behavior; current optimistic list/map updates do not visibly handle write failures.

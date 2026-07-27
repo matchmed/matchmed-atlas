@@ -29,6 +29,7 @@ export function patchFavoritesPractice(
   practiceId: string,
   patch: {
     practice_name?: string | null
+    location_summary?: string | null
     city_st?: string | null
     retention_score?: number | null
     latest_roster_size?: number | null
@@ -38,10 +39,15 @@ export function patchFavoritesPractice(
 
   let changed = false
   const favorites = entry.favorites.map(f => {
-    const fav = f as { practice_id?: string }
+    const fav = f as { practice_id?: string; location_summary?: string | null }
     if (fav.practice_id !== practiceId) return f
     changed = true
-    return { ...fav, ...patch }
+    const next = { ...fav, ...patch }
+    // Prefer explicit location_summary; fall back to legacy city_st if present in patch
+    if (patch.location_summary === undefined && patch.city_st !== undefined && !fav.location_summary) {
+      next.location_summary = patch.city_st
+    }
+    return next
   })
 
   if (changed) {

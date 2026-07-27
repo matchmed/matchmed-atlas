@@ -11,6 +11,19 @@ import {
   PRACTICES_CACHE_TTL,
   type PracticeListRow,
 } from '@/lib/practices-cache'
+import {
+  buildPracticeSpiderGeoJSON,
+  fetchAllPracticeLocations,
+  formatCityState,
+  formatPracticeLocationSummary,
+  indexLocationsByPracticeId,
+  peekPracticeLocationsCache,
+  practiceMatchesLocationSearch,
+  practiceMatchesSelectedStates,
+  practicePinCoordinates,
+  uniqueSortedStates,
+  type PracticeLocation,
+} from '@/lib/practice-locations'
 import { replaceListParams, pageFromParams, statesFromParams } from '@/lib/list-url'
 import { useListSearch } from '@/lib/use-list-search'
 import { invalidateFavoritesCache } from '@/lib/favorites-cache'
@@ -25,12 +38,11 @@ const CACHE_STORE = PRACTICES_CACHE_STORE
 
 type Practice = PracticeListRow
 
-type SortKey = 'practice_name' | 'city_st' | 'retention_score' | 'retention_score_delta' | 'latest_roster_size'
+type SortKey = 'practice_name' | 'retention_score' | 'retention_score_delta' | 'latest_roster_size'
 
 function sortLabel(key: SortKey): string {
   const labels: Record<SortKey, string> = {
     practice_name: 'name',
-    city_st: 'location',
     retention_score: 'score',
     retention_score_delta: 'change vs 2019',
     latest_roster_size: 'roster size',
@@ -54,12 +66,15 @@ function ShortlistHeart({ filled, onClick }: { filled: boolean; onClick: (e: Rea
 }
 
 function practicePopupHtml(
-  props: { name: string; location: string; phone?: string; practiceId: string },
+  props: { name: string; location: string; locationCount?: string; phone?: string; practiceId: string },
   sl: { text: string; bg: string; color: string },
   isShortlisted: boolean,
 ) {
   const fill = isShortlisted ? '#E53935' : 'none'
   const stroke = isShortlisted ? '#E53935' : '#888'
+  const countLine = props.locationCount
+    ? `<div style="font-size:12px;color:#888;margin-bottom:4px;">${props.locationCount}</div>`
+    : ''
   return `
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px;">
       <div style="font-size:14px;font-weight:600;color:#1a1a1a;">${props.name}</div>
@@ -69,6 +84,7 @@ function practicePopupHtml(
         </svg>
       </button>
     </div>
+    ${countLine}
     <div style="font-size:12px;color:#888;margin-bottom:4px;">${props.location}</div>
     ${props.phone ? `<div style="font-size:12px;color:#1C4A45;margin-bottom:8px;">${props.phone}</div>` : ''}
     <div style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;background:${sl.bg};color:${sl.color};margin-bottom:10px;">${sl.text}</div>
@@ -76,15 +92,23 @@ function practicePopupHtml(
   `
 }
 
-function PracticeCard({ practice, onOpen }: { practice: Practice; onOpen: () => void }) {
+function PracticeCard({
+  practice,
+  locationSummary,
+  onOpen,
+}: {
+  practice: Practice
+  locationSummary: string
+  onOpen: () => void
+}) {
   const [fg, bg] = nameToColor(practice.practice_name || '')
   const initials = getInitials(practice.practice_name || '?')
   const sl = scoreLabel(practice.retention_score)
-  const location = practice.city_st || '—'
   const roster = practice.latest_roster_size
     ? `${practice.latest_roster_size} physician${practice.latest_roster_size === 1 ? '' : 's'}`
     : null
-  const meta = roster ? `${location} · ${roster}` : location
+  const metaParts = [locationSummary || null, roster].filter(Boolean)
+  const meta = metaParts.length ? metaParts.join(' · ') : '—'
 
   return (
     <button type="button" className="practice-card" onClick={onOpen}>
@@ -122,8 +146,16 @@ function PracticesPageContent() {
   const [practices, setPractices] = useState<Practice[]>(
     () => peekAtlasCache<Practice>(CACHE_DB, CACHE_KEY, CACHE_TTL) ?? [],
   )
+  const [locations, setLocations] = useState<PracticeLocation[]>(
+    () => peekPracticeLocationsCache() ?? [],
+  )
+  const [locationsError, setLocationsError] = useState<string | null>(null)
   const [loading, setLoading] = useState(
     () => !peekAtlasCache<Practice>(CACHE_DB, CACHE_KEY, CACHE_TTL),
+  )
+  const locationsByPracticeId = useMemo(
+    () => indexLocationsByPracticeId(locations),
+    [locations],
   )
   const { search, setSearch } = useListSearch()
   const selectedStates = useMemo(() => statesFromParams(searchParams), [searchParams])
@@ -154,12 +186,14 @@ function PracticesPageContent() {
   const [clusterPractices, setClusterPractices] = useState<any[]>([])
   const [clusterPanelOpen, setClusterPanelOpen] = useState(false)
   const [highlightedClusterId, setHighlightedClusterId] = useState<number | null>(null)
+  const [spiderPracticeId, setSpiderPracticeId] = useState<string | null>(null)
+  const [spiderHub, setSpiderHub] = useState<[number, number] | null>(null)
   const [shortlistedPracticeIds, setShortlistedPracticeIds] = useState<Set<string>>(new Set())
   const [profileId, setProfileId] = useState<string | null>(null)
 
-  // Load all practices with IndexedDB cache
+  // Load practices + practice_locations with IndexedDB cache
   useEffect(() => {
-    async function load() {
+    async function loadPractices() {
       const cached = await loadAtlasCache<Practice>(CACHE_DB, CACHE_STORE, CACHE_KEY, CACHE_TTL)
       if (cached) {
         setPractices(cached)
@@ -184,7 +218,22 @@ function PracticesPageContent() {
       setPractices(all)
       setLoading(false)
     }
-    load()
+
+    async function loadLocations() {
+      try {
+        setLocationsError(null)
+        const rows = await fetchAllPracticeLocations()
+        setLocations(rows)
+      } catch (e) {
+        setLocations([])
+        setLocationsError(
+          e instanceof Error ? e.message : 'Failed to load practice locations',
+        )
+      }
+    }
+
+    void loadPractices()
+    void loadLocations()
   }, [])
 
   useEffect(() => {
@@ -239,12 +288,16 @@ function PracticesPageContent() {
     } catch (e) {}
   }, [practices])
 
-  const allStates = Array.from(new Set(practices.map(p => p.state).filter(Boolean) as string[])).sort()
+  const allStates = useMemo(() => uniqueSortedStates(locations), [locations])
 
   const filtered = practices.filter(p => {
     const q = search.toLowerCase()
-    const matchesSearch = !q || (p.practice_name || '').toLowerCase().includes(q) || (p.city_st || '').toLowerCase().includes(q)
-    const matchesState = selectedStates.size === 0 || selectedStates.has(p.state || '')
+    const locs = locationsByPracticeId.get(p.id) ?? []
+    const matchesSearch =
+      !q ||
+      (p.practice_name || '').toLowerCase().includes(q) ||
+      practiceMatchesLocationSearch(locs, q)
+    const matchesState = practiceMatchesSelectedStates(locs, selectedStates)
     return matchesSearch && matchesState
   }).sort((a, b) => {
     const av = a[sortKey]
@@ -311,6 +364,11 @@ function PracticesPageContent() {
     return { text: s.toFixed(1), bg: '#ffebee', color: '#C0392B' }
   }
 
+  function clearSpider() {
+    setSpiderPracticeId(null)
+    setSpiderHub(null)
+  }
+
   function showPracticePopup(coords: [number, number], props: Record<string, any>) {
     if (!mapRef.current) return
     lastPopupRef.current = { coords, props }
@@ -318,10 +376,31 @@ function PracticesPageContent() {
     const sl = scoreLabelLocal(score)
     const isShortlisted = shortlistedPracticeIdsRef.current.has(props.practiceId)
     if (popupRef.current) popupRef.current.remove()
+
+    const locs = locationsByPracticeId.get(props.practiceId) ?? []
+    if (locs.filter(l => l.latitude != null && l.longitude != null).length > 1) {
+      setSpiderPracticeId(props.practiceId)
+      setSpiderHub(coords)
+    } else {
+      clearSpider()
+    }
+
     popupRef.current = new mapboxgl.Popup({ closeButton: true, maxWidth: '240px' })
       .setLngLat(coords)
-      .setHTML(practicePopupHtml(props as { name: string; location: string; phone?: string; practiceId: string }, sl, isShortlisted))
+      .setHTML(practicePopupHtml(props as {
+        name: string
+        location: string
+        locationCount?: string
+        phone?: string
+        practiceId: string
+      }, sl, isShortlisted))
       .addTo(mapRef.current)
+
+    popupRef.current.on('close', () => {
+      if (lastPopupRef.current?.props.practiceId === props.practiceId) {
+        clearSpider()
+      }
+    })
   }
 
   async function toggleShortlist(practiceId: string) {
@@ -399,6 +478,21 @@ function PracticesPageContent() {
       mapInitedRef.current = true
       const geo = buildGeoJSON(filtered)
       map.addSource('practices', { type: 'geojson', data: geo, cluster: true, clusterMaxZoom: 10, clusterRadius: 40 })
+      map.addSource('spider-lines', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      })
+      map.addLayer({
+        id: 'spider-lines',
+        type: 'line',
+        source: 'spider-lines',
+        paint: {
+          'line-color': '#1C4A45',
+          'line-width': 1.75,
+          'line-opacity': 0.55,
+          'line-dasharray': [2, 1.5],
+        },
+      })
       map.addLayer({
         id: 'cluster-highlight',
         type: 'circle',
@@ -426,6 +520,7 @@ function PracticesPageContent() {
 
       map.on('click', 'clusters', e => {
         e.originalEvent.stopPropagation()
+        clearSpider()
         const f = map.queryRenderedFeatures(e.point, { layers: ['clusters', 'cluster-count'] })
         if (!f || !f.length) return
         const src = map.getSource('practices') as mapboxgl.GeoJSONSource
@@ -443,6 +538,7 @@ function PracticesPageContent() {
 
       map.on('click', 'cluster-count', e => {
         e.originalEvent.stopPropagation()
+        clearSpider()
         const f = map.queryRenderedFeatures(e.point, { layers: ['clusters', 'cluster-count'] })
         if (!f || !f.length) return
         const src = map.getSource('practices') as mapboxgl.GeoJSONSource
@@ -459,9 +555,19 @@ function PracticesPageContent() {
       })
 
       map.on('click', 'unclustered', e => {
+        e.originalEvent.stopPropagation()
         const props = e.features![0].properties!
         const coords = (e.features![0].geometry as any).coordinates.slice() as [number, number]
         showPracticePopupRef.current(coords, props)
+      })
+
+      map.on('click', e => {
+        const hits = map.queryRenderedFeatures(e.point, {
+          layers: ['unclustered', 'clusters', 'cluster-count'],
+        })
+        if (hits.length) return
+        if (popupRef.current) popupRef.current.remove()
+        clearSpider()
       })
 
       map.on('mouseenter', 'unclustered', () => map.getCanvas().style.cursor = 'pointer')
@@ -491,31 +597,83 @@ function PracticesPageContent() {
     }
   }, [highlightedClusterId])
 
-  // Update map when filter changes
+  // Update map when filter or locations change
   useEffect(() => {
     if (!mapInitedRef.current || !mapRef.current) return
     const src = mapRef.current.getSource('practices') as mapboxgl.GeoJSONSource | undefined
     if (src) src.setData(buildGeoJSON(filtered))
-  }, [filtered])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtered, locations, locationsByPracticeId])
+
+  // Spider lines for the selected multi-location practice
+  useEffect(() => {
+    if (!mapInitedRef.current || !mapRef.current) return
+    const src = mapRef.current.getSource('spider-lines') as mapboxgl.GeoJSONSource | undefined
+    if (!src) return
+
+    if (!spiderPracticeId || !spiderHub) {
+      src.setData({ type: 'FeatureCollection', features: [] })
+      return
+    }
+
+    const locs = locationsByPracticeId.get(spiderPracticeId) ?? []
+    src.setData(buildPracticeSpiderGeoJSON(locs, spiderHub))
+  }, [spiderPracticeId, spiderHub, locationsByPracticeId])
+
+  useEffect(() => {
+    if (view !== 'map') clearSpider()
+  }, [view])
 
   function buildGeoJSON(records: Practice[]): GeoJSON.FeatureCollection {
-    const seen: Record<string, number> = {}
-    return {
-      type: 'FeatureCollection',
-      features: records.filter(r => r.latitude && r.longitude && isFinite(r.latitude) && isFinite(r.longitude)).map(r => {
-        const key = `${r.latitude?.toFixed(4)},${r.longitude?.toFixed(4)}`
-        seen[key] = (seen[key] || 0) + 1
-        const count = seen[key]
-        const jitter = count > 1 ? 0.003 : 0
-        const angle = (count - 1) * 2.4
-        return {
+    const practiceById = new Map(records.map(r => [r.id, r]))
+    const features: GeoJSON.Feature[] = []
+    const practiceIds = new Set(records.map(r => r.id))
+
+    for (const practiceId of practiceIds) {
+      const practice = practiceById.get(practiceId)
+      if (!practice) continue
+      const locs = locationsByPracticeId.get(practiceId) ?? []
+      const pins = practicePinCoordinates(locs)
+      const locationCount = locs.length
+
+      for (let i = 0; i < pins.length; i++) {
+        const pin = pins[i]
+        const loc = locs.find(l => l.id === pin.id)
+        features.push({
           type: 'Feature',
-          geometry: { type: 'Point', coordinates: [r.longitude! + jitter * Math.cos(angle), r.latitude! + jitter * Math.sin(angle)] },
-          properties: { name: r.practice_name || '', location: r.city_st || '', score: r.retention_score === null ? 'null' : r.retention_score, color: scoreColor(r.retention_score), phone: r.phone || '', practiceId: r.id }
-        }
-      })
+          geometry: {
+            type: 'Point',
+            coordinates: pin.coordinates,
+          },
+          properties: {
+            name: practice.practice_name || '',
+            location:
+              formatCityState(loc?.city ?? null, loc?.state ?? null) ||
+              formatPracticeLocationSummary(locs),
+            locationCount: locationCount > 1 ? `${locationCount} locations` : '',
+            score: practice.retention_score === null ? 'null' : practice.retention_score,
+            color: scoreColor(practice.retention_score),
+            phone: practice.phone || '',
+            practiceId: practice.id,
+          },
+        })
+      }
     }
+
+    return { type: 'FeatureCollection', features }
   }
+
+  const mapPinCount = useMemo(() => {
+    const ids = new Set(filtered.map(p => p.id))
+    return locations.filter(
+      loc =>
+        ids.has(loc.practice_id) &&
+        loc.latitude != null &&
+        loc.longitude != null &&
+        isFinite(loc.latitude) &&
+        isFinite(loc.longitude),
+    ).length
+  }, [filtered, locations])
 
   const thStyle = (key: SortKey): React.CSSProperties => ({
     padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600,
@@ -560,7 +718,7 @@ function PracticesPageContent() {
           <input
             type="text"
             className="practices-search-input"
-            placeholder="Search practices..."
+            placeholder="Search by name, city, or state..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={{ fontSize: 13, padding: '7px 11px', height: 36, border: '1px solid #ddd', borderRadius: 8, outline: 'none', flex: 1, minWidth: 180 }}
@@ -640,6 +798,20 @@ function PracticesPageContent() {
 
       {loading && <div className="loading-bar"><div className="loading-bar-inner" /></div>}
 
+      {locationsError && (
+        <div style={{
+          marginBottom: 12,
+          padding: '10px 14px',
+          borderRadius: 8,
+          border: '1px solid #f5c2c7',
+          background: '#fff5f5',
+          color: '#842029',
+          fontSize: 13,
+        }}>
+          Location data unavailable: {locationsError}. State filters and map pins need SELECT access on practice_locations.
+        </div>
+      )}
+
       {/* Table / card list view */}
       {view === 'table' && (
         <>
@@ -651,9 +823,6 @@ function PracticesPageContent() {
                 <tr>
                   <th style={thStyle('practice_name')} onClick={() => handleSort('practice_name')}>
                     Practice {sortKey === 'practice_name' ? (sortDir === 1 ? '↑' : '↓') : '↕'}
-                  </th>
-                  <th style={thStyle('city_st')} onClick={() => handleSort('city_st')}>
-                    Location {sortKey === 'city_st' ? (sortDir === 1 ? '↑' : '↓') : '↕'}
                   </th>
                   <th style={thStyle('retention_score')} onClick={() => handleSort('retention_score')}>
                     <span className="data-table-label-full">Retention score</span>
@@ -674,9 +843,6 @@ function PracticesPageContent() {
                   <tr key={p.id} style={{ cursor: 'pointer' }} onClick={() => router.push(`/practices/${p.id}`)}>
                     <td style={{ padding: '11px 14px', borderTop: '1px solid #f0f0f0', fontWeight: 500, maxWidth: 320 }}>
                       {p.practice_name || '—'}
-                    </td>
-                    <td style={{ padding: '11px 14px', borderTop: '1px solid #f0f0f0', color: '#666' }}>
-                      {p.city_st || '—'}
                     </td>
                     <td style={{ padding: '11px 14px', borderTop: '1px solid #f0f0f0' }}>
                       <span className={`score-pill ${scoreClass(p.retention_score)}`}>
@@ -700,7 +866,7 @@ function PracticesPageContent() {
                   </tr>
                 ))}
                 {!loading && pagePractices.length === 0 && (
-                  <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', color: '#aaa' }}>No practices match your filters.</td></tr>
+                  <tr><td colSpan={5} style={{ padding: 40, textAlign: 'center', color: '#aaa' }}>No practices match your filters.</td></tr>
                 )}
               </tbody>
             </table>
@@ -710,7 +876,12 @@ function PracticesPageContent() {
 
           <div className="practices-card-view">
             {pagePractices.map(p => (
-              <PracticeCard key={p.id} practice={p} onOpen={() => openPractice(p.id)} />
+              <PracticeCard
+                key={p.id}
+                practice={p}
+                locationSummary={formatPracticeLocationSummary(locationsByPracticeId.get(p.id) ?? [])}
+                onOpen={() => openPractice(p.id)}
+              />
             ))}
             {!loading && pagePractices.length === 0 && (
               <div style={{ padding: 40, textAlign: 'center', color: '#aaa', fontSize: 13 }}>
@@ -758,7 +929,11 @@ function PracticesPageContent() {
             ))}
           </div>
           <div style={{ position: 'absolute', bottom: 12, right: 12, zIndex: 10, background: 'rgba(255,255,255,0.92)', borderRadius: 8, padding: '7px 12px', fontSize: 12, color: '#888', boxShadow: '0 1px 4px rgba(0,0,0,0.12)' }}>
-            <span style={{ color: '#333', fontWeight: 500 }}>{filtered.filter(r => r.latitude).length.toLocaleString()}</span> practices
+            <span style={{ color: '#333', fontWeight: 500 }}>{mapPinCount.toLocaleString()}</span>
+            {' '}location{mapPinCount !== 1 ? 's' : ''}
+            {filtered.length !== mapPinCount && (
+              <span> · {filtered.length.toLocaleString()} practice{filtered.length !== 1 ? 's' : ''}</span>
+            )}
           </div>
           {clusterPanelOpen && (
             <div style={{
@@ -775,10 +950,15 @@ function PracticesPageContent() {
               flexDirection: 'column',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid #e8e8e8' }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{clusterPractices.length} practices</span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{clusterPractices.length} location{clusterPractices.length !== 1 ? 's' : ''}</span>
                 <button
                   type="button"
-                  onClick={() => { setClusterPanelOpen(false); setClusterPractices([]); setHighlightedClusterId(null) }}
+                  onClick={() => {
+                    setClusterPanelOpen(false)
+                    setClusterPractices([])
+                    setHighlightedClusterId(null)
+                    clearSpider()
+                  }}
                   aria-label="Close panel"
                   style={{ background: 'none', border: 'none', fontSize: 20, lineHeight: 1, color: '#888', cursor: 'pointer', padding: '0 4px' }}
                 >
@@ -813,6 +993,11 @@ function PracticesPageContent() {
                         onClick={e => { e.stopPropagation(); toggleShortlist(practice.practiceId) }}
                       />
                     </div>
+                    {practice.locationCount ? (
+                      <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>
+                        {practice.locationCount}
+                      </div>
+                    ) : null}
                     <div style={{ fontSize: 12, color: '#888', marginBottom: 10 }}>{practice.location}</div>
                     <button
                       type="button"

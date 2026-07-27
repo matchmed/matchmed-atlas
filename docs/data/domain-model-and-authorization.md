@@ -80,6 +80,21 @@ Observed intelligence fields include:
 
 List and detail clients can read practices directly. Admin lead-linking searches practice name/city/state. The cache stores a subset in browser IndexedDB for one hour of reuse, with stale records retained beyond TTL until overwritten.
 
+Practice list search, state filters, and map pins use `practice_locations` rather than practice-row `city_st` / coordinates. Legacy location fields may still appear on the practice row and in favorites until a later cleanup.
+
+### `practice_locations`
+
+**Code-derived fact — referenced**
+
+Observed fields include:
+
+- `id`, `practice_id`;
+- `address`, `city`, `state`, `zip`;
+- `latitude`, `longitude`;
+- `doctor_count`, `rank_by_doctors`.
+
+List clients bulk-fetch and cache locations for filtering and map GeoJSON. Detail clients fetch locations for the open practice and render a single-site city/state or a multi-site summary with an expandable list. Browser access requires table `SELECT` grants plus an authenticated RLS SELECT policy (see migration `20260727030000_practice_locations_select_grants.sql`).
+
 ### `doctors`
 
 **Code-derived fact — referenced**

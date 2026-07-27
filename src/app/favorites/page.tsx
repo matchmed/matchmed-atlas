@@ -9,22 +9,41 @@ import {
   isFavoritesCacheForUser,
   setFavoritesCache,
 } from '@/lib/favorites-cache'
+import {
+  fetchAllPracticeLocations,
+  formatPracticeLocationSummary,
+  indexLocationsByPracticeId,
+  type PracticeLocation,
+} from '@/lib/practice-locations'
 
 interface FavoritePractice {
   id: string
   practice_name: string | null
-  city_st: string | null
+  location_summary: string | null
   retention_score: number | null
   latest_roster_size: number | null
   practice_id: string
 }
 
-function mapShortlistRows(data: { id: string; practice_id: string; practices: { practice_name: string | null; city_st: string | null; retention_score: number | null; latest_roster_size: number | null } | null }[]): FavoritePractice[] {
+function mapShortlistRows(
+  data: {
+    id: string
+    practice_id: string
+    practices: {
+      practice_name: string | null
+      retention_score: number | null
+      latest_roster_size: number | null
+    } | null
+  }[],
+  locationsByPracticeId: Map<string, PracticeLocation[]>,
+): FavoritePractice[] {
   return data.map(f => ({
     id: f.id,
     practice_id: f.practice_id,
     practice_name: f.practices?.practice_name || null,
-    city_st: f.practices?.city_st || null,
+    location_summary: formatPracticeLocationSummary(
+      locationsByPracticeId.get(f.practice_id) ?? [],
+    ) || null,
     retention_score: f.practices?.retention_score || null,
     latest_roster_size: f.practices?.latest_roster_size || null,
   }))
@@ -48,7 +67,7 @@ export default function FavoritesPage() {
 
       if (isFavoritesCacheForUser(user.id)) {
         const cached = peekFavoritesCache<FavoritePractice>()
-        if (cached) {
+        if (cached && cached.every(f => 'location_summary' in f)) {
           setFavorites(cached)
           setLoading(false)
           return
@@ -66,13 +85,17 @@ export default function FavoritesPage() {
         return
       }
 
-      const { data } = await supabase
-        .from('shortlists')
-        .select('id, practice_id, practices(id, practice_name, city_st, retention_score, latest_roster_size)')
-        .eq('physician_id', profile.id)
-        .order('created_at', { ascending: false })
+      const [{ data }, locations] = await Promise.all([
+        supabase
+          .from('shortlists')
+          .select('id, practice_id, practices(id, practice_name, retention_score, latest_roster_size)')
+          .eq('physician_id', profile.id)
+          .order('created_at', { ascending: false }),
+        fetchAllPracticeLocations(),
+      ])
 
-      const mapped = data ? mapShortlistRows(data as any) : []
+      const locationsByPracticeId = indexLocationsByPracticeId(locations)
+      const mapped = data ? mapShortlistRows(data as any, locationsByPracticeId) : []
       setFavoritesCache(user.id, mapped)
       setFavorites(mapped)
       setLoading(false)
@@ -119,6 +142,10 @@ export default function FavoritesPage() {
             const [fg, bg] = nameToColor(name)
             const initials = getInitials(name)
             const hasScore = f.retention_score !== null
+            const metaParts = [
+              f.location_summary || null,
+              `${f.latest_roster_size || 0} physicians`,
+            ].filter(Boolean)
 
             return (
               <div
@@ -141,7 +168,7 @@ export default function FavoritesPage() {
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</div>
-                  <div style={{ fontSize: 12, color: '#888' }}>{f.city_st || '—'} · {f.latest_roster_size || 0} physicians</div>
+                  <div style={{ fontSize: 12, color: '#888' }}>{metaParts.join(' · ') || '—'}</div>
                 </div>
 
                 {hasScore && (

@@ -130,9 +130,16 @@ No code in the route verifies a Supabase user, checks `is_admin`, limits body si
 - key: `atlas_practices_v2`;
 - TTL: one hour.
 
+Practice-locations cache constants are:
+
+- database: `AtlasPracticeLocationsDB`;
+- store: `practice_locations`;
+- key: `atlas_practice_locations_v2`;
+- TTL: one hour.
+
 Fresh practice-detail data patches matching records in the practice-list cache. Favorites use a separate in-memory, user-keyed cache with a 30-minute default TTL; they are not persisted by that module. Practice map center, zoom, and last-view state use `sessionStorage`.
 
-Cache expiry controls reuse, not deletion. IndexedDB records are not actively removed at TTL expiry and no logout cleanup is implemented in the cache modules. Cached practice rows include names, location, scores, roster size, coordinates, phone, and organization identifier; they do not include profile records in the observed implementation.
+Cache expiry controls reuse, not deletion. IndexedDB records are not actively removed at TTL expiry and no logout cleanup is implemented in the cache modules. Cached practice rows include names, legacy location fields, scores, roster size, coordinates, phone, and organization identifier; practice search, state filters, and the map use the separate `practice_locations` cache. Cached rows do not include profile records in the observed implementation.
 
 ## Failure behavior
 
