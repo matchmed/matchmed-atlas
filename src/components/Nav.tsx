@@ -62,7 +62,7 @@ export default function Nav() {
         setUserEmail(user.email)
         const { data: profile } = await supabase
           .from('profiles')
-          .select('first_name, last_name, training_status')
+          .select('first_name, last_name, training_status, is_internal')
           .eq('user_id', user.id)
           .maybeSingle()
         if (profile?.first_name) {
@@ -75,6 +75,7 @@ export default function Nav() {
           identifiedUserIdRef.current = user.id
           posthog.identify(user.id, {
             training_status: profile?.training_status ?? undefined,
+            is_internal: profile?.is_internal === true,
           })
         }
       }

@@ -203,11 +203,18 @@ export default function OnboardingPage() {
       return
     }
 
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_internal')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
     posthog.identify(user.id, {
       training_status: form.training_status,
       start_year: form.start_year,
       preferred_state: form.preferred_state,
       data_sharing: form.data_sharing,
+      is_internal: profile?.is_internal === true,
     })
     posthog.capture('onboarding_completed', {
       training_status: form.training_status,
