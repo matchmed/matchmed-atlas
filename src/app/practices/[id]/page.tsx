@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { invalidateFavoritesCache } from '@/lib/favorites-cache'
 import { syncPracticeListCacheFromDetail } from '@/lib/practices-cache'
+import posthog from 'posthog-js'
 import {
   formatCityState,
   formatPracticeLocationAddress,
@@ -14,6 +15,9 @@ import {
 import { nameToColor, getInitials, scoreColor, scoreBg, deltaColor, deltaBg, deltaArrow } from '@/lib/utils'
 import PracticeErrorReportModal from '@/components/PracticeErrorReportModal'
 import PracticeLocationsDisclaimer from '@/components/PracticeLocationsDisclaimer'
+
+/** Session-scoped guard against Strict Mode / remount duplicate practice_viewed events. */
+const viewedPracticeIds = new Set<string>()
 
 interface Practice {
   id: string
@@ -114,6 +118,14 @@ export default function PracticeDetailPage() {
       if (practiceRes.data) {
         setPractice(practiceRes.data)
         void syncPracticeListCacheFromDetail(practiceRes.data)
+        if (!viewedPracticeIds.has(practiceRes.data.id)) {
+          viewedPracticeIds.add(practiceRes.data.id)
+          posthog.capture('practice_viewed', {
+            practice_id: practiceRes.data.id,
+            practice_name: practiceRes.data.practice_name,
+            retention_score: practiceRes.data.retention_score,
+          })
+        }
       }
       if (locationsRes.data) {
         const normalized = (locationsRes.data as Record<string, unknown>[])
@@ -169,20 +181,25 @@ export default function PracticeDetailPage() {
     const supabase = createClient()
 
     if (isFavorited && favId) {
-      await supabase.from('shortlists').delete().eq('id', favId)
-      setIsFavorited(false)
-      setFavId(null)
+      const { error } = await supabase.from('shortlists').delete().eq('id', favId)
+      if (!error) {
+        setIsFavorited(false)
+        setFavId(null)
+        posthog.capture('practice_unfavorited', { practice_id: id, source: 'detail' })
+        invalidateFavoritesCache()
+      }
     } else {
-      const { data } = await supabase.from('shortlists').insert({
+      const { data, error } = await supabase.from('shortlists').insert({
         physician_id: profileId,
         practice_id: id,
       }).select('id').single()
-      if (data) {
+      if (!error && data) {
         setIsFavorited(true)
         setFavId(data.id)
+        posthog.capture('practice_favorited', { practice_id: id, source: 'detail' })
+        invalidateFavoritesCache()
       }
     }
-    invalidateFavoritesCache()
     setFavLoading(false)
   }
 

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { captureServerEvent } from '@/lib/posthog-server'
+import { createClient } from '@/lib/supabase-server'
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,6 +37,17 @@ export async function POST(req: NextRequest) {
         { error: data?.error?.message || 'Anthropic API request failed', details: data },
         { status: response.status },
       )
+    }
+
+    // Analytics must never fail report generation. Distinct ID = Supabase auth UUID.
+    try {
+      const supabase = await createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      await captureServerEvent(user?.id ?? 'anonymous', 'report_generated', {
+        prompt_length: prompt.length,
+      })
+    } catch {
+      // ignore analytics failures
     }
 
     return NextResponse.json(data)

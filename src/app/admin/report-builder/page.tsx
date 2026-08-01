@@ -476,7 +476,9 @@ export default function ReportBuilderPage() {
     try {
       const res = await fetch('/api/generate-report', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ prompt: buildPrompt(parsed, form) }),
       })
       const data = await res.json()

@@ -2,6 +2,7 @@
 import { Suspense, useEffect, useState, useRef, useMemo } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import posthog from 'posthog-js'
 import { scoreClass, scoreLabel, deltaColor, deltaBg, deltaArrow, getInitials, nameToColor } from '@/lib/utils'
 import { loadAtlasCache, peekAtlasCache, saveAtlasCache } from '@/lib/atlas-cache'
 import {
@@ -417,11 +418,34 @@ function PracticesPageContent() {
     })
 
     if (isShortlisted) {
-      await supabase.from('shortlists').delete().eq('physician_id', profileId).eq('practice_id', practiceId)
+      const { error } = await supabase
+        .from('shortlists')
+        .delete()
+        .eq('physician_id', profileId)
+        .eq('practice_id', practiceId)
+      if (error) {
+        setShortlistedPracticeIds(prev => new Set([...prev, practiceId]))
+        shortlistedPracticeIdsRef.current = new Set([...shortlistedPracticeIdsRef.current, practiceId])
+      } else {
+        posthog.capture('practice_unfavorited', { practice_id: practiceId, source: 'list' })
+        invalidateFavoritesCache()
+      }
     } else {
-      await supabase.from('shortlists').insert({ physician_id: profileId, practice_id: practiceId })
+      const { error } = await supabase
+        .from('shortlists')
+        .insert({ physician_id: profileId, practice_id: practiceId })
+      if (error) {
+        setShortlistedPracticeIds(prev => {
+          const next = new Set(prev)
+          next.delete(practiceId)
+          shortlistedPracticeIdsRef.current = next
+          return next
+        })
+      } else {
+        posthog.capture('practice_favorited', { practice_id: practiceId, source: 'list' })
+        invalidateFavoritesCache()
+      }
     }
-    invalidateFavoritesCache()
 
     if (lastPopupRef.current?.props.practiceId === practiceId) {
       showPracticePopupRef.current(lastPopupRef.current.coords, lastPopupRef.current.props)
@@ -738,7 +762,11 @@ function PracticesPageContent() {
           <button
             type="button"
             className="practices-view-toggle-mobile"
-            onClick={() => setView(view === 'table' ? 'map' : 'table')}
+            onClick={() => {
+              const next = view === 'table' ? 'map' : 'table'
+              posthog.capture('map_view_toggled', { view: next })
+              setView(next)
+            }}
             aria-label={view === 'table' ? 'Switch to map view' : 'Switch to list view'}
           >
             {view === 'table' ? (
@@ -770,7 +798,10 @@ function PracticesPageContent() {
           {/* View toggle — desktop */}
           <div className="practices-view-toggle-desktop" style={{ display: 'flex', border: '1px solid #ddd', borderRadius: 8, overflow: 'hidden', marginLeft: 'auto' }}>
             {(['table', 'map'] as const).map(v => (
-              <button key={v} onClick={() => setView(v)} style={{
+              <button key={v} onClick={() => {
+                if (v !== view) posthog.capture('map_view_toggled', { view: v })
+                setView(v)
+              }} style={{
                 padding: '7px 14px', fontSize: 13, cursor: 'pointer', height: 36, border: 'none',
                 background: view === v ? '#1C4A45' : '#fff',
                 color: view === v ? '#fff' : '#888',

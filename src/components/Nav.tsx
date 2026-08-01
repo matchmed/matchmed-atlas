@@ -6,6 +6,7 @@ import { isAuthPage } from '@/lib/auth-paths'
 import { useState, useEffect, useRef } from 'react'
 import Logo from './Logo'
 import { PracticesIcon, PhysiciansIcon, FavoritesIcon, JobsIcon } from './nav-icons'
+import posthog from 'posthog-js'
 
 const primaryTabs = [
   {
@@ -51,6 +52,7 @@ export default function Nav() {
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [initials, setInitials] = useState('?')
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const identifiedUserIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     async function getUser() {
@@ -60,13 +62,20 @@ export default function Nav() {
         setUserEmail(user.email)
         const { data: profile } = await supabase
           .from('profiles')
-          .select('first_name, last_name')
+          .select('first_name, last_name, training_status')
           .eq('user_id', user.id)
           .maybeSingle()
         if (profile?.first_name) {
           setInitials(`${profile.first_name[0]}${profile.last_name?.[0] || ''}`.toUpperCase())
         } else {
           setInitials(user.email[0].toUpperCase())
+        }
+        // Identify once per auth UUID; never send email/name/phone as person properties.
+        if (identifiedUserIdRef.current !== user.id) {
+          identifiedUserIdRef.current = user.id
+          posthog.identify(user.id, {
+            training_status: profile?.training_status ?? undefined,
+          })
         }
       }
     }
@@ -85,7 +94,11 @@ export default function Nav() {
 
   async function handleLogout() {
     const supabase = createClient()
-    await supabase.auth.signOut()
+    const { error } = await supabase.auth.signOut()
+    if (!error) {
+      identifiedUserIdRef.current = null
+      posthog.reset()
+    }
     router.push('/login')
     router.refresh()
   }

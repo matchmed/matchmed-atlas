@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import posthog from 'posthog-js'
 
 interface Job {
   id: string
@@ -488,7 +489,7 @@ export default function JobsPage() {
                 {j.email && (
                   <a
                     href={`mailto:${j.email}`}
-                    onClick={e => e.stopPropagation()}
+                    onClick={e => { e.stopPropagation(); posthog.capture('job_contact_clicked', { contact_type: 'email', practice_id: j.practice_id, practice_name: j.practice_name }) }}
                     style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none' }}
                   >
                     ✉️ {j.email}
@@ -497,7 +498,7 @@ export default function JobsPage() {
                 {j.phone && (
                   <a
                     href={`tel:${j.phone}`}
-                    onClick={e => e.stopPropagation()}
+                    onClick={e => { e.stopPropagation(); posthog.capture('job_contact_clicked', { contact_type: 'phone', practice_id: j.practice_id, practice_name: j.practice_name }) }}
                     style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none' }}
                   >
                     📞 {j.phone}
