@@ -211,10 +211,15 @@ export default function AccountPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    await supabase
+    const { error } = await supabase
       .from('profiles')
       .update({ ...form })
       .eq('user_id', user.id)
+
+    if (error) {
+      setSaving(false)
+      return
+    }
 
     posthog.capture('account_profile_saved', {
       training_status: form.training_status,
@@ -272,15 +277,22 @@ export default function AccountPage() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-  
-    await supabase
+
+    const { error } = await supabase
       .from('profiles')
       .update({ deleted_at: new Date().toISOString() })
       .eq('user_id', user.id)
 
+    if (error) {
+      setDeleting(false)
+      return
+    }
+
     posthog.capture('account_deleted')
-    posthog.reset()
-    await supabase.auth.signOut()
+    const { error: signOutError } = await supabase.auth.signOut()
+    if (!signOutError) {
+      posthog.reset()
+    }
     router.push('/login')
   }
 

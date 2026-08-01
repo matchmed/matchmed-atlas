@@ -52,6 +52,7 @@ export default function Nav() {
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [initials, setInitials] = useState('?')
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const identifiedUserIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     async function getUser() {
@@ -69,10 +70,13 @@ export default function Nav() {
         } else {
           setInitials(user.email[0].toUpperCase())
         }
-        posthog.identify(user.id, {
-          email: user.email,
-          training_status: profile?.training_status ?? undefined,
-        })
+        // Identify once per auth UUID; never send email/name/phone as person properties.
+        if (identifiedUserIdRef.current !== user.id) {
+          identifiedUserIdRef.current = user.id
+          posthog.identify(user.id, {
+            training_status: profile?.training_status ?? undefined,
+          })
+        }
       }
     }
     getUser()
@@ -89,9 +93,12 @@ export default function Nav() {
   }, [])
 
   async function handleLogout() {
-    posthog.reset()
     const supabase = createClient()
-    await supabase.auth.signOut()
+    const { error } = await supabase.auth.signOut()
+    if (!error) {
+      identifiedUserIdRef.current = null
+      posthog.reset()
+    }
     router.push('/login')
     router.refresh()
   }

@@ -418,13 +418,34 @@ function PracticesPageContent() {
     })
 
     if (isShortlisted) {
-      await supabase.from('shortlists').delete().eq('physician_id', profileId).eq('practice_id', practiceId)
-      posthog.capture('practice_unfavorited', { practice_id: practiceId, source: 'list' })
+      const { error } = await supabase
+        .from('shortlists')
+        .delete()
+        .eq('physician_id', profileId)
+        .eq('practice_id', practiceId)
+      if (error) {
+        setShortlistedPracticeIds(prev => new Set([...prev, practiceId]))
+        shortlistedPracticeIdsRef.current = new Set([...shortlistedPracticeIdsRef.current, practiceId])
+      } else {
+        posthog.capture('practice_unfavorited', { practice_id: practiceId, source: 'list' })
+        invalidateFavoritesCache()
+      }
     } else {
-      await supabase.from('shortlists').insert({ physician_id: profileId, practice_id: practiceId })
-      posthog.capture('practice_favorited', { practice_id: practiceId, source: 'list' })
+      const { error } = await supabase
+        .from('shortlists')
+        .insert({ physician_id: profileId, practice_id: practiceId })
+      if (error) {
+        setShortlistedPracticeIds(prev => {
+          const next = new Set(prev)
+          next.delete(practiceId)
+          shortlistedPracticeIdsRef.current = next
+          return next
+        })
+      } else {
+        posthog.capture('practice_favorited', { practice_id: practiceId, source: 'list' })
+        invalidateFavoritesCache()
+      }
     }
-    invalidateFavoritesCache()
 
     if (lastPopupRef.current?.props.practiceId === practiceId) {
       showPracticePopupRef.current(lastPopupRef.current.coords, lastPopupRef.current.props)

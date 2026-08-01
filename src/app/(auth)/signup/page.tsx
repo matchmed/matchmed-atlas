@@ -27,7 +27,7 @@ export default function SignupPage() {
     setError('')
 
     const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -39,7 +39,10 @@ export default function SignupPage() {
       setError(error.message)
       setLoading(false)
     } else {
-      posthog.capture('user_signed_up', { method: 'email' })
+      // Anti-enumeration: existing emails return success with empty identities.
+      if (data.user && (data.user.identities?.length ?? 0) > 0) {
+        posthog.capture('user_signed_up', { method: 'email' })
+      }
       setLoading(false)
       setShowConfirmation(true)
     }

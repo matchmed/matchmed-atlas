@@ -183,7 +183,8 @@ export default function OnboardingPage() {
       onboarding_complete: true,
       signup_date: new Date().toISOString(),
     }, { onConflict: 'user_id' })
-    
+
+    let saved = !upsertError
     if (upsertError) {
       const { error: updateError } = await supabase
         .from('profiles')
@@ -193,7 +194,14 @@ export default function OnboardingPage() {
           onboarding_complete: true,
         })
         .eq('email', user.email)
-      }
+      saved = !updateError
+    }
+
+    if (!saved) {
+      setError('Could not save your profile. Please try again.')
+      setLoading(false)
+      return
+    }
 
     posthog.identify(user.id, {
       training_status: form.training_status,
