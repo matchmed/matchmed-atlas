@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { upsertProfileByUserId, type ProfileUpsertFields } from '@/lib/profile-writes'
 import { LEGAL_PRIVACY_URL, LEGAL_TERMS_URL } from '@/lib/legal-urls'
+import { safeNextPath } from '@/lib/safe-next-path'
 import Logo from '@/components/Logo'
 import posthog from 'posthog-js'
 
@@ -291,7 +292,8 @@ export default function OnboardingPage() {
       }
 
       if (existing?.onboarding_complete === true) {
-        router.replace('/')
+        const next = safeNextPath(new URLSearchParams(window.location.search).get('next'))
+        router.replace(next || '/')
         return
       }
 
@@ -417,7 +419,8 @@ export default function OnboardingPage() {
     })
 
     setShowSuccess(true)
-    setTimeout(() => router.push('/'), 2500)
+    const next = safeNextPath(new URLSearchParams(window.location.search).get('next'))
+    setTimeout(() => router.push(next || '/'), 2500)
   }
 
   if (booting) {

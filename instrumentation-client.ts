@@ -108,7 +108,9 @@ if (isPostHogEnabled(token)) {
     autocapture: false,
     capture_pageview: true,
     person_profiles: 'identified_only',
-    disable_session_recording: false,
+    // Recording is started only from authenticated product chrome (Nav),
+    // never on public discovery routes — including auth'd profile views.
+    disable_session_recording: true,
     capture_heatmaps: true,
     capture_exceptions: false,
     disable_surveys: true,

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { isAuthPage } from '@/lib/auth-paths'
+import { isPublicDiscoveryPath } from '@/lib/public-routes'
 import { useState, useEffect, useRef } from 'react'
 import Logo from './Logo'
 import { PracticesIcon, PhysiciansIcon, FavoritesIcon, JobsIcon } from './nav-icons'
@@ -78,10 +79,16 @@ export default function Nav() {
             is_internal: profile?.is_internal === true,
           })
         }
+        if (
+          typeof posthog?.startSessionRecording === 'function' &&
+          !isPublicDiscoveryPath(pathname)
+        ) {
+          posthog.startSessionRecording()
+        }
       }
     }
     getUser()
-  }, [])
+  }, [pathname])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

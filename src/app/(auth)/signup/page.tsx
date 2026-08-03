@@ -1,12 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import Logo from '@/components/Logo'
 import posthog from 'posthog-js'
 import { LEGAL_PRIVACY_URL, LEGAL_TERMS_URL } from '@/lib/legal-urls'
+import { authCallbackUrl, safeNextPath, withNextParam } from '@/lib/safe-next-path'
 
-export default function SignupPage() {
+function SignupForm() {
+  const searchParams = useSearchParams()
+  const nextPath = safeNextPath(searchParams.get('next'))
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -32,7 +36,7 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: authCallbackUrl(window.location.origin, nextPath),
       },
     })
 
@@ -55,7 +59,7 @@ export default function SignupPage() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: authCallbackUrl(window.location.origin, nextPath),
         queryParams: {
           prompt: 'select_account',
         },
@@ -175,7 +179,7 @@ export default function SignupPage() {
 
               <p style={{ textAlign: 'center', fontSize: 13, color: '#6b7280', marginTop: 20, marginBottom: 0 }}>
                 Already have an account?{' '}
-                <a href="/login" style={{ color: '#1C4A45', fontWeight: 500, textDecoration: 'none' }}>Sign in</a>
+                <a href={withNextParam('/login', nextPath)} style={{ color: '#1C4A45', fontWeight: 500, textDecoration: 'none' }}>Sign in</a>
               </p>
             </div>
           )}
@@ -194,11 +198,19 @@ export default function SignupPage() {
         />
         <div className="auth-split-hero-content">
           <blockquote style={{ fontSize: 20, fontWeight: 500, lineHeight: 1.5, marginBottom: 12, letterSpacing: '-0.2px' }}>
-            "The only platform that shows you how practices actually retain physicians, backed by real CMS data."
+            &quot;The only platform that shows you how practices actually retain physicians, backed by real CMS data.&quot;
           </blockquote>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', margin: 0 }}>MatchMed Atlas · Ophthalmology Workforce Intelligence</p>
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="loading-bar"><div className="loading-bar-inner" /></div>}>
+      <SignupForm />
+    </Suspense>
   )
 }
