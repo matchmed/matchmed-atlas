@@ -232,6 +232,7 @@ GRANT INSERT (
 ) ON TABLE public.profiles TO authenticated;
 
 GRANT UPDATE (
+  user_id,
   email,
   first_name,
   last_name,
@@ -254,7 +255,12 @@ GRANT UPDATE (
 
 -- Explicitly not granted to authenticated for INSERT/UPDATE:
 --   id, airtable_id, npi_verified, created_at, is_admin, is_internal
---   user_id on UPDATE (INSERT of user_id remains for own-row create)
+-- user_id is granted on UPDATE only because the application uses upsert.
+-- PostgREST ON CONFLICT DO UPDATE commonly includes conflict-target columns in
+-- the SET list; without UPDATE(user_id), draft/complete/Account upserts can 403
+-- even when the value is unchanged. RLS (profiles_update_own) still requires
+-- user_id = auth.uid() on both USING and WITH CHECK, so a caller cannot
+-- reassign the row to another UUID.
 
 COMMIT;
 
