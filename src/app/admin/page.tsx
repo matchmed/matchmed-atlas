@@ -62,6 +62,7 @@ function UsersTab() {
   const [sendingMap, setSendingMap] = useState<Record<string, boolean>>({})
   const [sentMap, setSentMap] = useState<Record<string, boolean>>({})
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [actionError, setActionError] = useState('')
 
   useEffect(() => { loadProfiles() }, [])
 
@@ -79,23 +80,35 @@ function UsersTab() {
 
   async function toggleVerified(profile: Profile) {
     setTogglingMap(prev => ({ ...prev, [profile.id]: true }))
+    setActionError('')
     const supabase = createClient()
-    await supabase
-      .from('profiles')
-      .update({ npi_verified: !profile.npi_verified })
-      .eq('id', profile.id)
-    setProfiles(prev => prev.map(p => p.id === profile.id ? { ...p, npi_verified: !p.npi_verified } : p))
+    const { data, error } = await supabase.rpc('admin_set_profile_npi_verified', {
+      target_profile_id: profile.id,
+      verified: !profile.npi_verified,
+    })
+    const row = Array.isArray(data) ? data[0] : data
+    if (error || !row?.id) {
+      setActionError('Could not update NPI verification. Please try again.')
+      setTogglingMap(prev => ({ ...prev, [profile.id]: false }))
+      return
+    }
+    setProfiles(prev => prev.map(p => p.id === profile.id ? { ...p, npi_verified: Boolean(row.npi_verified) } : p))
     setTogglingMap(prev => ({ ...prev, [profile.id]: false }))
   }
 
   async function deleteUser(profile: Profile) {
     setDeletingMap(prev => ({ ...prev, [profile.id]: true }))
+    setActionError('')
     const supabase = createClient()
-    // Soft delete the profile
-    await supabase
-      .from('profiles')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('id', profile.id)
+    const { data, error } = await supabase.rpc('admin_soft_delete_profile', {
+      target_profile_id: profile.id,
+    })
+    const row = Array.isArray(data) ? data[0] : data
+    if (error || !row?.id) {
+      setActionError('Could not close this account. Please try again.')
+      setDeletingMap(prev => ({ ...prev, [profile.id]: false }))
+      return
+    }
     setProfiles(prev => prev.filter(p => p.id !== profile.id))
     setDeletingMap(prev => ({ ...prev, [profile.id]: false }))
     setConfirmDelete(null)
@@ -160,6 +173,12 @@ function UsersTab() {
       </div>
 
       {loading && <div style={{ color: '#aaa', fontSize: 13, padding: 20 }}>Loading...</div>}
+
+      {actionError && (
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', marginBottom: 12 }}>
+          <p style={{ fontSize: 13, color: '#dc2626', margin: 0 }}>{actionError}</p>
+        </div>
+      )}
 
       {/* Table */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

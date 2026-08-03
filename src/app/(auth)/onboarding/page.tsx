@@ -151,7 +151,7 @@ function isStepOneComplete(form: OnboardingForm): boolean {
   return Boolean(
     form.first_name.trim() &&
     form.last_name.trim() &&
-    form.npi.trim() &&
+    form.npi.trim().length === 10 &&
     phoneDigitCount(form.phone) >= 11 &&
     form.preferred_state.length > 0 &&
     form.start_year &&
@@ -470,7 +470,21 @@ export default function OnboardingPage() {
 
               <div style={fieldStyle}>
                 <label style={labelStyle}>NPI *</label>
-                <input style={inputStyle} type="text" placeholder="10-digit NPI number" value={form.npi} onChange={e => setForm(f => ({ ...f, npi: e.target.value }))} autoComplete="off" />
+                <input
+                  style={inputStyle}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={10}
+                  placeholder="10-digit NPI number"
+                  value={form.npi}
+                  autoComplete="off"
+                  onChange={e => {
+                    const digits = e.target.value.replace(/\D/g, '')
+                    if (digits.length > 10) return
+                    setForm(f => ({ ...f, npi: digits }))
+                  }}
+                />
               </div>
 
               <div style={fieldStyle}>

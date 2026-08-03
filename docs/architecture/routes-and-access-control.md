@@ -22,7 +22,7 @@ This inventory is derived from `src/app/**`, `src/proxy.ts`, `src/app/admin/layo
 
 All other matched routes redirect unauthenticated visitors to `/login`. For authenticated requests outside the public set, the proxy reads `profiles.deleted_at`; a non-null value causes sign-out and redirect to `/login`.
 
-The proxy does not enforce `is_admin`, per-record ownership, or operation-specific privileges. It does enforce soft-deletion sign-out and onboarding completion for authenticated users outside exempt paths (`/onboarding`, public auth entry routes, and public legal pages). Supabase RLS/grants must authorize every browser-direct query.
+The proxy does not enforce `is_admin`, per-record ownership, or operation-specific privileges. It does enforce soft-deletion sign-out and onboarding completion for authenticated users outside exempt paths (`/onboarding`, public auth entry routes, and public legal pages). Supabase RLS/grants must authorize every browser-direct query. Admin NPI verification and cross-user soft-delete are intended to use narrow `SECURITY DEFINER` RPCs; see `docs/security/profiles-rls-hardening.proposal.sql` (not applied until owner-approved rollout).
 
 ## Page routes
 
