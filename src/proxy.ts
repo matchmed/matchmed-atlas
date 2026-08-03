@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { isOnboardingExemptPath, needsOnboardingRedirect } from '@/lib/onboarding-gate'
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -27,7 +28,7 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
-  
+
   const publicRoutes = [
     '/login',
     '/signup',
@@ -35,28 +36,36 @@ export async function proxy(request: NextRequest) {
     '/terms-and-conditions',
     '/privacy-policy',
   ]
-  const isPublic = publicRoutes.some(route => 
+  const isPublic = publicRoutes.some(route =>
     pathname === route || pathname.startsWith('/auth/')
-  ) 
-  
+  )
+
   if (!user && !isPublic) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
-  
-  // Check if account is deleted
+
   if (user && !isPublic) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('deleted_at')
+      .select('deleted_at, onboarding_complete')
       .eq('user_id', user.id)
       .maybeSingle()
-  
+
     if (profile?.deleted_at) {
       await supabase.auth.signOut()
       const url = request.nextUrl.clone()
       url.pathname = '/login'
+      return NextResponse.redirect(url)
+    }
+
+    if (
+      !isOnboardingExemptPath(pathname) &&
+      needsOnboardingRedirect(profile)
+    ) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/onboarding'
       return NextResponse.redirect(url)
     }
   }

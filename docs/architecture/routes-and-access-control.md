@@ -22,7 +22,7 @@ This inventory is derived from `src/app/**`, `src/proxy.ts`, `src/app/admin/layo
 
 All other matched routes redirect unauthenticated visitors to `/login`. For authenticated requests outside the public set, the proxy reads `profiles.deleted_at`; a non-null value causes sign-out and redirect to `/login`.
 
-The proxy does not enforce onboarding completion, `is_admin`, per-record ownership, or operation-specific privileges. Supabase RLS/grants must authorize every browser-direct query.
+The proxy does not enforce `is_admin`, per-record ownership, or operation-specific privileges. It does enforce soft-deletion sign-out and onboarding completion for authenticated users outside exempt paths (`/onboarding`, public auth entry routes, and public legal pages). Supabase RLS/grants must authorize every browser-direct query.
 
 ## Page routes
 
@@ -34,9 +34,9 @@ The proxy does not enforce onboarding completion, `is_admin`, per-record ownersh
 | `/auth/callback` | Route handler | Public by `/auth/*` | Verifies invite/recovery token hash or exchanges auth code; redirects by recovery/onboarding state |
 | `/auth/confirm` | Client | Public by `/auth/*` | Reads current session and redirects |
 | `/auth/set-password` | Client | Public by `/auth/*`; requires recovery session in page logic | Exchanges code, verifies recovery token, or accepts legacy fragment; changes password |
-| `/onboarding` | Client | Protected by proxy | Upserts/updates own expected profile and consent fields |
-| `/terms-and-conditions` | Server/static component | Public allowlist | Legal copy |
-| `/privacy-policy` | Server/static component | Public allowlist | Legal/privacy copy |
+| `/onboarding` | Client | Protected by proxy; exempt from onboarding-complete redirect | Creates/loads draft profile; step saves; final completion upsert |
+| `/terms-and-conditions` | Server/static component | Public allowlist (viewable while incomplete; not an app escape hatch) | Legal copy |
+| `/privacy-policy` | Server/static component | Public allowlist (viewable while incomplete; not an app escape hatch) | Legal/privacy copy |
 | `/` | Server shell plus client home | Protected by proxy | Server gets user; client reads profile and aggregate table counts |
 | `/practices` | Client | Protected by proxy | Reads practices; reads/mutates shortlists; Mapbox; IndexedDB cache |
 | `/practices/[id]` | Client | Protected by proxy | Reads practice, affiliations, leads, profile/shortlist; inserts correction report |
@@ -44,7 +44,7 @@ The proxy does not enforce onboarding completion, `is_admin`, per-record ownersh
 | `/physicians/[id]` | Client | Protected by proxy | Reads doctor and affiliations with practice relationship |
 | `/favorites` | Client | Protected by proxy; repeats user check | Reads profile and shortlists; deletes shortlist rows |
 | `/jobs` | Client | Protected by proxy | Reads all exposed `employer_leads` fields, including contact details |
-| `/account` | Client | Protected by proxy; repeats user check | Reads/updates profile, changes password, soft-deletes profile, signs out |
+| `/account` | Client | Protected by proxy (onboarding-complete required); repeats user check | Upserts profile with confirmed row, changes password, soft-deletes profile, signs out |
 | `/partners` | Server/static component | Protected by proxy | Informational content only |
 | `/scoring-methodology` | Server/static component | Protected by proxy | Informational content only |
 | `/admin` | Client inside server admin layout | Protected by proxy and admin layout; client repeats admin check | Reads/updates profiles and leads; sends OTP links; soft-deletes profiles |

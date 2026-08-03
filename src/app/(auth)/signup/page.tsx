@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import Logo from '@/components/Logo'
 import posthog from 'posthog-js'
+import { LEGAL_PRIVACY_URL, LEGAL_TERMS_URL } from '@/lib/legal-urls'
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
@@ -91,9 +92,9 @@ export default function SignupPage() {
 
               <p style={{ fontSize: 12, color: '#9ca3af', marginBottom: 24, lineHeight: 1.5 }}>
                 By signing up, you agree to MatchMed&apos;s{' '}
-                <a href="/terms-and-conditions" style={{ color: '#1C4A45', textDecoration: 'none' }}>Terms of Service</a>
+                <a href={LEGAL_TERMS_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#1C4A45', textDecoration: 'none' }}>Terms of Service</a>
                 {' '}and{' '}
-                <a href="/privacy-policy" style={{ color: '#1C4A45', textDecoration: 'none' }}>Privacy Policy</a>.
+                <a href={LEGAL_PRIVACY_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#1C4A45', textDecoration: 'none' }}>Privacy Policy</a>.
               </p>
 
               {/* Google SSO */}

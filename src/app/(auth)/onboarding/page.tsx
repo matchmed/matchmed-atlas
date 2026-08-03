@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import { upsertProfileByUserId, type ProfileUpsertFields } from '@/lib/profile-writes'
+import { LEGAL_PRIVACY_URL, LEGAL_TERMS_URL } from '@/lib/legal-urls'
 import Logo from '@/components/Logo'
 import posthog from 'posthog-js'
 
@@ -43,6 +45,9 @@ const PRACTICE_SETTINGS = [
   'Hospital / Health System employed',
 ]
 
+const PROFILE_FORM_SELECT =
+  'user_id, email, first_name, last_name, npi, phone, preferred_state, start_year, clinical_focus, training_status, practice_setting_preference, current_practice, procedures_performed, procedures_desired, terms_accepted, data_sharing, onboarding_complete, is_internal'
+
 const inputStyle = {
   width: '100%',
   padding: '12px 14px',
@@ -65,6 +70,99 @@ const labelStyle = {
 }
 
 const fieldStyle = { marginBottom: 18 }
+
+type OnboardingForm = {
+  first_name: string
+  last_name: string
+  npi: string
+  phone: string
+  preferred_state: string[]
+  start_year: string
+  clinical_focus: string[]
+  training_status: string
+  practice_setting_preference: string[]
+  current_practice: string
+  procedures_performed: string[]
+  procedures_desired: string[]
+  terms_accepted: boolean
+  data_sharing: boolean
+}
+
+const EMPTY_FORM: OnboardingForm = {
+  first_name: '',
+  last_name: '',
+  npi: '',
+  phone: '+1 ',
+  preferred_state: [],
+  start_year: '',
+  clinical_focus: [],
+  training_status: '',
+  practice_setting_preference: [],
+  current_practice: '',
+  procedures_performed: [],
+  procedures_desired: [],
+  terms_accepted: false,
+  data_sharing: false,
+}
+
+function profileToForm(profile: Record<string, unknown>): OnboardingForm {
+  return {
+    first_name: (profile.first_name as string) || '',
+    last_name: (profile.last_name as string) || '',
+    npi: (profile.npi as string) || '',
+    phone: (profile.phone as string) || '+1 ',
+    preferred_state: (profile.preferred_state as string[]) || [],
+    start_year: (profile.start_year as string) || '',
+    clinical_focus: (profile.clinical_focus as string[]) || [],
+    training_status: (profile.training_status as string) || '',
+    practice_setting_preference: (profile.practice_setting_preference as string[]) || [],
+    current_practice: (profile.current_practice as string) || '',
+    procedures_performed: (profile.procedures_performed as string[]) || [],
+    procedures_desired: (profile.procedures_desired as string[]) || [],
+    terms_accepted: Boolean(profile.terms_accepted),
+    data_sharing: Boolean(profile.data_sharing),
+  }
+}
+
+function hasDraftProgress(form: OnboardingForm): boolean {
+  return Boolean(
+    form.first_name ||
+    form.last_name ||
+    form.npi ||
+    (form.phone && form.phone !== '+1 ') ||
+    form.preferred_state.length ||
+    form.start_year ||
+    form.clinical_focus.length ||
+    form.training_status ||
+    form.practice_setting_preference.length ||
+    form.current_practice ||
+    form.procedures_performed.length ||
+    form.procedures_desired.length ||
+    form.terms_accepted ||
+    form.data_sharing
+  )
+}
+
+function phoneDigitCount(phone: string): number {
+  return phone.replace(/\D/g, '').length
+}
+
+function isStepOneComplete(form: OnboardingForm): boolean {
+  return Boolean(
+    form.first_name.trim() &&
+    form.last_name.trim() &&
+    form.npi.trim() &&
+    phoneDigitCount(form.phone) >= 11 &&
+    form.preferred_state.length > 0 &&
+    form.start_year &&
+    form.clinical_focus.length > 0 &&
+    form.training_status &&
+    form.practice_setting_preference.length > 0 &&
+    form.current_practice.trim() &&
+    form.procedures_performed.length > 0 &&
+    form.procedures_desired.length > 0
+  )
+}
 
 function MultiSelect({ label, options, value, onChange }: {
   label: string
@@ -143,25 +241,137 @@ export default function OnboardingPage() {
   const router = useRouter()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [booting, setBooting] = useState(true)
   const [error, setError] = useState('')
   const [showSuccess, setShowSuccess] = useState(false)
+  const [form, setForm] = useState<OnboardingForm>(EMPTY_FORM)
+  const startedEmitted = useRef(false)
+  const resumedEmitted = useRef(false)
 
-  const [form, setForm] = useState({
-    first_name: '',
-    last_name: '',
-    npi: '',
-    phone: '+1 ',
-    preferred_state: [] as string[],
-    start_year: '',
-    clinical_focus: [] as string[],
-    training_status: '',
-    practice_setting_preference: [] as string[],
-    current_practice: '',
-    procedures_performed: [] as string[],
-    procedures_desired: [] as string[],
-    terms_accepted: false,
-    data_sharing: false,
-  })
+  async function saveDraft(
+    values: OnboardingForm,
+    options: { complete: boolean },
+  ) {
+    const supabase = createClient()
+    const payload: ProfileUpsertFields = {
+      ...values,
+      onboarding_complete: options.complete,
+    }
+    if (options.complete) {
+      payload.signup_date = new Date().toISOString()
+    }
+    return upsertProfileByUserId(supabase, payload)
+  }
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function boot() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.replace('/login')
+        return
+      }
+
+      posthog.identify(user.id)
+
+      const { data: existing, error: loadError } = await supabase
+        .from('profiles')
+        .select(PROFILE_FORM_SELECT)
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (cancelled) return
+
+      if (loadError) {
+        setError('Could not load your profile. Please refresh and try again.')
+        setBooting(false)
+        return
+      }
+
+      if (existing?.onboarding_complete === true) {
+        router.replace('/')
+        return
+      }
+
+      if (existing) {
+        const hydrated = profileToForm(existing)
+        setForm(hydrated)
+        if (hasDraftProgress(hydrated) && !resumedEmitted.current) {
+          resumedEmitted.current = true
+          const resumeKey = `ph_onboarding_resumed_${user.id}`
+          if (typeof sessionStorage !== 'undefined' && !sessionStorage.getItem(resumeKey)) {
+            sessionStorage.setItem(resumeKey, '1')
+            posthog.capture('onboarding_resumed', { step: 1 })
+          }
+        }
+        setBooting(false)
+        return
+      }
+
+      const draft = await upsertProfileByUserId(supabase, {
+        onboarding_complete: false,
+      })
+
+      if (cancelled) return
+
+      if (!draft.ok) {
+        posthog.capture('onboarding_save_failed', {
+          reason: draft.reason,
+          context: 'draft_create',
+        })
+        setError('Could not start onboarding. Please refresh and try again.')
+        setBooting(false)
+        return
+      }
+
+      if (!startedEmitted.current) {
+        startedEmitted.current = true
+        const startKey = `ph_onboarding_started_${user.id}`
+        if (typeof sessionStorage !== 'undefined' && !sessionStorage.getItem(startKey)) {
+          sessionStorage.setItem(startKey, '1')
+          posthog.capture('onboarding_started')
+        }
+      }
+      setBooting(false)
+    }
+
+    boot()
+    return () => { cancelled = true }
+  }, [router])
+
+  async function handleNext() {
+    if (!isStepOneComplete(form)) {
+      setError('Please complete all required fields before continuing.')
+      return
+    }
+    setLoading(true)
+    setError('')
+
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      router.push('/login')
+      return
+    }
+
+    const result = await saveDraft(form, { complete: false })
+    if (!result.ok) {
+      posthog.capture('onboarding_save_failed', {
+        reason: result.reason,
+        context: 'step',
+        step: 1,
+      })
+      setError('Could not save your progress. Please try again.')
+      setLoading(false)
+      return
+    }
+
+    posthog.capture('onboarding_step_saved', { step: 1 })
+    setLoading(false)
+    setStep(2)
+  }
 
   async function handleSubmit() {
     if (!form.terms_accepted) {
@@ -170,34 +380,18 @@ export default function OnboardingPage() {
     }
     setLoading(true)
     setError('')
-  
+
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-  
+
     if (!user) { router.push('/login'); return }
-  
-    const { error: upsertError } = await supabase.from('profiles').upsert({
-      user_id: user.id,
-      email: user.email,
-      ...form,
-      onboarding_complete: true,
-      signup_date: new Date().toISOString(),
-    }, { onConflict: 'user_id' })
 
-    let saved = !upsertError
-    if (upsertError) {
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          user_id: user.id,
-          ...form,
-          onboarding_complete: true,
-        })
-        .eq('email', user.email)
-      saved = !updateError
-    }
-
-    if (!saved) {
+    const result = await saveDraft(form, { complete: true })
+    if (!result.ok) {
+      posthog.capture('onboarding_save_failed', {
+        reason: result.reason,
+        context: 'complete',
+      })
       setError('Could not save your profile. Please try again.')
       setLoading(false)
       return
@@ -224,6 +418,21 @@ export default function OnboardingPage() {
 
     setShowSuccess(true)
     setTimeout(() => router.push('/'), 2500)
+  }
+
+  if (booting) {
+    return (
+      <div className="auth-split auth-onboarding-split">
+        <div className="auth-onboarding-form">
+          <div className="auth-onboarding-inner">
+            <div style={{ marginBottom: 32 }}>
+              <Logo size="sm" />
+            </div>
+            <p style={{ fontSize: 14, color: '#6b7280' }}>Loading your profile...</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -324,12 +533,18 @@ export default function OnboardingPage() {
 
               <MultiSelect label="Procedures interested in for the future *" options={PROCEDURES} value={form.procedures_desired} onChange={v => setForm(f => ({ ...f, procedures_desired: v }))} />
 
+              {error && (
+                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', marginBottom: 16 }}>
+                  <p style={{ fontSize: 13, color: '#dc2626', margin: 0 }}>{error}</p>
+                </div>
+              )}
+
               <button
-                onClick={() => setStep(2)}
-                disabled={!form.first_name || !form.last_name || !form.npi || !form.training_status}
-                style={{ width: '100%', padding: '13px 16px', background: (!form.first_name || !form.last_name || !form.npi || !form.training_status) ? '#8ab4ae' : '#1C4A45', color: 'white', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: 'pointer', marginTop: 8, boxSizing: 'border-box' as const }}
+                onClick={handleNext}
+                disabled={loading || !isStepOneComplete(form)}
+                style={{ width: '100%', padding: '13px 16px', background: (loading || !isStepOneComplete(form)) ? '#8ab4ae' : '#1C4A45', color: 'white', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: (loading || !isStepOneComplete(form)) ? 'not-allowed' : 'pointer', marginTop: 8, boxSizing: 'border-box' as const }}
               >
-                Next
+                {loading ? 'Saving...' : 'Next'}
               </button>
             </>
           )}
@@ -344,10 +559,10 @@ export default function OnboardingPage() {
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
                   <input type="checkbox" checked={form.terms_accepted} onChange={e => setForm(f => ({ ...f, terms_accepted: e.target.checked }))} style={{ marginTop: 2, accentColor: '#1C4A45' }} />
                   <span style={{ fontSize: 13, color: '#374151', lineHeight: 1.5 }}>
-                    I agree to MatchMed's{' '}
-                    <a href="https://atlas.matchmed.app/terms-and-conditions" target="_blank" rel="noopener noreferrer" style={{ color: '#1C4A45' }}>Terms of Service</a>
+                    I agree to MatchMed&apos;s{' '}
+                    <a href={LEGAL_TERMS_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#1C4A45' }}>Terms of Service</a>
                     {' '}&{' '}
-                    <a href="https://atlas.matchmed.app/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: '#1C4A45' }}>Privacy Policy</a>.
+                    <a href={LEGAL_PRIVACY_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#1C4A45' }}>Privacy Policy</a>.
                   </span>
                 </label>
               </div>
@@ -370,7 +585,7 @@ export default function OnboardingPage() {
 
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
-                  onClick={() => setStep(1)}
+                  onClick={() => { setError(''); setStep(1) }}
                   style={{ flex: 1, padding: '13px 16px', background: 'white', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 15, fontWeight: 500, color: '#374151', cursor: 'pointer' }}
                 >
                   Previous
@@ -399,7 +614,7 @@ export default function OnboardingPage() {
         />
         <div className="auth-split-hero-content">
           <blockquote style={{ fontSize: 20, fontWeight: 500, lineHeight: 1.5, marginBottom: 12, letterSpacing: '-0.2px' }}>
-            "Built on 8 years of CMS Medicare data covering 6,400+ ophthalmology practices and 22,000+ physician careers."
+            &ldquo;Built on 8 years of CMS Medicare data covering 6,400+ ophthalmology practices and 22,000+ physician careers.&rdquo;
           </blockquote>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', margin: 0 }}>MatchMed Atlas · Ophthalmology Workforce Intelligence</p>
         </div>

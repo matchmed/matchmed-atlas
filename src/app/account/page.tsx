@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import { upsertProfileByUserId } from '@/lib/profile-writes'
 import posthog from 'posthog-js'
 
 const US_STATES = ['AK','AL','AR','AZ','CA','CO','CT','DC','DE','FL','GA','HI','IA','ID','IL','IN','KS','KY','LA','MA','MD','ME','MI','MN','MO','MS','MT','NC','ND','NE','NH','NJ','NM','NV','NY','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VA','VT','WA','WI','WV','WY']
@@ -137,6 +138,7 @@ export default function AccountPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [userEmail, setUserEmail] = useState('')
   const [initials, setInitials] = useState('?')
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -207,16 +209,21 @@ export default function AccountPage() {
 
   async function handleSave() {
     setSaving(true)
+    setSaveError('')
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) {
+      setSaving(false)
+      setSaveError('Could not save your profile. Please try again.')
+      posthog.capture('account_profile_save_failed', { reason: 'unauthenticated' })
+      return
+    }
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({ ...form })
-      .eq('user_id', user.id)
+    const result = await upsertProfileByUserId(supabase, { ...form })
 
-    if (error) {
+    if (!result.ok) {
+      posthog.capture('account_profile_save_failed', { reason: result.reason })
+      setSaveError('Could not save your profile. Please try again.')
       setSaving(false)
       return
     }
@@ -489,6 +496,11 @@ export default function AccountPage() {
       </div>
 
       {/* Save button */}
+      {saveError && (
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', marginBottom: 12 }}>
+          <p style={{ fontSize: 13, color: '#dc2626', margin: 0 }}>{saveError}</p>
+        </div>
+      )}
       <button
         onClick={handleSave}
         disabled={saving}

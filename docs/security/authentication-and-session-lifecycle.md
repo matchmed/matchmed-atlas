@@ -58,15 +58,15 @@ sequenceDiagram
     end
 ```
 
-Onboarding writes expected profile fields: Supabase user ID/email, names, NPI, phone, preferred states, anticipated start year, clinical focus, training status, practice-setting preferences, current practice/program, procedures performed/desired, Terms acceptance, partner-contact preference (`data_sharing`), completion flag, and signup date.
+Onboarding creates a draft `profiles` row on authenticated load (`onboarding_complete: false`) if none exists, hydrates any existing incomplete draft into the form, and persists step-one values before advancing. Final submit upserts the full form with `onboarding_complete: true` and `signup_date`, confirming the write via a returned `user_id` row. The email-based update fallback has been removed; `user_id` is the canonical identity key.
 
 The UI labels many fields required, but the first-step button only checks first name, last name, NPI, and training status. Submission checks Terms acceptance. No repository DDL confirms database validation, NPI format/uniqueness, consent timestamp/version, or required constraints.
 
-The code first upserts on `user_id`. On any upsert error it attempts an update by email, but it does not surface an update failure and proceeds to success. This is a current reliability and identity-linkage limitation.
+Account save also upserts by `user_id` with a confirmed returned row; success UI and `account_profile_saved` fire only after that confirmation.
 
 ## Login
 
-Password login calls `signInWithPassword`, then navigates to `/`. Google login uses the callback above. Neither login path itself checks onboarding completion or `deleted_at`; the subsequent request is intercepted by the proxy, which checks soft deletion. Direct password login does not redirect incomplete profiles to onboarding.
+Password login calls `signInWithPassword`, then navigates to `/`. Google login uses the callback above. Neither login path itself checks onboarding completion or `deleted_at`; the subsequent request is intercepted by the proxy, which checks soft deletion and onboarding completion.
 
 The login page also supports a legacy/implicit URL fragment containing `access_token`: browser client initialization is expected to process the fragment, then the page waits 500 ms, reads the session, and routes to `/`.
 
@@ -78,7 +78,7 @@ For matched requests, the proxy:
 2. allows Supabase to write refreshed cookies to both request and response;
 3. calls `auth.getUser()` to validate the user with Supabase;
 4. redirects unauthenticated users unless the route is public;
-5. for authenticated protected routes, checks `profiles.deleted_at`.
+5. for authenticated non-public routes, checks `profiles.deleted_at` and, unless the path is onboarding-exempt (`/onboarding`, auth/legal/public entry routes), redirects when the profile is missing or `onboarding_complete` is not true.
 
 This establishes current request-time authentication. Cookie names, expiry, refresh-token rotation, inactivity timeout, absolute lifetime, concurrent session limits, and revocation settings are Supabase configuration and are not in the repository.
 

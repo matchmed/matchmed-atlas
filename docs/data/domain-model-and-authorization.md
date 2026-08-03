@@ -56,9 +56,9 @@ Observed identifiers and state:
 - `is_admin`;
 - `deleted_at`.
 
-Some fields are treated as arrays by the UI. Onboarding upserts by `user_id`, with an update-by-email fallback. Account edits update by `user_id`. Admin screens list selected profile fields and can set `npi_verified` and `deleted_at`.
+Some fields are treated as arrays by the UI. Onboarding creates a draft row by `user_id` when missing, saves step drafts, and completes with a confirmed upsert. Account edits upsert by `user_id` with a returned-row confirmation. Admin screens list selected profile fields and can set `npi_verified` and `deleted_at`.
 
-No tracked constraint proves uniqueness of `user_id`, email, or NPI; no type definition proves the fields' database types; and no policy proves users can only read/update their own profile.
+No tracked constraint proves uniqueness of `user_id`, email, or NPI; no type definition proves the fields' database types; and no policy proves users can only read/update their own profile. See `docs/security/profiles-onboarding-draft.proposal.sql` for proposed production inventory and constraint/RLS statements (not applied).
 
 ### `practices`
 
