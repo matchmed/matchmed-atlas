@@ -15,6 +15,10 @@ import {
 import { nameToColor, getInitials, scoreColor, scoreBg, deltaColor, deltaBg, deltaArrow } from '@/lib/utils'
 import PracticeErrorReportModal from '@/components/PracticeErrorReportModal'
 import PracticeLocationsDisclaimer from '@/components/PracticeLocationsDisclaimer'
+import {
+  fetchPhysicianJobsForPractice,
+  type PhysicianJob,
+} from '@/lib/physician-jobs'
 
 /** Session-scoped guard against Strict Mode / remount duplicate practice_viewed events. */
 const viewedPracticeIds = new Set<string>()
@@ -53,18 +57,6 @@ interface Affiliation {
   doctors: { id: string; physician_name: string | null; npi: string } | null
 }
 
-interface JobLead {
-  id: string
-  point_of_contact: string | null
-  email: string | null
-  phone: string | null
-  primary_location: string | null
-  practice_setting: string | null
-  clinical_surgical_mix: string | null
-  ideal_hiring_timeline: string | null
-  subspecialties_interest: string[] | null
-  additional_details: string | null
-}
 
 function deltaChip(d: number | null) {
   if (d === null) return <span style={{ color: '#ccc', fontSize: 11 }}>— vs 2019</span>
@@ -92,7 +84,7 @@ export default function PracticeDetailPage() {
   const [locations, setLocations] = useState<PracticeLocation[]>([])
   const [locationsExpanded, setLocationsExpanded] = useState(false)
   const [affiliations, setAffiliations] = useState<Affiliation[]>([])
-  const [jobs, setJobs] = useState<JobLead[]>([])
+  const [jobs, setJobs] = useState<PhysicianJob[]>([])
   const [loading, setLoading] = useState(true)
   const [showFormer, setShowFormer] = useState(true)
   const [jobsOpen, setJobsOpen] = useState(true)
@@ -113,7 +105,7 @@ export default function PracticeDetailPage() {
           .select('id,practice_id,address,city,state,zip,latitude,longitude,doctor_count,rank_by_doctors')
           .eq('practice_id', id),
         supabase.from('affiliations').select('id,npi,status,first_seen_year_at_org,last_seen_year_at_org,tenure_years,grad_yr,doctors(id,physician_name,npi)').eq('practice_id', id).order('last_seen_year_at_org', { ascending: false }),
-        supabase.from('employer_leads').select('*').eq('practice_id', id),
+        fetchPhysicianJobsForPractice(id),
       ])
       if (practiceRes.data) {
         setPractice(practiceRes.data)
@@ -144,7 +136,8 @@ export default function PracticeDetailPage() {
         setLocations([])
       }
       if (affilRes.data) setAffiliations(affilRes.data as any)
-      if (jobRes.data) setJobs(jobRes.data)
+      if (!jobRes.error) setJobs(jobRes.data)
+      else setJobs([])
 
       // Get profile id and check if favorited
       const { data: { user } } = await supabase.auth.getUser()
@@ -572,13 +565,6 @@ export default function PracticeDetailPage() {
                     {j.ideal_hiring_timeline && badge(`Timeline: ${j.ideal_hiring_timeline}`, '#C8640A', '#FFF0E0')}
                   </div>
                   {j.additional_details && <div style={{ marginTop: 10, fontSize: 13, color: '#555', lineHeight: 1.5, borderTop: '1px solid #f0f0f0', paddingTop: 10 }}>{j.additional_details}</div>}
-                  {(j.point_of_contact || j.email || j.phone) && (
-                    <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', borderTop: '1px solid #f0f0f0', paddingTop: 10 }}>
-                      {j.point_of_contact && <span style={{ fontSize: 13, fontWeight: 500 }}>👤 {j.point_of_contact}</span>}
-                      {j.email && <a href={`mailto:${j.email}`} style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none' }}>✉️ {j.email}</a>}
-                      {j.phone && <a href={`tel:${j.phone}`} style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none' }}>📞 {j.phone}</a>}
-                    </div>
-                  )}
                 </div>
               ))}
             </div>

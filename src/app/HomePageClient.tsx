@@ -11,6 +11,7 @@ import {
   ScoringIcon,
   ShieldCheckIcon,
 } from '@/components/nav-icons'
+import { countPhysicianJobs } from '@/lib/physician-jobs'
 
 interface Stats {
   practices: number
@@ -102,13 +103,13 @@ export default function HomePageClient() {
         supabase.from('practices').select('id', { count: 'exact', head: true }),
         supabase.from('doctors').select('id', { count: 'exact', head: true }),
         supabase.from('affiliations').select('id', { count: 'exact', head: true }),
-        supabase.from('employer_leads').select('id', { count: 'exact', head: true }),
+        countPhysicianJobs(),
       ])
       setStats({
         practices: p.count || 0,
         doctors: d.count || 0,
         affiliations: a.count || 0,
-        jobs: j.count || 0,
+        jobs: j.error ? 0 : j.count,
       })
     }
     load()

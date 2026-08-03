@@ -1,25 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase'
-import posthog from 'posthog-js'
-
-interface Job {
-  id: string
-  practice_name: string | null
-  practice_id: string | null
-  point_of_contact: string | null
-  email: string | null
-  phone: string | null
-  primary_location: string | null
-  practice_setting: string | null
-  clinical_surgical_mix: string | null
-  ideal_hiring_timeline: string | null
-  subspecialties_interest: string[] | null
-  additional_details: string | null
-  source: string | null
-  received_at: string | null
-}
+import { fetchPhysicianJobs, type PhysicianJob } from '@/lib/physician-jobs'
 
 const PAGE_SIZE = 20
 
@@ -55,8 +37,9 @@ function daysAgo(iso: string | null): string | null {
 
 export default function JobsPage() {
   const router = useRouter()
-  const [jobs, setJobs] = useState<Job[]>([])
+  const [jobs, setJobs] = useState<PhysicianJob[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [selectedStates, setSelectedStates] = useState<Set<string>>(new Set())
   const [selectedSubs, setSelectedSubs] = useState<Set<string>>(new Set())
@@ -67,13 +50,15 @@ export default function JobsPage() {
 
   useEffect(() => {
     async function load() {
-      const supabase = createClient()
       setLoading(true)
-      const { data } = await supabase
-        .from('employer_leads')
-        .select('*')
-        .order('received_at', { ascending: false })
-      if (data) setJobs(data)
+      setLoadError(null)
+      const { data, error } = await fetchPhysicianJobs({ limit: 500 })
+      if (error) {
+        setLoadError('Job listings are temporarily unavailable.')
+        setJobs([])
+      } else {
+        setJobs(data)
+      }
       setLoading(false)
     }
     load()
@@ -94,7 +79,7 @@ export default function JobsPage() {
     new Set(jobs.flatMap(j => j.subspecialties_interest || []).filter(Boolean))
   ).sort()
 
-  function getState(j: Job) {
+  function getState(j: PhysicianJob) {
     const parts = (j.primary_location || '').split(', ')
     return parts.length >= 2 ? parts[parts.length - 1].trim() : ''
   }
@@ -139,7 +124,7 @@ export default function JobsPage() {
     setPage(0)
   }
 
-  function handleCardClick(j: Job) {
+  function handleCardClick(j: PhysicianJob) {
     if (j.practice_id) {
       router.push(`/practices/${j.practice_id}`)
     }
@@ -348,7 +333,7 @@ export default function JobsPage() {
         <select
           value={sort}
           onChange={e => {
-            setSort(e.target.value as any)
+            setSort(e.target.value as 'newest' | 'oldest')
             setPage(0)
           }}
           style={{
@@ -371,6 +356,12 @@ export default function JobsPage() {
       {loading && (
         <div className="loading-bar">
           <div className="loading-bar-inner" />
+        </div>
+      )}
+
+      {loadError && !loading && (
+        <div style={{ textAlign: 'center', padding: 40, color: '#888', fontSize: 13 }}>
+          {loadError}
         </div>
       )}
 
@@ -470,48 +461,14 @@ export default function JobsPage() {
                 {j.additional_details}
               </div>
             )}
-
-            {(j.point_of_contact || j.email || j.phone) && (
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: 12,
-                  alignItems: 'center',
-                  borderTop: '1px solid #f0f0f0',
-                  paddingTop: 10,
-                  marginTop: 10,
-                }}
-              >
-                {j.point_of_contact && (
-                  <span style={{ fontSize: 13, fontWeight: 500 }}>👤 {j.point_of_contact}</span>
-                )}
-                {j.email && (
-                  <a
-                    href={`mailto:${j.email}`}
-                    onClick={e => { e.stopPropagation(); posthog.capture('job_contact_clicked', { contact_type: 'email', practice_id: j.practice_id, practice_name: j.practice_name }) }}
-                    style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none' }}
-                  >
-                    ✉️ {j.email}
-                  </a>
-                )}
-                {j.phone && (
-                  <a
-                    href={`tel:${j.phone}`}
-                    onClick={e => { e.stopPropagation(); posthog.capture('job_contact_clicked', { contact_type: 'phone', practice_id: j.practice_id, practice_name: j.practice_name }) }}
-                    style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none' }}
-                  >
-                    📞 {j.phone}
-                  </a>
-                )}
-              </div>
-            )}
           </div>
         ))}
 
-        {!loading && pageJobs.length === 0 && (
+        {!loading && !loadError && pageJobs.length === 0 && (
           <div style={{ textAlign: 'center', padding: 40, color: '#aaa', fontSize: 13 }}>
-            No job listings match your filters.
+            {jobs.length === 0 && !search && selectedStates.size === 0 && selectedSubs.size === 0
+              ? 'No job listings are available yet.'
+              : 'No job listings match your filters.'}
           </div>
         )}
       </div>
