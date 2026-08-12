@@ -324,7 +324,7 @@ export default function PracticeDetailAuthorized() {
     const tenureLabel = tenure >= 8 ? '8+ yrs' : tenure === 1 ? '1 yr' : `${tenure} yrs`
     const [fg2, bg2] = nameToColor(n)
     return (
-      <div key={a.id} onClick={() => a.doctors?.id && router.push(`/physicians/${a.doctors.id}`)} style={{ background: '#ffffff', border: '1px solid #e8e8e8', borderRadius: 10, padding: '14px 16px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 14, cursor: a.doctors?.id ? 'pointer' : 'default' }}>
+      <div key={a.id} onClick={() => a.doctors?.id && router.push(`/physicians/${a.doctors.id}`)} style={{ background: '#ffffff', border: '1px solid #DDD8D0', borderRadius: 10, padding: '14px 16px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 14, cursor: a.doctors?.id ? 'pointer' : 'default' }}>
         <div style={{ width: 40, height: 40, borderRadius: '50%', background: bg2, color: fg2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
           {getInitials(n)}
         </div>
@@ -453,13 +453,38 @@ export default function PracticeDetailAuthorized() {
 
       {/* Metrics grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10, marginBottom: 24 }}>
-        {metricCards.map(c => (
-          <div key={c.label} style={{ background: c.bg, borderRadius: 10, padding: '14px 12px', border: '0.5px solid rgba(0,0,0,0.07)' }}>
-            <div style={{ fontSize: 11, color: '#888', marginBottom: 5, fontWeight: 500, letterSpacing: '.02em' }}>{c.label}</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: c.color, lineHeight: 1.1, marginBottom: c.sub ? 6 : 0 }}>{c.value}</div>
-            {c.sub && <div>{c.sub}</div>}
-          </div>
-        ))}
+        {metricCards.map(c => {
+          const isRetention = c.label === 'Retention score'
+          return (
+            <div key={c.label} style={{ background: c.bg, borderRadius: 10, padding: '14px 12px', border: '0.5px solid rgba(0,0,0,0.07)' }}>
+              <div style={{ fontSize: 11, color: '#888', marginBottom: 5, fontWeight: 500, letterSpacing: '.02em' }}>{c.label}</div>
+              <div
+                style={{
+                  fontSize: 22,
+                  fontWeight: 700,
+                  color: c.color,
+                  lineHeight: 1.1,
+                  marginBottom: !isRetention && c.sub ? 6 : 0,
+                  display: isRetention ? 'flex' : undefined,
+                  alignItems: isRetention ? 'baseline' : undefined,
+                  flexWrap: isRetention ? 'nowrap' : undefined,
+                  whiteSpace: isRetention ? 'nowrap' : undefined,
+                }}
+              >
+                <span>{c.value}</span>
+                {isRetention && hasScore && (
+                  <span className="locked-metric-score-scale"> / 100</span>
+                )}
+              </div>
+              {isRetention && (
+                <p className="locked-metric-score-note" style={{ marginBottom: c.sub ? 6 : 0 }}>
+                  Higher scores reflect greater observed physician retention.
+                </p>
+              )}
+              {c.sub && <div>{c.sub}</div>}
+            </div>
+          )
+        })}
       </div>
 
       {/* Tenure bars */}
@@ -554,7 +579,7 @@ export default function PracticeDetailAuthorized() {
           {jobsOpen && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {jobs.map(j => (
-                <div key={j.id} style={{ border: '1px solid #e8e8e8', borderRadius: 12, padding: '16px 20px', background: '#ffffff', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                <div key={j.id} style={{ border: '1px solid #DDD8D0', borderRadius: 12, padding: '16px 20px', background: '#ffffff', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
                   {j.primary_location && <div style={{ fontSize: 13, color: '#888', marginBottom: 10 }}>📍 {j.primary_location}</div>}
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
                     {(j.subspecialties_interest || []).map(s => badge(s, '#1A6B3A', '#D4EDDA'))}

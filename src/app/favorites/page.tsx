@@ -152,7 +152,7 @@ export default function FavoritesPage() {
                 key={f.id}
                 style={{
                   background: '#ffffff',
-                  border: '1px solid #e8e8e8',
+                  border: '1px solid #DDD8D0',
                   borderRadius: 12,
                   padding: '16px 20px',
                   display: 'flex',
