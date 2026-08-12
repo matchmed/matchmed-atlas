@@ -1,29 +1,13 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-server'
 import {
-  formatPublicCityState,
-  formatPublicZip,
   publicGetPractice,
   publicGetPracticeLocations,
   publicGetPracticeRoster,
 } from '@/lib/public-search'
-import PracticeLocationsDisclaimer from '@/components/PracticeLocationsDisclaimer'
+import PublicPracticeLocations from '@/components/PublicPracticeLocations'
 import UnlockAnalysisCta from '@/components/UnlockAnalysisCta'
 import { nameToColor, getInitials } from '@/lib/utils'
-
-function formatLocationLine(loc: {
-  address: string | null
-  city: string | null
-  state: string | null
-  zip: string | null
-}): string {
-  const parts = [
-    (loc.address || '').trim(),
-    formatPublicCityState(loc.city, loc.state),
-    formatPublicZip(loc.zip),
-  ].filter(Boolean)
-  return parts.join(' · ')
-}
 
 /** Hard-coded neutral bar widths — not derived from any practice data. */
 const TENURE_PLACEHOLDER_WIDTHS = ['42%', '68%', '54%', '36%', '58%'] as const
@@ -118,25 +102,7 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
         </div>
       </div>
 
-      <section style={{ marginBottom: 28 }} aria-labelledby="public-locations-heading">
-        <h2 id="public-locations-heading" style={{ fontSize: 11, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>
-          Locations
-        </h2>
-        {locations.length === 0 ? (
-          <p style={{ fontSize: 13, color: '#888' }}>No CMS billing locations listed.</p>
-        ) : (
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8 }}>
-            {locations.map(loc => (
-              <li key={loc.id} style={{ fontSize: 13, color: '#555', lineHeight: 1.45 }}>
-                {formatLocationLine(loc) || 'Location'}
-              </li>
-            ))}
-          </ul>
-        )}
-        <div style={{ marginTop: 8 }}>
-          <PracticeLocationsDisclaimer />
-        </div>
-      </section>
+      <PublicPracticeLocations locations={locations} />
 
       <section className="locked-analysis-module" aria-labelledby="locked-analysis-heading">
         <h2 id="locked-analysis-heading" className="locked-analysis-module-label">
@@ -162,13 +128,13 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
           </div>
 
           <div className="locked-gate-stack">
-            <div className="locked-analysis-preview" aria-hidden="true">
-              <div className="locked-tenure-block">
-                <div className="locked-section-subhead">Physician tenure distribution</div>
-                <div className="locked-tenure-bars">
-                  {(['0–1', '2–3', '4–5', '6–7', '8+'] as const).map((label, i) => (
-                    <div key={label} className="locked-tenure-row">
-                      <span className="locked-tenure-label">{label}</span>
+            <div className="locked-tenure-block">
+              <div className="locked-section-subhead">Physician tenure distribution</div>
+              <div className="locked-tenure-bars">
+                {(['0–1', '2–3', '4–5', '6–7', '8+'] as const).map((label, i) => (
+                  <div key={label} className="locked-tenure-row">
+                    <span className="locked-tenure-label">{label}</span>
+                    <div className="locked-tenure-gated" aria-hidden="true">
                       <div className="locked-tenure-track">
                         <div
                           className="locked-tenure-fill"
@@ -177,13 +143,15 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
                       </div>
                       <span className="locked-tenure-count" />
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
+            </div>
 
-              <div className="locked-former-block">
-                <div className="locked-section-subhead">Former physician history</div>
-                <div className="locked-former-list">
+            <div className="locked-former-block">
+              <div className="locked-section-subhead">Former physician history</div>
+              <div className="locked-former-gated">
+                <div className="locked-former-list" aria-hidden="true">
                   {[0, 1, 2].map(i => (
                     <div key={i} className="locked-former-row">
                       <div className="locked-former-avatar" />
@@ -194,10 +162,9 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
                     </div>
                   ))}
                 </div>
+                <div className="locked-analysis-fade" aria-hidden="true" />
               </div>
             </div>
-
-            <div className="locked-analysis-fade" aria-hidden="true" />
 
             <UnlockAnalysisCta
               className="unlock-cta-overlay"

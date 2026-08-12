@@ -1069,12 +1069,32 @@ a { color: inherit; text-decoration: none; }
 }
 
 .locked-analysis-preview {
-  /* Soft enough to read row structure; padding gives CTA overlap room without burying rows. */
   filter: blur(1.05px);
   opacity: 0.9;
   padding-bottom: 72px;
   pointer-events: none;
   user-select: none;
+}
+
+.locked-tenure-gated,
+.locked-former-gated .locked-former-list {
+  filter: blur(1.05px);
+  opacity: 0.9;
+  pointer-events: none;
+  user-select: none;
+}
+
+.locked-tenure-gated {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.locked-former-gated {
+  position: relative;
+  padding-bottom: 72px;
 }
 
 .locked-analysis-fade {
@@ -1091,6 +1111,10 @@ a { color: inherit; text-decoration: none; }
     #F7F6F2 100%
   );
   pointer-events: none;
+}
+
+.locked-former-gated .locked-analysis-fade {
+  height: 72%;
 }
 
 .unlock-cta.unlock-cta-overlay {
@@ -1345,7 +1369,8 @@ a { color: inherit; text-decoration: none; }
     padding: 8px 12px;
   }
 
-  .locked-analysis-preview {
+  .locked-analysis-preview,
+  .locked-former-gated {
     padding-bottom: 36px;
   }
 
