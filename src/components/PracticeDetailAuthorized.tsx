@@ -453,13 +453,38 @@ export default function PracticeDetailAuthorized() {
 
       {/* Metrics grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10, marginBottom: 24 }}>
-        {metricCards.map(c => (
-          <div key={c.label} style={{ background: c.bg, borderRadius: 10, padding: '14px 12px', border: '0.5px solid rgba(0,0,0,0.07)' }}>
-            <div style={{ fontSize: 11, color: '#888', marginBottom: 5, fontWeight: 500, letterSpacing: '.02em' }}>{c.label}</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: c.color, lineHeight: 1.1, marginBottom: c.sub ? 6 : 0 }}>{c.value}</div>
-            {c.sub && <div>{c.sub}</div>}
-          </div>
-        ))}
+        {metricCards.map(c => {
+          const isRetention = c.label === 'Retention score'
+          return (
+            <div key={c.label} style={{ background: c.bg, borderRadius: 10, padding: '14px 12px', border: '0.5px solid rgba(0,0,0,0.07)' }}>
+              <div style={{ fontSize: 11, color: '#888', marginBottom: 5, fontWeight: 500, letterSpacing: '.02em' }}>{c.label}</div>
+              <div
+                style={{
+                  fontSize: 22,
+                  fontWeight: 700,
+                  color: c.color,
+                  lineHeight: 1.1,
+                  marginBottom: !isRetention && c.sub ? 6 : 0,
+                  display: isRetention ? 'flex' : undefined,
+                  alignItems: isRetention ? 'baseline' : undefined,
+                  flexWrap: isRetention ? 'nowrap' : undefined,
+                  whiteSpace: isRetention ? 'nowrap' : undefined,
+                }}
+              >
+                <span>{c.value}</span>
+                {isRetention && hasScore && (
+                  <span className="locked-metric-score-scale"> / 100</span>
+                )}
+              </div>
+              {isRetention && (
+                <p className="locked-metric-score-note" style={{ marginBottom: c.sub ? 6 : 0 }}>
+                  Higher scores reflect greater observed physician retention.
+                </p>
+              )}
+              {c.sub && <div>{c.sub}</div>}
+            </div>
+          )
+        })}
       </div>
 
       {/* Tenure bars */}
