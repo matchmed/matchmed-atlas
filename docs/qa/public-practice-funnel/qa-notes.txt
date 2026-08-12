@@ -1,0 +1,11 @@
+styles {"gridDisplay":"grid","gridCols":"248.656px 248.672px 248.672px","ctaBg":"rgb(245, 236, 230)","primaryBg":"rgb(169, 85, 45)","primaryColor":"rgb(255, 255, 255)","cards":[{"w":249,"h":79,"x":337,"y":609,"bg":"rgb(253, 251, 230)"},{"w":249,"h":79,"x":596,"y":609,"bg":"rgb(235, 231, 224)"},{"w":249,"h":79,"x":854,"y":609,"bg":"rgb(247, 246, 242)"}],"tenureFillHeights":[20,20,20,20,20],"formerRows":3}
+1440: overflow=false scrollW=1440 clientW=1440
+toggle tag=BUTTON aria-expanded=false aria-controls=true
+after Enter aria-expanded=true text=Show fewer physicians ▼
+visible after Enter: BACH, AUSTIN E | LICHT, JOSEPH L | MURDOCK, JENNIFER | NOEL, DON HERSHELSON
+after second Enter aria-expanded=false
+1024: overflow=false scrollW=1024 clientW=1024
+320: overflow=false scrollW=320 clientW=320
+375: overflow=false scrollW=375 clientW=375
+390: overflow=false scrollW=390 clientW=390
+430: overflow=false scrollW=430 clientW=430
