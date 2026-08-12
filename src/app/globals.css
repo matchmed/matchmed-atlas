@@ -837,6 +837,33 @@ a { color: inherit; text-decoration: none; }
   white-space: nowrap;
 }
 
+/* Brighter canvas — anonymous practice/physician profiles only (not public home) */
+body:has(.public-profile-shell) {
+  background: #FCFCFC;
+}
+
+.public-chrome.public-profile-shell {
+  background: #FCFCFC;
+  border-bottom-color: #DDD8D0;
+}
+
+.public-chrome.public-profile-shell .public-chrome-link {
+  color: #1F5B52;
+}
+
+.public-chrome.public-profile-shell .public-chrome-button {
+  background: #1F5B52;
+}
+
+.public-chrome.public-profile-shell .public-chrome-button:hover,
+.public-chrome.public-profile-shell .public-chrome-button:focus-visible {
+  background: #184940;
+}
+
+.public-main-content.public-profile-shell {
+  background: #FCFCFC;
+}
+
 .public-main-content {
   width: 100%;
   max-width: 880px;
@@ -1043,7 +1070,7 @@ a { color: inherit; text-decoration: none; }
 /* Shared public locked-analysis CTA (practice + physician) */
 .unlock-cta.unlock-cta-emphasis {
   background: #F5ECE6;
-  border: 1px solid #A9552D;
+  border: 1.5px solid #A9552D;
   border-radius: 12px;
   padding: 18px 20px 16px;
   box-shadow: none;
@@ -1073,9 +1100,9 @@ a { color: inherit; text-decoration: none; }
 }
 
 .unlock-cta-emphasis .unlock-cta-primary {
-  background: #A9552D;
+  background: #984E28;
   color: #FFFFFF;
-  border: 1.5px solid #A9552D;
+  border: 1.5px solid #984E28;
 }
 
 .unlock-cta-emphasis .unlock-cta-primary:hover,
@@ -1109,7 +1136,7 @@ a { color: inherit; text-decoration: none; }
 .locked-analysis-module-label {
   font-size: 11px;
   font-weight: 700;
-  color: #999;
+  color: #8A867F;
   text-transform: uppercase;
   letter-spacing: .08em;
   margin-bottom: 12px;
@@ -1117,11 +1144,12 @@ a { color: inherit; text-decoration: none; }
 
 .locked-analysis-module-body {
   position: relative;
-  border: 1px solid #e0ddd8;
+  border: 1px solid #DDD8D0;
   border-radius: 14px;
-  background: #fff;
+  background: #FFFFFF;
   overflow: hidden;
   padding: 18px 16px 22px;
+  box-shadow: 0 1px 2px rgba(30, 30, 26, 0.03);
 }
 
 .locked-gate-stack {
@@ -1168,9 +1196,9 @@ a { color: inherit; text-decoration: none; }
   background: linear-gradient(
     to bottom,
     rgba(255, 255, 255, 0) 0%,
-    rgba(247, 246, 242, 0.28) 34%,
-    rgba(247, 246, 242, 0.78) 68%,
-    #F7F6F2 100%
+    rgba(255, 255, 255, 0.28) 34%,
+    rgba(255, 255, 255, 0.78) 68%,
+    #FFFFFF 100%
   );
   pointer-events: none;
 }
@@ -1200,20 +1228,20 @@ a { color: inherit; text-decoration: none; }
 .locked-metric-card {
   border-radius: 10px;
   padding: 14px 12px;
-  border: 0.5px solid rgba(0, 0, 0, 0.07);
+  border: 1px solid #DDD8D0;
 }
 
 .locked-metric-card.is-locked {
-  background: #ebe7e0;
+  background: #F4F1EB;
 }
 
 .locked-metric-card.is-public {
-  background: #F7F6F2;
+  background: #FFFFFF;
 }
 
 .locked-metric-label {
   font-size: 11px;
-  color: #888;
+  color: #68645E;
   margin-bottom: 8px;
   font-weight: 500;
   letter-spacing: .02em;
@@ -1222,8 +1250,29 @@ a { color: inherit; text-decoration: none; }
 .locked-metric-value {
   font-size: 22px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #1E1E1A;
   line-height: 1.1;
+}
+
+.locked-metric-card-score .locked-metric-value {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.locked-metric-score-scale {
+  font-size: 13px;
+  font-weight: 500;
+  color: #8A867F;
+}
+
+.locked-metric-score-note {
+  margin: 6px 0 0;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: #68645E;
 }
 
 .locked-metric-skeleton {
@@ -1237,7 +1286,7 @@ a { color: inherit; text-decoration: none; }
 .locked-section-subhead {
   font-size: 11px;
   font-weight: 700;
-  color: #999;
+  color: #8A867F;
   text-transform: uppercase;
   letter-spacing: .08em;
   margin-bottom: 12px;
@@ -1256,7 +1305,7 @@ a { color: inherit; text-decoration: none; }
 
 .locked-tenure-label {
   font-size: 11px;
-  color: #888;
+  color: #8A867F;
   width: 54px;
   text-align: right;
   flex-shrink: 0;
@@ -1264,7 +1313,7 @@ a { color: inherit; text-decoration: none; }
 
 .locked-tenure-track {
   flex: 1;
-  background: #ebebeb;
+  background: #ebe7e0;
   border-radius: 4px;
   height: 20px;
   overflow: hidden;
@@ -1299,8 +1348,8 @@ a { color: inherit; text-decoration: none; }
   display: flex;
   align-items: center;
   gap: 14px;
-  background: #f5f3ef;
-  border: 1px solid #e8e5df;
+  background: #F4F1EB;
+  border: 1px solid #DDD8D0;
   border-radius: 10px;
   padding: 14px 16px;
 }
@@ -1353,8 +1402,8 @@ a { color: inherit; text-decoration: none; }
   gap: 14px;
   margin-bottom: 18px;
   padding: 12px 14px;
-  background: #f5f3ef;
-  border: 1px solid #e8e5df;
+  background: #F4F1EB;
+  border: 1px solid #DDD8D0;
   border-radius: 10px;
 }
 
@@ -1382,7 +1431,7 @@ a { color: inherit; text-decoration: none; }
   height: 12px;
   border-radius: 50%;
   background: #b8b1a5;
-  border: 2px solid #f5f3ef;
+  border: 2px solid #F4F1EB;
   position: relative;
   z-index: 1;
 }
@@ -1399,7 +1448,7 @@ a { color: inherit; text-decoration: none; }
 
 .public-roster-note {
   font-size: 11px;
-  color: #999;
+  color: #8A867F;
   line-height: 1.5;
   margin: 0 0 12px;
 }
@@ -1407,7 +1456,7 @@ a { color: inherit; text-decoration: none; }
 .public-roster-heading {
   font-size: 11px;
   font-weight: 600;
-  color: #1A6B3A;
+  color: #1F5B52;
   text-transform: uppercase;
   letter-spacing: .06em;
   margin-bottom: 10px;
@@ -1415,7 +1464,7 @@ a { color: inherit; text-decoration: none; }
 
 .public-roster-empty {
   font-size: 13px;
-  color: #888;
+  color: #68645E;
 }
 
 .public-roster-preview {
@@ -1433,7 +1482,7 @@ a { color: inherit; text-decoration: none; }
   right: 0;
   bottom: 0;
   height: 34px;
-  background: linear-gradient(to bottom, rgba(247, 246, 242, 0), #F7F6F2);
+  background: linear-gradient(to bottom, rgba(252, 252, 252, 0), #FCFCFC);
   pointer-events: none;
 }
 
@@ -1449,13 +1498,14 @@ a { color: inherit; text-decoration: none; }
 
 .public-roster-link {
   display: block;
-  background: #ffffff;
-  border: 1px solid #e8e8e8;
+  background: #FFFFFF;
+  border: 1px solid #DDD8D0;
   border-radius: 10px;
   padding: 12px 14px;
   font-size: 14px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #1E1E1A;
+  box-shadow: 0 1px 2px rgba(30, 30, 26, 0.03);
 }
 
 .public-roster-toggle {
@@ -1470,7 +1520,7 @@ a { color: inherit; text-decoration: none; }
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
-  color: #1C4A45;
+  color: #1F5B52;
 }
 
 .public-roster-chevron {
@@ -1481,6 +1531,224 @@ a { color: inherit; text-decoration: none; }
 
 .public-roster-chevron.is-open {
   transform: rotate(180deg);
+}
+
+/* ── Public profile page layout tokens ── */
+.public-profile {
+  max-width: 800px;
+  margin: 0 auto;
+  color: #1E1E1A;
+}
+
+.public-profile-back {
+  margin-bottom: 20px;
+}
+
+.public-profile-link {
+  font-size: 13px;
+  color: #1F5B52;
+  text-decoration: none;
+}
+
+.public-profile-link:hover,
+.public-profile-link:focus-visible {
+  color: #184940;
+}
+
+.public-profile-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+
+.public-profile-header.is-physician {
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.public-profile-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.public-profile-avatar.is-practice {
+  width: 88px;
+  height: 88px;
+  border-radius: 14px;
+  font-size: 26px;
+  letter-spacing: -0.5px;
+}
+
+.public-profile-avatar.is-physician {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  font-size: 22px;
+}
+
+.public-profile-identity {
+  flex: 1;
+  min-width: 0;
+}
+
+.public-profile-title {
+  font-weight: 700;
+  color: #1E1E1A;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.public-profile-title.is-practice {
+  font-size: 24px;
+}
+
+.public-profile-title.is-physician {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.public-profile-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.public-profile-meta {
+  font-size: 13px;
+  color: #8A867F;
+}
+
+.public-profile-meta-strong {
+  color: #68645E;
+  font-weight: 500;
+}
+
+.public-profile-section {
+  margin-bottom: 28px;
+}
+
+.public-profile-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8A867F;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 10px;
+}
+
+.public-profile-section-label.is-accent {
+  font-weight: 600;
+  color: #1F5B52;
+  letter-spacing: .06em;
+}
+
+.public-profile-section-label.is-interactive {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 10px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.public-profile-chevron {
+  font-size: 14px;
+  color: #1F5B52;
+  line-height: 1;
+  transition: transform 0.2s;
+}
+
+.public-profile-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.public-profile-text {
+  font-size: 13px;
+  color: #68645E;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.public-profile-muted {
+  font-size: 13px;
+  color: #8A867F;
+}
+
+.public-profile-card-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.public-profile-card {
+  background: #FFFFFF;
+  border: 1px solid #DDD8D0;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 2px rgba(30, 30, 26, 0.03);
+}
+
+.public-profile-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1E1E1A;
+  margin-bottom: 4px;
+}
+
+.public-profile-card-meta {
+  font-size: 12px;
+  color: #8A867F;
+  margin-bottom: 6px;
+}
+
+.public-profile-card-detail {
+  font-size: 12px;
+  color: #68645E;
+}
+
+.public-profile-location-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.public-profile-caveats {
+  border-top: 1px solid #DDD8D0;
+  padding-top: 18px;
+}
+
+.public-profile-caveats-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8A867F;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 8px;
+}
+
+.public-profile-caveats-body {
+  font-size: 12px;
+  color: #68645E;
+  line-height: 1.55;
+  margin: 0 0 8px;
+}
+
+.public-profile-caveats-body:last-child {
+  margin-bottom: 0;
 }
 
 @media (max-width: 640px) {
@@ -1543,6 +1811,16 @@ a { color: inherit; text-decoration: none; }
 
   .locked-metric-grid.is-three {
     gap: 8px;
+  }
+
+  .locked-metric-score-scale {
+    font-size: 12px;
+  }
+
+  .locked-metric-score-note {
+    font-size: 10px;
+    line-height: 1.3;
+    margin-top: 5px;
   }
 
   .unlock-cta-emphasis .unlock-cta-title {

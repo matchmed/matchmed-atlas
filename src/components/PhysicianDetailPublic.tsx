@@ -26,78 +26,58 @@ export default async function PhysicianDetailPublic({ id }: { id: string }) {
   const affiliations = doctor.current_affiliations || []
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto' }}>
-      <div style={{ marginBottom: 20 }}>
-        <Link href="/" style={{ fontSize: 13, color: '#1C4A45' }}>
+    <div className="public-profile">
+      <div className="public-profile-back">
+        <Link href="/" className="public-profile-link">
           ← Back to search
         </Link>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 28 }}>
+      <div className="public-profile-header is-physician">
         <div
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: '50%',
-            background: bg,
-            color: fg,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 22,
-            fontWeight: 600,
-            flexShrink: 0,
-          }}
+          className="public-profile-avatar is-physician"
+          style={{ background: bg, color: fg }}
         >
           {initials}
         </div>
         <div>
-          <h1 className="font-serif" style={{ fontSize: 22, fontWeight: 600, color: '#1a1a1a', letterSpacing: '-0.02em', marginBottom: 8 }}>
+          <h1 className="font-serif public-profile-title is-physician">
             {name}
           </h1>
           {doctor.npi && (
-            <div style={{ fontSize: 13, color: '#888' }}>
-              NPI: <span style={{ color: '#444', fontWeight: 500 }}>{doctor.npi}</span>
+            <div className="public-profile-meta">
+              NPI: <span className="public-profile-meta-strong">{doctor.npi}</span>
             </div>
           )}
         </div>
       </div>
 
-      <section style={{ marginBottom: 28 }} aria-labelledby="current-affil-heading">
-        <h2 id="current-affil-heading" style={{ fontSize: 11, fontWeight: 600, color: '#1A6B3A', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
+      <section className="public-profile-section" aria-labelledby="current-affil-heading">
+        <h2 id="current-affil-heading" className="public-profile-section-label is-accent">
           Current observed affiliation{affiliations.length === 1 ? '' : 's'}
         </h2>
         {affiliations.length === 0 ? (
-          <p style={{ fontSize: 13, color: '#888' }}>No current CMS-observed affiliation listed.</p>
+          <p className="public-profile-muted">No current CMS-observed affiliation listed.</p>
         ) : (
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+          <ul className="public-profile-card-list">
             {affiliations.map((a, idx) => {
               const loc = formatPublicCityState(a.city, a.state)
               const key = a.practice_id || `${a.practice_name || 'affil'}-${idx}`
               const body = (
                 <>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', marginBottom: 4 }}>
+                  <div className="public-profile-card-title">
                     {a.practice_name || 'Practice'}
                   </div>
-                  {loc && <div style={{ fontSize: 12, color: '#888', marginBottom: 6 }}>{loc}</div>}
+                  {loc && <div className="public-profile-card-meta">{loc}</div>}
                   {a.latest_cms_observation_year != null && (
-                    <div style={{ fontSize: 12, color: '#666' }}>
+                    <div className="public-profile-card-detail">
                       Latest CMS observation: {a.latest_cms_observation_year}
                     </div>
                   )}
                 </>
               )
               return (
-                <li
-                  key={key}
-                  style={{
-                    background: '#ffffff',
-                    border: '1px solid #e8e8e8',
-                    borderRadius: 10,
-                    padding: '16px 18px',
-                    marginBottom: 10,
-                  }}
-                >
+                <li key={key} className="public-profile-card">
                   {a.practice_id ? (
                     <Link href={`/practices/${a.practice_id}`} style={{ display: 'block', color: 'inherit' }}>
                       {body}
@@ -164,13 +144,13 @@ export default async function PhysicianDetailPublic({ id }: { id: string }) {
         </div>
       </section>
 
-      <section aria-labelledby="phys-caveats-heading" style={{ borderTop: '1px solid #e8e5df', paddingTop: 18 }}>
-        <h2 id="phys-caveats-heading" style={{ fontSize: 11, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>
+      <section className="public-profile-caveats" aria-labelledby="phys-caveats-heading">
+        <h2 id="phys-caveats-heading" className="public-profile-caveats-title">
           Data notes
         </h2>
-        <p style={{ fontSize: 12, color: '#777', lineHeight: 1.55, margin: 0 }}>
+        <p className="public-profile-caveats-body">
           Affiliations reflect CMS-observed billing relationships and may lag recent changes.{' '}
-          <Link href="/scoring-methodology" style={{ color: '#1C4A45' }}>Scoring methodology</Link>
+          <Link href="/scoring-methodology" className="public-profile-link">Scoring methodology</Link>
         </p>
       </section>
     </div>

@@ -16,6 +16,11 @@ export function isPublicPhysicianDetailPath(pathname: string): boolean {
   return PHYSICIAN_DETAIL.test(pathname)
 }
 
+/** Anonymous practice/physician profile pages (excludes public home). */
+export function isPublicProfileDetailPath(pathname: string): boolean {
+  return isPublicPracticeDetailPath(pathname) || isPublicPhysicianDetailPath(pathname)
+}
+
 /** Routes anonymous visitors may open without logging in. */
 export function isAnonymousAllowlistedPath(pathname: string): boolean {
   if (
