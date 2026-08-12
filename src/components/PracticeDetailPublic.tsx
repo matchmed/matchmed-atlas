@@ -6,8 +6,9 @@ import {
   publicGetPracticeRoster,
 } from '@/lib/public-search'
 import PublicPracticeLocations from '@/components/PublicPracticeLocations'
+import PublicPracticeRoster from '@/components/PublicPracticeRoster'
 import UnlockAnalysisCta from '@/components/UnlockAnalysisCta'
-import { nameToColor, getInitials } from '@/lib/utils'
+import { nameToColor, getInitials, scoreColor, scoreBg } from '@/lib/utils'
 
 /** Hard-coded neutral bar widths — not derived from any practice data. */
 const TENURE_PLACEHOLDER_WIDTHS = ['42%', '68%', '54%', '36%', '58%'] as const
@@ -35,21 +36,8 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
   const [fg, bg] = nameToColor(name)
   const initials = getInitials(name)
   const nextPath = `/practices/${practice.id}`
-
-  const metricCards = [
-    { label: 'Retention Score', kind: 'locked' as const },
-    { label: 'Experience Level', kind: 'locked' as const },
-    {
-      label: 'Current Roster',
-      kind: 'public' as const,
-      value: practice.latest_roster_size?.toString() ?? '—',
-    },
-    {
-      label: 'CMS Observation',
-      kind: 'public' as const,
-      value: practice.latest_cms_observation_year?.toString() ?? '—',
-    },
-  ]
+  const hasScore = practice.retention_score != null
+  const scoreLabel = hasScore ? practice.retention_score!.toFixed(1) : '—'
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto' }}>
@@ -104,28 +92,42 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
 
       <PublicPracticeLocations locations={locations} />
 
+      <PublicPracticeRoster roster={roster} />
+
       <section className="locked-analysis-module" aria-labelledby="locked-analysis-heading">
         <h2 id="locked-analysis-heading" className="locked-analysis-module-label">
           Atlas analysis
         </h2>
 
         <div className="locked-analysis-module-body">
-          {/* Public metric values stay sharp; locked metrics use static skeletons only. */}
-          <div className="locked-metric-grid">
-            {metricCards.map(c => (
-              <div
-                key={c.label}
-                className={c.kind === 'locked' ? 'locked-metric-card is-locked' : 'locked-metric-card is-public'}
-              >
-                <div className="locked-metric-label">{c.label}</div>
-                {c.kind === 'locked' ? (
-                  <div className="locked-metric-skeleton" aria-hidden="true" />
-                ) : (
-                  <div className="locked-metric-value">{c.value}</div>
-                )}
+          <div className="locked-metric-grid is-three">
+            <div
+              className="locked-metric-card is-public"
+              style={{ background: scoreBg(practice.retention_score) }}
+            >
+              <div className="locked-metric-label">Retention Score</div>
+              <div className="locked-metric-value" style={{ color: scoreColor(practice.retention_score) }}>
+                {scoreLabel}
               </div>
-            ))}
+            </div>
+            <div className="locked-metric-card is-locked">
+              <div className="locked-metric-label">Experience Level</div>
+              <div className="locked-metric-skeleton" aria-hidden="true" />
+            </div>
+            <div className="locked-metric-card is-public">
+              <div className="locked-metric-label">CMS Observation</div>
+              <div className="locked-metric-value">
+                {practice.latest_cms_observation_year?.toString() ?? '—'}
+              </div>
+            </div>
           </div>
+
+          <UnlockAnalysisCta
+            className="unlock-cta-emphasis unlock-cta-bridge"
+            nextPath={nextPath}
+            title="Why did this practice score this way?"
+            body="See physician tenure, former physician history, and the full Atlas analysis."
+          />
 
           <div className="locked-gate-stack">
             <div className="locked-tenure-block">
@@ -165,49 +167,8 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
                 <div className="locked-analysis-fade" aria-hidden="true" />
               </div>
             </div>
-
-            <UnlockAnalysisCta
-              className="unlock-cta-overlay unlock-cta-emphasis"
-              nextPath={nextPath}
-              title="How long do physicians stay here? Who has left?"
-              body="See the full Atlas analysis, including tenure, retention, and physician history."
-            />
           </div>
         </div>
-      </section>
-
-      <section style={{ marginBottom: 28 }} aria-labelledby="roster-heading">
-        <p style={{ fontSize: 11, color: '#999', lineHeight: 1.5, margin: '0 0 12px' }}>
-          Physician rosters reflect the latest CMS data and may lag recent departures or additions.
-        </p>
-        <h2 id="roster-heading" style={{ fontSize: 11, fontWeight: 600, color: '#1A6B3A', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
-          Currently observed physicians ({roster.length})
-        </h2>
-        {roster.length === 0 ? (
-          <p style={{ fontSize: 13, color: '#888' }}>No currently observed physicians listed.</p>
-        ) : (
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-            {roster.map(doc => (
-              <li key={doc.id} style={{ marginBottom: 8 }}>
-                <Link
-                  href={`/physicians/${doc.id}`}
-                  style={{
-                    display: 'block',
-                    background: '#ffffff',
-                    border: '1px solid #e8e8e8',
-                    borderRadius: 10,
-                    padding: '12px 14px',
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: '#1a1a1a',
-                  }}
-                >
-                  {doc.physician_name || 'Physician'}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
       </section>
 
       <section aria-labelledby="caveats-heading" style={{ borderTop: '1px solid #e8e5df', paddingTop: 18 }}>

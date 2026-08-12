@@ -32,6 +32,7 @@ export type PublicPractice = {
   phone: string | null
   website: string | null
   latest_roster_size: number | null
+  retention_score: number | null
   latest_cms_observation_year: number | null
 }
 
@@ -171,6 +172,7 @@ export async function publicGetPractice(
       phone: str(obj.phone),
       website: str(obj.website),
       latest_roster_size: num(obj.latest_roster_size),
+      retention_score: num(obj.retention_score),
       latest_cms_observation_year: num(obj.latest_cms_observation_year),
     },
     error: null,
