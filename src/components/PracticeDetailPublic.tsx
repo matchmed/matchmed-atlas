@@ -167,10 +167,10 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
             </div>
 
             <UnlockAnalysisCta
-              className="unlock-cta-overlay"
+              className="unlock-cta-overlay unlock-cta-emphasis"
               nextPath={nextPath}
-              title="Unlock Full Atlas Analysis"
-              body="Create a free account to review workforce stability, physician tenure, score history, and former physicians."
+              title="How long do physicians stay here? Who has left?"
+              body="See the full Atlas analysis, including tenure, retention, and physician history."
             />
           </div>
         </div>
