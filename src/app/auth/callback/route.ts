@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { safeNextPath, withNextParam } from '@/lib/safe-next-path'
 
 function authFailureRedirect(origin: string, searchParams: URLSearchParams) {
   if (searchParams.get('next') === '/auth/set-password') {
@@ -14,6 +15,8 @@ export async function GET(request: Request) {
   const code = searchParams.get('code')
   const token_hash = searchParams.get('token_hash')
   const type = searchParams.get('type')
+  const nextRaw = searchParams.get('next')
+  const safeNext = safeNextPath(nextRaw)
 
   const cookieStore = await cookies()
   const supabase = createServerClient(
@@ -40,8 +43,18 @@ export async function GET(request: Request) {
       console.error('[auth/callback] verifyOtp failed:', error.message, { type })
     }
     if (user) {
-      const destination = type === 'recovery' ? '/auth/set-password' : '/'
-      return NextResponse.redirect(`${origin}${destination}`)
+      if (type === 'recovery') {
+        return NextResponse.redirect(`${origin}/auth/set-password`)
+      }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('onboarding_complete')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      if (!profile || !profile.onboarding_complete) {
+        return NextResponse.redirect(`${origin}${withNextParam('/onboarding', safeNext)}`)
+      }
+      return NextResponse.redirect(`${origin}${safeNext || '/'}`)
     }
     return authFailureRedirect(origin, searchParams)
   }
@@ -52,8 +65,7 @@ export async function GET(request: Request) {
       console.error('[auth/callback] exchangeCodeForSession failed:', error.message, { code: 'present' })
     }
     if (user) {
-      const next = searchParams.get('next')
-      if (next === '/auth/set-password') {
+      if (nextRaw === '/auth/set-password') {
         return NextResponse.redirect(`${origin}/auth/set-password`)
       }
       const { data: profile } = await supabase
@@ -62,10 +74,9 @@ export async function GET(request: Request) {
         .eq('user_id', user.id)
         .maybeSingle()
       if (!profile || !profile.onboarding_complete) {
-        return NextResponse.redirect(`${origin}/onboarding`)
-      } else {
-        return NextResponse.redirect(`${origin}/`)
+        return NextResponse.redirect(`${origin}${withNextParam('/onboarding', safeNext)}`)
       }
+      return NextResponse.redirect(`${origin}${safeNext || '/'}`)
     }
     return authFailureRedirect(origin, searchParams)
   }

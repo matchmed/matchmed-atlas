@@ -1,42 +1,41 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import Logo from '@/components/Logo'
 import posthog from 'posthog-js'
+import { authCallbackUrl, safeNextPath, withNextParam } from '@/lib/safe-next-path'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const nextPath = safeNextPath(searchParams.get('next'))
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    if (params.get('error') === 'auth_failed') {
+    if (searchParams.get('error') === 'auth_failed') {
       setError('Your sign-in link has expired or is invalid. Please try signing in again.')
     }
-  }, [])
+  }, [searchParams])
 
-  // Handle invite/recovery tokens in URL fragment
   useEffect(() => {
     const hash = window.location.hash
     if (hash && hash.includes('access_token')) {
       const supabase = createClient()
-      // Supabase auto-processes the fragment on client init
       setTimeout(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
-          console.log('session after delay:', session)
           if (session) {
-            router.push('/')
+            router.push(nextPath || '/')
             router.refresh()
           }
         })
       }, 500)
     }
-  }, [])
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  }, [nextPath, router])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -55,8 +54,18 @@ export default function LoginPage() {
       if (loggedInUser) {
         posthog.identify(loggedInUser.id)
         posthog.capture('user_logged_in', { method: 'email' })
+        const { data: profile } = await supabase2
+          .from('profiles')
+          .select('onboarding_complete')
+          .eq('user_id', loggedInUser.id)
+          .maybeSingle()
+        if (!profile || profile.onboarding_complete !== true) {
+          router.push(withNextParam('/onboarding', nextPath))
+          router.refresh()
+          return
+        }
       }
-      router.push('/')
+      router.push(nextPath || '/')
       router.refresh()
     }
   }
@@ -67,7 +76,7 @@ export default function LoginPage() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: authCallbackUrl(window.location.origin, nextPath),
         queryParams: {
           prompt: 'select_account',
         },
@@ -77,26 +86,19 @@ export default function LoginPage() {
 
   return (
     <div className="auth-split">
-
-      {/* Left panel */}
       <div className="auth-split-form">
         <div className="auth-split-inner">
-
           <div style={{ marginBottom: 40 }}>
             <Logo size="sm" />
           </div>
 
-          {/* Card */}
           <div className="auth-card bg-canvas" style={{ borderRadius: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06)', border: '1px solid #eee', padding: '32px 32px 28px' }}>
-
             <h1 className="font-serif" style={{ fontSize: 24, fontWeight: 700, color: '#111', marginBottom: 6, letterSpacing: '-0.4px' }}>Welcome back</h1>
             <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 24, lineHeight: 1.5 }}>
               Log in to see how well any ophthalmology practice retains its physicians.
             </p>
 
             <form onSubmit={handleLogin}>
-
-              {/* Google SSO */}
               <button
                 type="button"
                 onClick={handleGoogleLogin}
@@ -111,7 +113,6 @@ export default function LoginPage() {
                 Continue with Google
               </button>
 
-              {/* Divider */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
                 <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
                 <span style={{ fontSize: 12, color: '#9ca3af' }}>or</span>
@@ -161,8 +162,8 @@ export default function LoginPage() {
             </form>
 
             <p style={{ textAlign: 'center', fontSize: 13, color: '#6b7280', marginTop: 20, marginBottom: 0 }}>
-              Don't have an account?{' '}
-              <a href="/signup" style={{ color: '#1C4A45', fontWeight: 500, textDecoration: 'none' }}>Sign up free</a>
+              Don&apos;t have an account?{' '}
+              <a href={withNextParam('/signup', nextPath)} style={{ color: '#1C4A45', fontWeight: 500, textDecoration: 'none' }}>Sign up free</a>
             </p>
           </div>
 
@@ -172,7 +173,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right panel */}
       <div className="auth-split-hero">
         <div
           className="auth-split-hero-bg"
@@ -180,11 +180,19 @@ export default function LoginPage() {
         />
         <div className="auth-split-hero-content">
           <blockquote style={{ fontSize: 20, fontWeight: 500, lineHeight: 1.5, marginBottom: 12, letterSpacing: '-0.2px' }}>
-            "The only platform that shows you how practices actually retain physicians, backed by real CMS data."
+            &quot;The only platform that shows you how practices actually retain physicians, backed by real CMS data.&quot;
           </blockquote>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', margin: 0 }}>MatchMed Atlas · Ophthalmology Workforce Intelligence</p>
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="loading-bar"><div className="loading-bar-inner" /></div>}>
+      <LoginForm />
+    </Suspense>
   )
 }

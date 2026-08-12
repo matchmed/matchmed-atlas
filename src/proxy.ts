@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { isOnboardingExemptPath, needsOnboardingRedirect } from '@/lib/onboarding-gate'
+import { isAnonymousAllowlistedPath } from '@/lib/public-routes'
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -28,17 +29,7 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
-
-  const publicRoutes = [
-    '/login',
-    '/signup',
-    '/forgot-password',
-    '/terms-and-conditions',
-    '/privacy-policy',
-  ]
-  const isPublic = publicRoutes.some(route =>
-    pathname === route || pathname.startsWith('/auth/')
-  )
+  const isPublic = isAnonymousAllowlistedPath(pathname)
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone()
@@ -46,7 +37,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (user && !isPublic) {
+  if (user) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('deleted_at, onboarding_complete')

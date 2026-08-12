@@ -772,3 +772,599 @@ a { color: inherit; text-decoration: none; }
     align-items: start;
   }
 }
+/* ── Public discovery chrome + search homepage ── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.public-chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #e8e5df;
+  background: #F7F6F2;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.public-chrome-brand {
+  display: inline-flex;
+  min-width: 0;
+  text-decoration: none;
+}
+
+.public-chrome-cta-short {
+  display: none;
+}
+
+.public-chrome-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.public-chrome-link {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1C4A45;
+  padding: 8px 10px;
+  text-decoration: none;
+}
+
+.public-chrome-button {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: #1C4A45;
+  border-radius: 8px;
+  padding: 9px 14px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.public-main-content {
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 28px 20px 64px;
+  box-sizing: border-box;
+}
+
+.public-home-hero {
+  padding: 28px 0 8px;
+}
+
+.public-home-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #1C4A45;
+  margin-bottom: 12px;
+}
+
+.public-home-title {
+  font-size: clamp(28px, 5vw, 40px);
+  font-weight: 700;
+  color: #1a1a1a;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin-bottom: 12px;
+}
+
+.public-home-sub {
+  font-size: 15px;
+  color: #666;
+  line-height: 1.6;
+  max-width: 540px;
+  margin-bottom: 28px;
+}
+
+.public-search {
+  position: relative;
+  max-width: 640px;
+}
+
+.public-search-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 16px;
+  padding: 14px 16px;
+  border: 1.5px solid #d8d3cb;
+  border-radius: 12px;
+  background: #fff;
+  color: #141210;
+  outline: none;
+  box-shadow: 0 1px 2px rgba(20, 18, 16, 0.04);
+}
+
+.public-search-input:focus {
+  border-color: #1C4A45;
+  box-shadow: 0 0 0 3px rgba(28, 74, 69, 0.12);
+}
+
+.public-search-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  background: #fff;
+  border: 1px solid #e0ddd8;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(20, 18, 16, 0.1);
+  max-height: min(420px, 60vh);
+  overflow: auto;
+  z-index: 30;
+}
+
+.public-search-status {
+  padding: 14px 16px;
+  font-size: 13px;
+  color: #666;
+}
+
+.public-search-error {
+  color: #b42318;
+}
+
+.public-search-group {
+  padding: 8px 0 10px;
+  border-top: 1px solid #f0eee9;
+}
+
+.public-search-group:first-child {
+  border-top: none;
+}
+
+.public-search-group-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #999;
+  padding: 6px 16px 8px;
+}
+
+.public-search-option {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.public-search-option.is-active,
+.public-search-option:hover {
+  background: #E8F0EF;
+}
+
+.public-search-option-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.public-search-option-meta {
+  font-size: 12px;
+  color: #888;
+}
+
+.public-home-counts {
+  margin-top: 18px;
+  font-size: 13px;
+  color: #8A8680;
+}
+
+.public-home-foot {
+  margin-top: 48px;
+  padding-top: 20px;
+  border-top: 1px solid #e8e5df;
+  font-size: 12px;
+  color: #777;
+  line-height: 1.55;
+}
+
+.public-home-foot a {
+  color: #1C4A45;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.unlock-cta {
+  background: #E8F0EF;
+  border: 1px solid #c5d8d5;
+  border-radius: 12px;
+  padding: 20px 18px;
+}
+
+.unlock-cta-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+
+.unlock-cta-body {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.55;
+  margin-bottom: 16px;
+}
+
+.unlock-cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.unlock-cta-primary,
+.unlock-cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 10px 16px;
+  text-decoration: none;
+}
+
+.unlock-cta-primary {
+  background: #1C4A45;
+  color: #fff;
+}
+
+.unlock-cta-secondary {
+  background: #fff;
+  color: #1C4A45;
+  border: 1.5px solid #1C4A45;
+}
+
+/* ── Locked analysis gate (public profiles) ── */
+.locked-analysis-module {
+  margin-bottom: 32px;
+}
+
+.locked-analysis-module-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 12px;
+}
+
+.locked-analysis-module-body {
+  position: relative;
+  border: 1px solid #e0ddd8;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+  padding: 18px 16px 22px;
+}
+
+.locked-gate-stack {
+  position: relative;
+  margin-top: 4px;
+}
+
+.locked-analysis-preview {
+  /* Soft enough to read row structure; padding gives CTA overlap room without burying rows. */
+  filter: blur(1.05px);
+  opacity: 0.9;
+  padding-bottom: 72px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.locked-analysis-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 46%;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(247, 246, 242, 0.28) 34%,
+    rgba(247, 246, 242, 0.78) 68%,
+    #F7F6F2 100%
+  );
+  pointer-events: none;
+}
+
+.unlock-cta.unlock-cta-overlay {
+  position: relative;
+  z-index: 2;
+  margin: -72px 4px 0;
+  box-shadow: 0 8px 24px rgba(20, 18, 16, 0.06);
+}
+
+.locked-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.locked-metric-card {
+  border-radius: 10px;
+  padding: 14px 12px;
+  border: 0.5px solid rgba(0, 0, 0, 0.07);
+}
+
+.locked-metric-card.is-locked {
+  background: #ebe7e0;
+}
+
+.locked-metric-card.is-public {
+  background: #F7F6F2;
+}
+
+.locked-metric-label {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 8px;
+  font-weight: 500;
+  letter-spacing: .02em;
+}
+
+.locked-metric-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1.1;
+}
+
+.locked-metric-skeleton {
+  height: 22px;
+  width: 52%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #d4cfc6 0%, #c4beb3 50%, #d4cfc6 100%);
+  background-size: 180% 100%;
+}
+
+.locked-section-subhead {
+  font-size: 11px;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 12px;
+}
+
+.locked-tenure-block {
+  margin-bottom: 20px;
+}
+
+.locked-tenure-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 7;
+}
+
+.locked-tenure-label {
+  font-size: 11px;
+  color: #888;
+  width: 54px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.locked-tenure-track {
+  flex: 1;
+  background: #ebebeb;
+  border-radius: 4px;
+  height: 20px;
+  overflow: hidden;
+}
+
+.locked-tenure-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: #b8b1a5;
+}
+
+.locked-tenure-count {
+  width: 22px;
+  height: 10px;
+  border-radius: 4px;
+  background: #d4cfc6;
+  flex-shrink: 0;
+}
+
+.locked-former-block {
+  /* Extra air so multiple placeholder rows remain clearly above the CTA. */
+  padding-bottom: 8px;
+}
+
+.locked-former-list {
+  display: grid;
+  gap: 8px;
+}
+
+.locked-former-row,
+.locked-affil-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #f5f3ef;
+  border: 1px solid #e8e5df;
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.locked-former-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #d4cfc6;
+  flex-shrink: 0;
+}
+
+.locked-former-lines,
+.locked-affil-main {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.locked-affil-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.locked-skel-line {
+  height: 10px;
+  border-radius: 5px;
+  background: #d4cfc6;
+}
+
+.locked-skel-line-lg { width: 62%; height: 12px; }
+.locked-skel-line-md { width: 48%; }
+.locked-skel-line-sm { width: 38%; }
+.locked-skel-line-xs { width: 44px; }
+
+.locked-skel-chip {
+  width: 64px;
+  height: 18px;
+  border-radius: 99px;
+  background: #d4cfc6;
+}
+
+.locked-career-timeline {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  background: #f5f3ef;
+  border: 1px solid #e8e5df;
+  border-radius: 10px;
+}
+
+.locked-career-rail {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.locked-career-rail::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: 50%;
+  height: 2px;
+  background: #cfc8bc;
+  transform: translateY(-50%);
+}
+
+.locked-career-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #b8b1a5;
+  border: 2px solid #f5f3ef;
+  position: relative;
+  z-index: 1;
+}
+
+.locked-career-segments {
+  flex: 1;
+  display: grid;
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .public-chrome {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .public-chrome .logo-byline {
+    display: none;
+  }
+
+  .public-chrome-cta-full {
+    display: none;
+  }
+
+  .public-chrome-cta-short {
+    display: inline;
+  }
+
+  .public-chrome-actions {
+    gap: 6px;
+  }
+
+  .public-chrome-link,
+  .public-chrome-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .public-chrome-link {
+    padding: 8px 8px;
+  }
+
+  .public-main-content {
+    padding: 20px 14px 48px;
+  }
+
+  .public-chrome-button {
+    padding: 8px 12px;
+  }
+
+  .locked-analysis-preview {
+    padding-bottom: 36px;
+  }
+
+  .unlock-cta.unlock-cta-overlay {
+    /* Lighter overlap than desktop so buttons keep comfortable spacing, still integrated. */
+    margin: -28px 0 0;
+    padding: 18px 14px;
+  }
+
+  .unlock-cta-actions {
+    gap: 10px;
+  }
+
+  .unlock-cta-primary,
+  .unlock-cta-secondary {
+    padding: 11px 14px;
+  }
+
+  .locked-analysis-module-body {
+    padding: 14px 12px 18px;
+  }
+}

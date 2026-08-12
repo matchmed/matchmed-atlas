@@ -52,16 +52,19 @@ interface LogoProps {
           }}>
             Atlas
           </span>
-          <span style={{
-            fontFamily: 'var(--font-sans), system-ui, sans-serif',
-            fontWeight: 500,
-            fontSize: byFontSize,
-            letterSpacing: '0.28em',
-            textTransform: 'uppercase',
-            color: byColor,
-            lineHeight: 1,
-            paddingBottom: 1,
-          }}>
+          <span
+            className="logo-byline"
+            style={{
+              fontFamily: 'var(--font-sans), system-ui, sans-serif',
+              fontWeight: 500,
+              fontSize: byFontSize,
+              letterSpacing: '0.28em',
+              textTransform: 'uppercase',
+              color: byColor,
+              lineHeight: 1,
+              paddingBottom: 1,
+            }}
+          >
             by MatchMed
           </span>
         </div>
