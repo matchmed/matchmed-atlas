@@ -26,26 +26,16 @@ export default function PublicPracticeLocations({
   const listId = useId()
 
   return (
-    <section style={{ marginBottom: 28 }} aria-labelledby="public-locations-heading">
+    <section className="public-profile-section" aria-labelledby="public-locations-heading">
       {locations.length <= 1 ? (
         <>
-          <h2
-            id="public-locations-heading"
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              color: '#999',
-              textTransform: 'uppercase',
-              letterSpacing: '.08em',
-              marginBottom: 10,
-            }}
-          >
+          <h2 id="public-locations-heading" className="public-profile-section-label">
             Locations
           </h2>
           {locations.length === 0 ? (
-            <p style={{ fontSize: 13, color: '#888' }}>No CMS billing locations listed.</p>
+            <p className="public-profile-muted">No CMS billing locations listed.</p>
           ) : (
-            <p style={{ fontSize: 13, color: '#555', lineHeight: 1.45, margin: 0 }}>
+            <p className="public-profile-text">
               {formatLocationLine(locations[0]) || 'Location'}
             </p>
           )}
@@ -58,60 +48,23 @@ export default function PublicPracticeLocations({
             aria-expanded={expanded}
             aria-controls={listId}
             onClick={() => setExpanded(open => !open)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              width: '100%',
-              gap: 12,
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              marginBottom: 10,
-              cursor: 'pointer',
-              textAlign: 'left',
-            }}
+            className="public-profile-section-label is-interactive"
           >
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                color: '#999',
-                textTransform: 'uppercase',
-                letterSpacing: '.08em',
-              }}
-            >
-              Locations ({locations.length})
-            </span>
+            <span>Locations ({locations.length})</span>
             <span
               aria-hidden="true"
-              style={{
-                fontSize: 14,
-                color: '#1C4A45',
-                transform: expanded ? 'rotate(180deg)' : 'none',
-                transition: 'transform 0.2s',
-                lineHeight: 1,
-              }}
+              className={`public-profile-chevron${expanded ? ' is-open' : ''}`}
             >
               ▼
             </span>
           </button>
 
-          <ul
-            id={listId}
-            style={{
-              listStyle: 'none',
-              margin: 0,
-              padding: 0,
-              display: 'grid',
-              gap: 8,
-            }}
-          >
+          <ul id={listId} className="public-profile-location-list">
             {locations.map((loc, i) => (
               <li
                 key={loc.id}
                 hidden={!expanded && i > 0}
-                style={{ fontSize: 13, color: '#555', lineHeight: 1.45 }}
+                className="public-profile-text"
               >
                 {formatLocationLine(loc) || 'Location'}
               </li>

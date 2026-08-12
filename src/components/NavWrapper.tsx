@@ -8,11 +8,11 @@ import Logo from '@/components/Logo'
 import Nav from '@/components/Nav'
 import { createClient } from '@/lib/supabase'
 import { isAuthPage } from '@/lib/auth-paths'
-import { isPublicDiscoveryPath } from '@/lib/public-routes'
+import { isPublicDiscoveryPath, isPublicProfileDetailPath } from '@/lib/public-routes'
 
-function PublicChrome() {
+function PublicChrome({ profileShell = false }: { profileShell?: boolean }) {
   return (
-    <header className="public-chrome">
+    <header className={`public-chrome${profileShell ? ' public-profile-shell' : ''}`.trim()}>
       <Link href="/" className="public-chrome-brand" aria-label="MatchMed Atlas home">
         <Logo size="sm" />
       </Link>
@@ -69,6 +69,7 @@ export default function NavWrapper({ children }: { children: React.ReactNode }) 
 
   const showPublicChrome =
     authChecked && !hasUser && !onAuthPage && isPublicDiscoveryPath(pathname)
+  const publicProfileShell = showPublicChrome && isPublicProfileDetailPath(pathname)
   const showAppNav = !onAuthPage && (!authChecked || hasUser || !isPublicDiscoveryPath(pathname))
 
   // While checking auth on public discovery, avoid flashing the full product nav.
@@ -78,12 +79,18 @@ export default function NavWrapper({ children }: { children: React.ReactNode }) 
   return (
     <>
       <PublicRoutePrivacy />
-      {showPublicChrome && <PublicChrome />}
+      {showPublicChrome && <PublicChrome profileShell={publicProfileShell} />}
       {!hideNavWhileChecking && showAppNav && !showPublicChrome && <Nav />}
       {onAuthPage ? (
         children
       ) : (
-        <main className={showPublicChrome ? 'public-main-content' : 'nav-main-content'}>
+        <main
+          className={
+            showPublicChrome
+              ? `public-main-content${publicProfileShell ? ' public-profile-shell' : ''}`
+              : 'nav-main-content'
+          }
+        >
           {children}
         </main>
       )}

@@ -40,39 +40,27 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
   const scoreLabel = hasScore ? practice.retention_score!.toFixed(1) : '—'
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto' }}>
-      <div style={{ marginBottom: 20 }}>
-        <Link href="/" style={{ fontSize: 13, color: '#1C4A45' }}>
+    <div className="public-profile">
+      <div className="public-profile-back">
+        <Link href="/" className="public-profile-link">
           ← Back to search
         </Link>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20, flexWrap: 'wrap', marginBottom: 28 }}>
+      <div className="public-profile-header">
         <div
-          style={{
-            width: 88,
-            height: 88,
-            borderRadius: 14,
-            background: bg,
-            color: fg,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 26,
-            fontWeight: 600,
-            flexShrink: 0,
-            letterSpacing: '-0.5px',
-          }}
+          className="public-profile-avatar is-practice"
+          style={{ background: bg, color: fg }}
         >
           {initials}
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h1 className="font-serif" style={{ fontSize: 24, fontWeight: 700, color: '#1a1a1a', letterSpacing: '-0.02em', marginBottom: 8, lineHeight: 1.2 }}>
+        <div className="public-profile-identity">
+          <h1 className="font-serif public-profile-title is-practice">
             {name}
           </h1>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="public-profile-contact">
             {practice.phone && (
-              <a href={`tel:${practice.phone}`} style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none' }}>
+              <a href={`tel:${practice.phone}`} className="public-profile-link">
                 {practice.phone}
               </a>
             )}
@@ -81,7 +69,8 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
                 href={practice.website.startsWith('http') ? practice.website : `https://${practice.website}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none', wordBreak: 'break-all' }}
+                className="public-profile-link"
+                style={{ wordBreak: 'break-all' }}
               >
                 {practice.website}
               </a>
@@ -102,13 +91,22 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
         <div className="locked-analysis-module-body">
           <div className="locked-metric-grid is-three">
             <div
-              className="locked-metric-card is-public"
+              className="locked-metric-card is-public locked-metric-card-score"
               style={{ background: scoreBg(practice.retention_score) }}
             >
               <div className="locked-metric-label">Retention Score</div>
-              <div className="locked-metric-value" style={{ color: scoreColor(practice.retention_score) }}>
-                {scoreLabel}
+              <div className="locked-metric-value">
+                <span
+                  className="locked-metric-score-number"
+                  style={{ color: scoreColor(practice.retention_score) }}
+                >
+                  {scoreLabel}
+                </span>
+                {hasScore && <span className="locked-metric-score-scale"> / 100</span>}
               </div>
+              <p className="locked-metric-score-note">
+                Higher scores reflect greater observed physician retention.
+              </p>
             </div>
             <div className="locked-metric-card is-locked">
               <div className="locked-metric-label">Experience Level</div>
@@ -171,16 +169,16 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
         </div>
       </section>
 
-      <section aria-labelledby="caveats-heading" style={{ borderTop: '1px solid #e8e5df', paddingTop: 18 }}>
-        <h2 id="caveats-heading" style={{ fontSize: 11, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>
+      <section className="public-profile-caveats" aria-labelledby="caveats-heading">
+        <h2 id="caveats-heading" className="public-profile-caveats-title">
           Data notes
         </h2>
-        <p style={{ fontSize: 12, color: '#777', lineHeight: 1.55, marginBottom: 8 }}>
+        <p className="public-profile-caveats-body">
           Atlas draws from the CMS Doctors and Clinicians database (billing-focused observations, not a complete employment registry).
           Rosters and locations can lag real-world changes.
         </p>
-        <p style={{ fontSize: 12, color: '#777', lineHeight: 1.55, margin: 0 }}>
-          <Link href="/scoring-methodology" style={{ color: '#1C4A45' }}>Scoring methodology</Link>
+        <p className="public-profile-caveats-body">
+          <Link href="/scoring-methodology" className="public-profile-link">Scoring methodology</Link>
           {' · '}
           Signed-in users can report corrections from the full practice page.
         </p>
