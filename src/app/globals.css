@@ -796,11 +796,19 @@ a { color: inherit; text-decoration: none; }
   position: sticky;
   top: 0;
   z-index: 40;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .public-chrome-brand {
   display: inline-flex;
+  min-width: 0;
   text-decoration: none;
+}
+
+.public-chrome-cta-short {
+  display: none;
 }
 
 .public-chrome-actions {
@@ -1032,9 +1040,301 @@ a { color: inherit; text-decoration: none; }
   border: 1.5px solid #1C4A45;
 }
 
+/* ── Locked analysis gate (public profiles) ── */
+.locked-analysis-module {
+  margin-bottom: 32px;
+}
+
+.locked-analysis-module-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 12px;
+}
+
+.locked-analysis-module-body {
+  position: relative;
+  border: 1px solid #e0ddd8;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+  padding: 18px 16px 22px;
+}
+
+.locked-gate-stack {
+  position: relative;
+  margin-top: 4px;
+}
+
+.locked-analysis-preview {
+  /* Soft enough to read row structure; padding gives CTA overlap room without burying rows. */
+  filter: blur(1.05px);
+  opacity: 0.9;
+  padding-bottom: 72px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.locked-analysis-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 46%;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(247, 246, 242, 0.28) 34%,
+    rgba(247, 246, 242, 0.78) 68%,
+    #F7F6F2 100%
+  );
+  pointer-events: none;
+}
+
+.unlock-cta.unlock-cta-overlay {
+  position: relative;
+  z-index: 2;
+  margin: -72px 4px 0;
+  box-shadow: 0 8px 24px rgba(20, 18, 16, 0.06);
+}
+
+.locked-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.locked-metric-card {
+  border-radius: 10px;
+  padding: 14px 12px;
+  border: 0.5px solid rgba(0, 0, 0, 0.07);
+}
+
+.locked-metric-card.is-locked {
+  background: #ebe7e0;
+}
+
+.locked-metric-card.is-public {
+  background: #F7F6F2;
+}
+
+.locked-metric-label {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 8px;
+  font-weight: 500;
+  letter-spacing: .02em;
+}
+
+.locked-metric-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1.1;
+}
+
+.locked-metric-skeleton {
+  height: 22px;
+  width: 52%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #d4cfc6 0%, #c4beb3 50%, #d4cfc6 100%);
+  background-size: 180% 100%;
+}
+
+.locked-section-subhead {
+  font-size: 11px;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 12px;
+}
+
+.locked-tenure-block {
+  margin-bottom: 20px;
+}
+
+.locked-tenure-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 7;
+}
+
+.locked-tenure-label {
+  font-size: 11px;
+  color: #888;
+  width: 54px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.locked-tenure-track {
+  flex: 1;
+  background: #ebebeb;
+  border-radius: 4px;
+  height: 20px;
+  overflow: hidden;
+}
+
+.locked-tenure-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: #b8b1a5;
+}
+
+.locked-tenure-count {
+  width: 22px;
+  height: 10px;
+  border-radius: 4px;
+  background: #d4cfc6;
+  flex-shrink: 0;
+}
+
+.locked-former-block {
+  /* Extra air so multiple placeholder rows remain clearly above the CTA. */
+  padding-bottom: 8px;
+}
+
+.locked-former-list {
+  display: grid;
+  gap: 8px;
+}
+
+.locked-former-row,
+.locked-affil-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #f5f3ef;
+  border: 1px solid #e8e5df;
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.locked-former-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #d4cfc6;
+  flex-shrink: 0;
+}
+
+.locked-former-lines,
+.locked-affil-main {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.locked-affil-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.locked-skel-line {
+  height: 10px;
+  border-radius: 5px;
+  background: #d4cfc6;
+}
+
+.locked-skel-line-lg { width: 62%; height: 12px; }
+.locked-skel-line-md { width: 48%; }
+.locked-skel-line-sm { width: 38%; }
+.locked-skel-line-xs { width: 44px; }
+
+.locked-skel-chip {
+  width: 64px;
+  height: 18px;
+  border-radius: 99px;
+  background: #d4cfc6;
+}
+
+.locked-career-timeline {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  background: #f5f3ef;
+  border: 1px solid #e8e5df;
+  border-radius: 10px;
+}
+
+.locked-career-rail {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.locked-career-rail::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: 50%;
+  height: 2px;
+  background: #cfc8bc;
+  transform: translateY(-50%);
+}
+
+.locked-career-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #b8b1a5;
+  border: 2px solid #f5f3ef;
+  position: relative;
+  z-index: 1;
+}
+
+.locked-career-segments {
+  flex: 1;
+  display: grid;
+  gap: 8px;
+}
+
 @media (max-width: 640px) {
   .public-chrome {
-    padding: 12px 14px;
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .public-chrome .logo-byline {
+    display: none;
+  }
+
+  .public-chrome-cta-full {
+    display: none;
+  }
+
+  .public-chrome-cta-short {
+    display: inline;
+  }
+
+  .public-chrome-actions {
+    gap: 6px;
+  }
+
+  .public-chrome-link,
+  .public-chrome-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .public-chrome-link {
+    padding: 8px 8px;
   }
 
   .public-main-content {
@@ -1043,5 +1343,28 @@ a { color: inherit; text-decoration: none; }
 
   .public-chrome-button {
     padding: 8px 12px;
+  }
+
+  .locked-analysis-preview {
+    padding-bottom: 36px;
+  }
+
+  .unlock-cta.unlock-cta-overlay {
+    /* Lighter overlap than desktop so buttons keep comfortable spacing, still integrated. */
+    margin: -28px 0 0;
+    padding: 18px 14px;
+  }
+
+  .unlock-cta-actions {
+    gap: 10px;
+  }
+
+  .unlock-cta-primary,
+  .unlock-cta-secondary {
+    padding: 11px 14px;
+  }
+
+  .locked-analysis-module-body {
+    padding: 14px 12px 18px;
   }
 }

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase-server'
 import {
   formatPublicCityState,
+  formatPublicZip,
   publicGetPractice,
   publicGetPracticeLocations,
   publicGetPracticeRoster,
@@ -19,10 +20,13 @@ function formatLocationLine(loc: {
   const parts = [
     (loc.address || '').trim(),
     formatPublicCityState(loc.city, loc.state),
-    (loc.zip || '').trim(),
+    formatPublicZip(loc.zip),
   ].filter(Boolean)
   return parts.join(' · ')
 }
+
+/** Hard-coded neutral bar widths — not derived from any practice data. */
+const TENURE_PLACEHOLDER_WIDTHS = ['42%', '68%', '54%', '36%', '58%'] as const
 
 export default async function PracticeDetailPublic({ id }: { id: string }) {
   const supabase = await createClient()
@@ -48,11 +52,19 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
   const initials = getInitials(name)
   const nextPath = `/practices/${practice.id}`
 
-  const placeholderMetrics = [
-    { label: 'Retention Score', value: '—' },
-    { label: 'Experience Level', value: '—' },
-    { label: 'Current Roster', value: practice.latest_roster_size?.toString() ?? '—' },
-    { label: 'CMS Observation', value: practice.latest_cms_observation_year?.toString() ?? '—' },
+  const metricCards = [
+    { label: 'Retention Score', kind: 'locked' as const },
+    { label: 'Experience Level', kind: 'locked' as const },
+    {
+      label: 'Current Roster',
+      kind: 'public' as const,
+      value: practice.latest_roster_size?.toString() ?? '—',
+    },
+    {
+      label: 'CMS Observation',
+      kind: 'public' as const,
+      value: practice.latest_cms_observation_year?.toString() ?? '—',
+    },
   ]
 
   return (
@@ -126,53 +138,75 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
         </div>
       </section>
 
-      <section style={{ marginBottom: 28 }} aria-labelledby="locked-analysis-heading">
-        <h2 id="locked-analysis-heading" style={{ fontSize: 11, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>
+      <section className="locked-analysis-module" aria-labelledby="locked-analysis-heading">
+        <h2 id="locked-analysis-heading" className="locked-analysis-module-label">
           Atlas analysis
         </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10, marginBottom: 16 }}>
-          {placeholderMetrics.map(c => (
-            <div
-              key={c.label}
-              style={{
-                background: '#f3f1ec',
-                borderRadius: 10,
-                padding: '14px 12px',
-                border: '0.5px solid rgba(0,0,0,0.07)',
-              }}
-            >
-              <div style={{ fontSize: 11, color: '#888', marginBottom: 5, fontWeight: 500 }}>{c.label}</div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: '#b0aaa0', lineHeight: 1.1 }}>{c.value}</div>
-            </div>
-          ))}
-        </div>
 
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>
-            Physician tenure distribution
-          </div>
-          {['0–1', '2–3', '4–5', '6–7', '8+'].map(label => (
-            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7 }}>
-              <span style={{ fontSize: 11, color: '#888', width: 54, textAlign: 'right', flexShrink: 0 }}>{label}</span>
-              <div style={{ flex: 1, background: '#ebebeb', borderRadius: 4, height: 20, overflow: 'hidden' }}>
-                <div style={{ width: '18%', background: '#d9d4cb', height: '100%', borderRadius: 4 }} />
+        <div className="locked-analysis-module-body">
+          {/* Public metric values stay sharp; locked metrics use static skeletons only. */}
+          <div className="locked-metric-grid">
+            {metricCards.map(c => (
+              <div
+                key={c.label}
+                className={c.kind === 'locked' ? 'locked-metric-card is-locked' : 'locked-metric-card is-public'}
+              >
+                <div className="locked-metric-label">{c.label}</div>
+                {c.kind === 'locked' ? (
+                  <div className="locked-metric-skeleton" aria-hidden="true" />
+                ) : (
+                  <div className="locked-metric-value">{c.value}</div>
+                )}
               </div>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#bbb', width: 22 }}>—</span>
+            ))}
+          </div>
+
+          <div className="locked-gate-stack">
+            <div className="locked-analysis-preview" aria-hidden="true">
+              <div className="locked-tenure-block">
+                <div className="locked-section-subhead">Physician tenure distribution</div>
+                <div className="locked-tenure-bars">
+                  {(['0–1', '2–3', '4–5', '6–7', '8+'] as const).map((label, i) => (
+                    <div key={label} className="locked-tenure-row">
+                      <span className="locked-tenure-label">{label}</span>
+                      <div className="locked-tenure-track">
+                        <div
+                          className="locked-tenure-fill"
+                          style={{ width: TENURE_PLACEHOLDER_WIDTHS[i] }}
+                        />
+                      </div>
+                      <span className="locked-tenure-count" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="locked-former-block">
+                <div className="locked-section-subhead">Former physician history</div>
+                <div className="locked-former-list">
+                  {[0, 1, 2].map(i => (
+                    <div key={i} className="locked-former-row">
+                      <div className="locked-former-avatar" />
+                      <div className="locked-former-lines">
+                        <div className="locked-skel-line locked-skel-line-lg" />
+                        <div className="locked-skel-line locked-skel-line-sm" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          ))}
-        </div>
 
-        <div style={{ borderLeft: '3px solid #ccc', padding: '12px 16px', background: '#f9f9f9', borderRadius: '0 8px 8px 0', marginBottom: 16 }}>
-          <p style={{ fontSize: 13, color: '#888', lineHeight: 1.6, margin: 0 }}>
-            Workforce stability insights, score history, and former physicians are available after you create a free Atlas account.
-          </p>
-        </div>
+            <div className="locked-analysis-fade" aria-hidden="true" />
 
-        <UnlockAnalysisCta
-          nextPath={nextPath}
-          title="Unlock Full Atlas Analysis"
-          body="Create a free account to review workforce stability, physician tenure, score history, and former physicians."
-        />
+            <UnlockAnalysisCta
+              className="unlock-cta-overlay"
+              nextPath={nextPath}
+              title="Unlock Full Atlas Analysis"
+              body="Create a free account to review workforce stability, physician tenure, score history, and former physicians."
+            />
+          </div>
+        </div>
       </section>
 
       <section style={{ marginBottom: 28 }} aria-labelledby="roster-heading">

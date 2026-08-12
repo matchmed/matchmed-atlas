@@ -1,0 +1,167 @@
+{
+  "search": {
+    "homepagePublic": true,
+    "groups": [
+      "Practices",
+      "Ophthalmologists"
+    ],
+    "practiceHits": 5,
+    "physicianHits": 5,
+    "practiceNav": "http://127.0.0.1:3010/practices/81900faa-272a-4289-ba5c-11a293e102c7",
+    "physicianNav": "http://127.0.0.1:3010/physicians/21add62b-3ea2-4a16-b75f-5d4478d90019"
+  },
+  "profiles": {
+    "practiceLockedCta": true,
+    "practiceRealLockedScore": false,
+    "practicePublicRoster": true,
+    "physicianNpi": true,
+    "physicianNoGrad": true
+  },
+  "next": {
+    "practiceSignup": "/signup?next=%2Fpractices%2F81900faa-272a-4289-ba5c-11a293e102c7",
+    "practiceLogin": "/login?next=%2Fpractices%2F81900faa-272a-4289-ba5c-11a293e102c7",
+    "practiceSafe": true,
+    "headerSignup": "/signup",
+    "headerLogin": "/login",
+    "signupPageUrl": "http://127.0.0.1:3010/signup?next=%2Fpractices%2F81900faa-272a-4289-ba5c-11a293e102c7",
+    "signupPreserved": true,
+    "physicianSignup": "/signup?next=%2Fphysicians%2F21add62b-3ea2-4a16-b75f-5d4478d90019",
+    "physicianSafe": true
+  },
+  "mobile": [
+    {
+      "width": 320,
+      "kind": "practice",
+      "overflow": false,
+      "headerOverflow": false,
+      "ctaClipped": false,
+      "overlap": false,
+      "ctaText": "Create free accountSign up",
+      "overlayVisible": true,
+      "sticky": "sticky"
+    },
+    {
+      "width": 320,
+      "kind": "physician",
+      "overflow": false,
+      "headerOverflow": false,
+      "ctaClipped": false,
+      "overlap": false,
+      "ctaText": "Create free accountSign up",
+      "overlayVisible": true,
+      "sticky": "sticky"
+    },
+    {
+      "width": 375,
+      "kind": "practice",
+      "overflow": false,
+      "headerOverflow": false,
+      "ctaClipped": false,
+      "overlap": false,
+      "ctaText": "Create free accountSign up",
+      "overlayVisible": true,
+      "sticky": "sticky"
+    },
+    {
+      "width": 375,
+      "kind": "physician",
+      "overflow": false,
+      "headerOverflow": false,
+      "ctaClipped": false,
+      "overlap": false,
+      "ctaText": "Create free accountSign up",
+      "overlayVisible": true,
+      "sticky": "sticky"
+    },
+    {
+      "width": 390,
+      "kind": "practice",
+      "overflow": false,
+      "headerOverflow": false,
+      "ctaClipped": false,
+      "overlap": false,
+      "ctaText": "Create free accountSign up",
+      "overlayVisible": true,
+      "sticky": "sticky"
+    },
+    {
+      "width": 390,
+      "kind": "physician",
+      "overflow": false,
+      "headerOverflow": false,
+      "ctaClipped": false,
+      "overlap": false,
+      "ctaText": "Create free accountSign up",
+      "overlayVisible": true,
+      "sticky": "sticky"
+    },
+    {
+      "width": 430,
+      "kind": "practice",
+      "overflow": false,
+      "headerOverflow": false,
+      "ctaClipped": false,
+      "overlap": false,
+      "ctaText": "Create free accountSign up",
+      "overlayVisible": true,
+      "sticky": "sticky"
+    },
+    {
+      "width": 430,
+      "kind": "physician",
+      "overflow": false,
+      "headerOverflow": false,
+      "ctaClipped": false,
+      "overlap": false,
+      "ctaText": "Create free accountSign up",
+      "overlayVisible": true,
+      "sticky": "sticky"
+    }
+  ],
+  "network": {
+    "practice": [],
+    "physician": [],
+    "home": [
+      {
+        "method": "POST",
+        "url": "https://yisjyqnxaimdaeiylbuy.supabase.co/rest/v1/rpc/public_platform_counts"
+      },
+      {
+        "status": 200,
+        "url": "https://yisjyqnxaimdaeiylbuy.supabase.co/rest/v1/rpc/public_platform_counts",
+        "leaked": [],
+        "bodyPreview": "{\"as_of\": \"2026-08-12T00:10:40.141362\", \"practice_count\": 6700, \"physician_count\": 22300}"
+      },
+      {
+        "method": "POST",
+        "url": "https://yisjyqnxaimdaeiylbuy.supabase.co/rest/v1/rpc/public_search"
+      },
+      {
+        "status": 200,
+        "url": "https://yisjyqnxaimdaeiylbuy.supabase.co/rest/v1/rpc/public_search",
+        "leaked": [],
+        "bodyPreview": "{\"practices\": [{\"id\": \"81900faa-272a-4289-ba5c-11a293e102c7\", \"city\": \"NORTH LAS VEGAS\", \"state\": \"NV\", \"practice_name\": \"EYE & COSMETIC SURGERY\", \"location_count\": 1}, {\"id\": \"31c"
+      },
+      {
+        "method": "POST",
+        "url": "https://yisjyqnxaimdaeiylbuy.supabase.co/rest/v1/rpc/public_platform_counts"
+      },
+      {
+        "status": 200,
+        "url": "https://yisjyqnxaimdaeiylbuy.supabase.co/rest/v1/rpc/public_platform_counts",
+        "leaked": [],
+        "bodyPreview": "{\"as_of\": \"2026-08-12T00:10:42.938032\", \"practice_count\": 6700, \"physician_count\": 22300}"
+      },
+      {
+        "method": "POST",
+        "url": "https://yisjyqnxaimdaeiylbuy.supabase.co/rest/v1/rpc/public_search"
+      },
+      {
+        "status": 200,
+        "url": "https://yisjyqnxaimdaeiylbuy.supabase.co/rest/v1/rpc/public_search",
+        "leaked": [],
+        "bodyPreview": "{\"practices\": [{\"id\": \"e0bf4ecb-5d0a-4ba2-a827-4f4e06f958f3\", \"city\": \"SEYMOUR\", \"state\": \"IN\", \"practice_name\": \"CONNER SMITH EYE CENTER\", \"location_count\": 3}, {\"id\": \"d3103b3c-b"
+      }
+    ]
+  }
+}

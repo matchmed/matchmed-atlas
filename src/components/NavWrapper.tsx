@@ -20,8 +20,9 @@ function PublicChrome() {
         <Link href="/login" className="public-chrome-link">
           Log in
         </Link>
-        <Link href="/signup" className="public-chrome-button">
-          Create free account
+        <Link href="/signup" className="public-chrome-button" aria-label="Create free account">
+          <span className="public-chrome-cta-full" aria-hidden="true">Create free account</span>
+          <span className="public-chrome-cta-short" aria-hidden="true">Sign up</span>
         </Link>
       </nav>
     </header>

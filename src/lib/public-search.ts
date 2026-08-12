@@ -262,3 +262,12 @@ export function formatPublicCityState(city: string | null, state: string | null)
   if (c && s) return `${c}, ${s}`
   return c || s || ''
 }
+
+/** Display-only ZIP formatting. Does not alter stored values. */
+export function formatPublicZip(zip: string | null | undefined): string {
+  if (zip == null) return ''
+  const digits = String(zip).replace(/\D/g, '')
+  if (digits.length === 9) return `${digits.slice(0, 5)}-${digits.slice(5)}`
+  if (digits.length === 5) return digits
+  return String(zip).trim()
+}

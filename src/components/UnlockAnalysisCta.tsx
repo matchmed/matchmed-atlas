@@ -7,16 +7,18 @@ export default function UnlockAnalysisCta({
   nextPath,
   title,
   body,
+  className = '',
 }: {
   nextPath: string
   title: string
   body: string
+  className?: string
 }) {
   const signupHref = withNextParam('/signup', nextPath)
   const loginHref = withNextParam('/login', nextPath)
 
   return (
-    <div className="unlock-cta" role="region" aria-label={title}>
+    <div className={`unlock-cta ${className}`.trim()} role="region" aria-label={title}>
       <h2 className="font-serif unlock-cta-title">{title}</h2>
       <p className="unlock-cta-body">{body}</p>
       <div className="unlock-cta-actions">

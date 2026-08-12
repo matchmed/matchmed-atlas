@@ -1,0 +1,10 @@
+[
+  {
+    "method": "POST",
+    "url": "https://yisjyqnxaimdaeiylbuy.supabase.co/rest/v1/rpc/public_platform_counts"
+  },
+  {
+    "method": "POST",
+    "url": "https://yisjyqnxaimdaeiylbuy.supabase.co/rest/v1/rpc/public_search"
+  }
+]

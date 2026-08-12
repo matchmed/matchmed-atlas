@@ -112,38 +112,53 @@ export default async function PhysicianDetailPublic({ id }: { id: string }) {
         )}
       </section>
 
-      <section style={{ marginBottom: 28 }} aria-labelledby="locked-career-heading">
-        <h2 id="locked-career-heading" style={{ fontSize: 11, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>
+      <section className="locked-analysis-module" aria-labelledby="locked-career-heading">
+        <h2 id="locked-career-heading" className="locked-analysis-module-label">
           Career history
         </h2>
-        <div style={{ borderLeft: '3px solid #ccc', padding: '12px 16px', background: '#f9f9f9', borderRadius: '0 8px 8px 0', marginBottom: 16 }}>
-          <p style={{ fontSize: 13, color: '#888', lineHeight: 1.6, margin: 0 }}>
-            Graduation timing, previous affiliations, tenure, and career movement require an Atlas account.
-          </p>
-        </div>
-        <div style={{ display: 'grid', gap: 8, marginBottom: 16 }}>
-          {['Previous affiliations', 'Tenure at each practice', 'Career timeline'].map(label => (
-            <div
-              key={label}
-              style={{
-                border: '1px solid #e8e8e8',
-                borderRadius: 10,
-                padding: '14px 16px',
-                background: '#f3f1ec',
-                color: '#b0aaa0',
-                fontSize: 13,
-                fontWeight: 600,
-              }}
-            >
-              {label} — locked
+
+        <div className="locked-analysis-module-body">
+          <div className="locked-gate-stack">
+            <div className="locked-analysis-preview" aria-hidden="true">
+              <div className="locked-career-timeline">
+                <div className="locked-career-rail">
+                  {[0, 1, 2, 3].map(i => (
+                    <span key={i} className="locked-career-dot" />
+                  ))}
+                </div>
+                <div className="locked-career-segments">
+                  <div className="locked-skel-line locked-skel-line-md" />
+                  <div className="locked-skel-line locked-skel-line-sm" />
+                </div>
+              </div>
+
+              <div className="locked-section-subhead">Previous affiliations</div>
+              <div className="locked-former-list">
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="locked-affil-row">
+                    <div className="locked-affil-main">
+                      <div className="locked-skel-line locked-skel-line-lg" />
+                      <div className="locked-skel-line locked-skel-line-sm" />
+                    </div>
+                    <div className="locked-affil-meta">
+                      <div className="locked-skel-chip" />
+                      <div className="locked-skel-line locked-skel-line-xs" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          ))}
+
+            <div className="locked-analysis-fade" aria-hidden="true" />
+
+            <UnlockAnalysisCta
+              className="unlock-cta-overlay"
+              nextPath={nextPath}
+              title="Unlock Complete Career History"
+              body="Create a free account to review previous affiliations, tenure, and career movement for this physician."
+            />
+          </div>
         </div>
-        <UnlockAnalysisCta
-          nextPath={nextPath}
-          title="Unlock Complete Career History"
-          body="Create a free account to review previous affiliations, tenure, and career movement for this physician."
-        />
       </section>
 
       <section aria-labelledby="phys-caveats-heading" style={{ borderTop: '1px solid #e8e5df', paddingTop: 18 }}>
