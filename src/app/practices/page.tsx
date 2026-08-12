@@ -192,31 +192,44 @@ function PracticesPageContent() {
   const [shortlistedPracticeIds, setShortlistedPracticeIds] = useState<Set<string>>(new Set())
   const [profileId, setProfileId] = useState<string | null>(null)
 
-  // Load practices + practice_locations with IndexedDB cache
+  // Load practices + practice_locations with IndexedDB cache (stale-while-revalidate)
   useEffect(() => {
+    async function fetchAllPractices(): Promise<Practice[] | null> {
+      try {
+        const supabase = createClient()
+        let all: Practice[] = []
+        let from = 0
+        while (true) {
+          const { data, error } = await supabase
+            .from('practices')
+            .select('id,practice_name,city_st,state,retention_score,retention_score_delta,latest_roster_size,latitude,longitude,phone,org_pac_id')
+            .range(from, from + 999)
+          if (error) return null
+          if (!data || data.length === 0) break
+          all = all.concat(data)
+          if (data.length < 1000) break
+          from += 1000
+        }
+        return all
+      } catch {
+        return null
+      }
+    }
+
     async function loadPractices() {
       const cached = await loadAtlasCache<Practice>(CACHE_DB, CACHE_STORE, CACHE_KEY, CACHE_TTL)
       if (cached) {
         setPractices(cached)
         setLoading(false)
-        return
+      } else {
+        setLoading(true)
       }
-      const supabase = createClient()
-      setLoading(true)
-      let all: Practice[] = []
-      let from = 0
-      while (true) {
-        const { data, error } = await supabase
-          .from('practices')
-          .select('id,practice_name,city_st,state,retention_score,retention_score_delta,latest_roster_size,latitude,longitude,phone,org_pac_id')
-          .range(from, from + 999)
-        if (error || !data || data.length === 0) break
-        all = all.concat(data)
-        if (data.length < 1000) break
-        from += 1000
+
+      const fresh = await fetchAllPractices()
+      if (fresh) {
+        await saveAtlasCache(CACHE_DB, CACHE_STORE, CACHE_KEY, fresh)
+        setPractices(fresh)
       }
-      await saveAtlasCache(CACHE_DB, CACHE_STORE, CACHE_KEY, all)
-      setPractices(all)
       setLoading(false)
     }
 
