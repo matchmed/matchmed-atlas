@@ -1,0 +1,7 @@
+info {"ctaBg":"rgb(245, 236, 230)","primaryBg":"rgb(169, 85, 45)","primaryColor":"rgb(255, 255, 255)","primaryHref":"/signup?next=%2Fphysicians%2F433cec41-8860-4b5b-a496-d407d9bddc9c","secondaryHref":"/login?next=%2Fphysicians%2F433cec41-8860-4b5b-a496-d407d9bddc9c","overlayPresent":false,"careerHeading":"Career history","subheads":["Previous affiliations"],"ctaTitle":"Where has this physician practiced? How long did they stay?","ctaBody":"See previous affiliations, tenure, and career movement with Atlas.","timelineCount":4,"affilRows":3,"order":["unlock-cta unlock-cta-emphasis unlock-cta-bridge","locked-gate-stack"]}
+1440: overflow=false scrollW=1440 clientW=1440
+1024: overflow=false scrollW=1024 clientW=1024
+320: overflow=false scrollW=320 clientW=320
+375: overflow=false scrollW=375 clientW=375
+390: overflow=false scrollW=390 clientW=390
+430: overflow=false scrollW=430 clientW=430

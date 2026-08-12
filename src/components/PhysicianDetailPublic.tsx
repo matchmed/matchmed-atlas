@@ -118,8 +118,15 @@ export default async function PhysicianDetailPublic({ id }: { id: string }) {
         </h2>
 
         <div className="locked-analysis-module-body">
+          <UnlockAnalysisCta
+            className="unlock-cta-emphasis unlock-cta-bridge"
+            nextPath={nextPath}
+            title="Where has this physician practiced? How long did they stay?"
+            body="See previous affiliations, tenure, and career movement with Atlas."
+          />
+
           <div className="locked-gate-stack">
-            <div className="locked-analysis-preview" aria-hidden="true">
+            <div className="locked-career-gated" aria-hidden="true">
               <div className="locked-career-timeline">
                 <div className="locked-career-rail">
                   {[0, 1, 2, 3].map(i => (
@@ -131,32 +138,28 @@ export default async function PhysicianDetailPublic({ id }: { id: string }) {
                   <div className="locked-skel-line locked-skel-line-sm" />
                 </div>
               </div>
-
-              <div className="locked-section-subhead">Previous affiliations</div>
-              <div className="locked-former-list">
-                {[0, 1, 2].map(i => (
-                  <div key={i} className="locked-affil-row">
-                    <div className="locked-affil-main">
-                      <div className="locked-skel-line locked-skel-line-lg" />
-                      <div className="locked-skel-line locked-skel-line-sm" />
-                    </div>
-                    <div className="locked-affil-meta">
-                      <div className="locked-skel-chip" />
-                      <div className="locked-skel-line locked-skel-line-xs" />
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
 
-            <div className="locked-analysis-fade" aria-hidden="true" />
-
-            <UnlockAnalysisCta
-              className="unlock-cta-overlay"
-              nextPath={nextPath}
-              title="Unlock Complete Career History"
-              body="Create a free account to review previous affiliations, tenure, and career movement for this physician."
-            />
+            <div className="locked-former-block">
+              <div className="locked-section-subhead">Previous affiliations</div>
+              <div className="locked-former-gated">
+                <div className="locked-former-list" aria-hidden="true">
+                  {[0, 1, 2].map(i => (
+                    <div key={i} className="locked-affil-row">
+                      <div className="locked-affil-main">
+                        <div className="locked-skel-line locked-skel-line-lg" />
+                        <div className="locked-skel-line locked-skel-line-sm" />
+                      </div>
+                      <div className="locked-affil-meta">
+                        <div className="locked-skel-chip" />
+                        <div className="locked-skel-line locked-skel-line-xs" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="locked-analysis-fade" aria-hidden="true" />
+              </div>
+            </div>
           </div>
         </div>
       </section>
