@@ -326,7 +326,7 @@ export default function AccountPage() {
       </div>
 
       {/* Profile section */}
-      <div className="bg-canvas" style={{ border: '1px solid #e5e7eb', borderRadius: 12, padding: 24, marginBottom: 16 }}>
+      <div style={{ background: '#FFFFFF', border: '1px solid #DDD8D0', borderRadius: 12, padding: 24, marginBottom: 16 }}>
         <h2 style={{ fontSize: 15, fontWeight: 600, color: '#111', marginBottom: 20 }}>Profile information</h2>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
@@ -401,7 +401,7 @@ export default function AccountPage() {
       </div>
 
       {/* Preferences section */}
-      <div className="bg-canvas" style={{ border: '1px solid #e5e7eb', borderRadius: 12, padding: 24, marginBottom: 24 }}>
+      <div style={{ background: '#FFFFFF', border: '1px solid #DDD8D0', borderRadius: 12, padding: 24, marginBottom: 24 }}>
         <h2 style={{ fontSize: 15, fontWeight: 600, color: '#111', marginBottom: 16 }}>Introductions & Opportunities</h2>
         <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
           <input
@@ -417,7 +417,7 @@ export default function AccountPage() {
       </div>
 
       {/* Password section */}
-      <div className="bg-canvas" style={{ border: '1px solid #e5e7eb', borderRadius: 12, padding: 24, marginBottom: 16 }}>
+      <div style={{ background: '#FFFFFF', border: '1px solid #DDD8D0', borderRadius: 12, padding: 24, marginBottom: 16 }}>
         <h2 style={{ fontSize: 15, fontWeight: 600, color: '#111', marginBottom: 16 }}>Password</h2>
 
         {usesEmailPassword ? (

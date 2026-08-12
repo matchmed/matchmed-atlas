@@ -21,7 +21,8 @@ interface Stats {
 }
 
 const navCardStyle: CSSProperties = {
-  border: '1px solid #e0ddd8',
+  background: '#FFFFFF',
+  border: '1px solid #DDD8D0',
   borderRadius: 10,
   padding: '16px 18px',
   display: 'flex',
@@ -151,10 +152,10 @@ export default function HomePageClient() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 40 }}>
         {statCards.map(s => (
           <Link key={s.label} href={s.href} style={{
-            background: '#ffffff',
+            background: '#FFFFFF',
             borderRadius: 12,
             padding: '18px 16px',
-            border: '1px solid #e0ddd8',
+            border: '1px solid #DDD8D0',
             display: 'block',
             transition: 'transform 0.12s, box-shadow 0.12s',
           }}>
@@ -172,7 +173,7 @@ export default function HomePageClient() {
         </div>
         <div className="navigate-atlas-grid">
           {quickLinks.map(l => (
-            <Link key={l.href} href={l.href} className="bg-canvas navigate-atlas-card" style={navCardStyle}>
+            <Link key={l.href} href={l.href} className="navigate-atlas-card" style={navCardStyle}>
               <div style={iconTileStyle}>
                 {l.icon}
               </div>
@@ -185,7 +186,7 @@ export default function HomePageClient() {
 
           <Link
             href="/scoring-methodology"
-            className="bg-canvas navigate-atlas-card navigate-atlas-span-full"
+            className="navigate-atlas-card navigate-atlas-span-full"
             style={navCardStyle}
           >
             <div style={iconTileStyle}>
@@ -199,7 +200,7 @@ export default function HomePageClient() {
 
           <Link
             href="/partners"
-            className="bg-canvas navigate-atlas-card navigate-atlas-span-full navigate-atlas-span-3"
+            className="navigate-atlas-card navigate-atlas-span-full navigate-atlas-span-3"
             style={navCardStyle}
           >
             <div style={iconTileStyle}>

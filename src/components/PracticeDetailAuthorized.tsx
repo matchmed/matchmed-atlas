@@ -324,7 +324,7 @@ export default function PracticeDetailAuthorized() {
     const tenureLabel = tenure >= 8 ? '8+ yrs' : tenure === 1 ? '1 yr' : `${tenure} yrs`
     const [fg2, bg2] = nameToColor(n)
     return (
-      <div key={a.id} onClick={() => a.doctors?.id && router.push(`/physicians/${a.doctors.id}`)} style={{ background: '#ffffff', border: '1px solid #e8e8e8', borderRadius: 10, padding: '14px 16px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 14, cursor: a.doctors?.id ? 'pointer' : 'default' }}>
+      <div key={a.id} onClick={() => a.doctors?.id && router.push(`/physicians/${a.doctors.id}`)} style={{ background: '#ffffff', border: '1px solid #DDD8D0', borderRadius: 10, padding: '14px 16px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 14, cursor: a.doctors?.id ? 'pointer' : 'default' }}>
         <div style={{ width: 40, height: 40, borderRadius: '50%', background: bg2, color: fg2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
           {getInitials(n)}
         </div>
@@ -554,7 +554,7 @@ export default function PracticeDetailAuthorized() {
           {jobsOpen && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {jobs.map(j => (
-                <div key={j.id} style={{ border: '1px solid #e8e8e8', borderRadius: 12, padding: '16px 20px', background: '#ffffff', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                <div key={j.id} style={{ border: '1px solid #DDD8D0', borderRadius: 12, padding: '16px 20px', background: '#ffffff', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
                   {j.primary_location && <div style={{ fontSize: 13, color: '#888', marginBottom: 10 }}>📍 {j.primary_location}</div>}
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
                     {(j.subspecialties_interest || []).map(s => badge(s, '#1A6B3A', '#D4EDDA'))}
