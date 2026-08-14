@@ -10,6 +10,7 @@ import {
   type PublicSearchPractice,
   type PublicSearchPhysician,
 } from '@/lib/public-search'
+import { captureAnalyticsEvent } from '@/lib/posthog-client'
 
 type Hit =
   | { kind: 'practice'; item: PublicSearchPractice }
@@ -95,9 +96,25 @@ export default function PublicSearchCombobox({
         setError('Search is temporarily unavailable. Please try again.')
         setFetchedPractices([])
         setFetchedPhysicians([])
+        captureAnalyticsEvent('public_search_performed', {
+          source: 'atlas',
+          query_length: q.length,
+          practice_results: 0,
+          physician_results: 0,
+          had_error: true,
+        })
       } else {
-        setFetchedPractices(data?.practices ?? [])
-        setFetchedPhysicians(data?.physicians ?? [])
+        const nextPractices = data?.practices ?? []
+        const nextPhysicians = data?.physicians ?? []
+        setFetchedPractices(nextPractices)
+        setFetchedPhysicians(nextPhysicians)
+        captureAnalyticsEvent('public_search_performed', {
+          source: 'atlas',
+          query_length: q.length,
+          practice_results: nextPractices.length,
+          physician_results: nextPhysicians.length,
+          had_error: false,
+        })
       }
       setActiveIndex(-1)
       setLoading(false)
@@ -121,6 +138,14 @@ export default function PublicSearchCombobox({
     showPanel && !loading && !error && practices.length === 0 && physicians.length === 0
 
   function goToHit(hit: Hit) {
+    captureAnalyticsEvent(
+      'public_search_result_selected',
+      {
+        source: 'atlas',
+        result_kind: hit.kind,
+      },
+      { sendInstantly: true },
+    )
     const href =
       hit.kind === 'practice' ? practiceHref(hit.item.id) : physicianHref(hit.item.id)
     if (/^https?:\/\//i.test(href)) {

@@ -88,6 +88,8 @@ function sanitizeNextParam(raw: string): string {
   }
 }
 
+const LINKER_HASH_PARAMS = new Set(['ph_distinct_id', 'ph_session_id'])
+
 function redactHash(hash: string): string {
   if (hash.length <= 1) return ''
   const hashBody = hash.slice(1)
@@ -95,7 +97,11 @@ function redactHash(hash: string): string {
   const hashParams = new URLSearchParams(hashBody)
   let changed = false
   for (const key of [...hashParams.keys()]) {
-    if (SENSITIVE_URL_PARAMS.has(key.toLowerCase())) {
+    const lower = key.toLowerCase()
+    if (LINKER_HASH_PARAMS.has(lower)) {
+      hashParams.delete(key)
+      changed = true
+    } else if (SENSITIVE_URL_PARAMS.has(lower)) {
       hashParams.set(key, '[redacted]')
       changed = true
     }
@@ -162,6 +168,11 @@ function stripRemainingUuids(value: string): string {
   return value.replace(UUID_RE, '[id]')
 }
 
+export function isCampaignAttributionPropertyKey(key: string): boolean {
+  const k = key.toLowerCase()
+  return k.startsWith('utm_') || k.startsWith('$initial_utm_') || k.startsWith('$session_entry_utm_')
+}
+
 export function sanitizeAnalyticsProperties(
   properties: Record<string, unknown> | undefined,
 ): Record<string, unknown> | undefined {
@@ -176,6 +187,8 @@ export function sanitizeAnalyticsProperties(
 
   for (const [key, value] of Object.entries(next)) {
     if (typeof value !== 'string') continue
+    // Keep native campaign properties intact; they are not PII.
+    if (isCampaignAttributionPropertyKey(key)) continue
 
     if (looksLikePath(key)) {
       next[key] = sanitizePathname(value)

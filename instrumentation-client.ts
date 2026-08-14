@@ -1,6 +1,14 @@
 import posthog from 'posthog-js'
 import type { CaptureResult } from 'posthog-js'
-import { sanitizeAnalyticsProperties } from '@/lib/posthog-privacy'
+import {
+  consumeCrossSiteBootstrap,
+  hasStandardUtmParams,
+} from '@/lib/posthog-attribution'
+import {
+  extractPathname,
+  isAnalyticsPublicDiscoveryPath,
+  sanitizeAnalyticsProperties,
+} from '@/lib/posthog-privacy'
 
 function isPostHogEnabled(token: string | undefined): boolean {
   if (!token) return false
@@ -12,15 +20,27 @@ function isPostHogEnabled(token: string | undefined): boolean {
 
 function beforeSend(event: CaptureResult | null): CaptureResult | null {
   if (!event) return event
+  const properties =
+    sanitizeAnalyticsProperties(event.properties as Record<string, unknown>) ?? {}
+  const path =
+    (typeof properties.$pathname === 'string' && properties.$pathname) ||
+    (typeof properties.$current_url === 'string'
+      ? extractPathname(properties.$current_url)
+      : '') ||
+    ''
+  if (isAnalyticsPublicDiscoveryPath(path) && properties.product_surface == null) {
+    properties.product_surface = 'atlas_public'
+  }
   return {
     ...event,
-    properties: sanitizeAnalyticsProperties(event.properties as Record<string, unknown>) ?? {},
+    properties,
     $set: sanitizeAnalyticsProperties(event.$set as Record<string, unknown> | undefined),
     $set_once: sanitizeAnalyticsProperties(event.$set_once as Record<string, unknown> | undefined),
   }
 }
 
 const token = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
+const bootstrap = token ? consumeCrossSiteBootstrap(token) : undefined
 
 if (isPostHogEnabled(token)) {
   posthog.init(token!, {
@@ -37,11 +57,20 @@ if (isPostHogEnabled(token)) {
     capture_exceptions: false,
     disable_surveys: true,
     enable_recording_console_log: false,
+    cross_subdomain_cookie: true,
+    disable_capture_url_hashes: true,
+    save_campaign_params: true,
+    bootstrap: bootstrap ?? {},
     session_recording: {
       maskAllInputs: true,
       maskTextSelector: '*',
     },
     before_send: beforeSend,
+    loaded(ph) {
+      // Persist $initial_utm_* on a person before identify() when this tab
+      // itself was the UTM landing (same-domain campaign URLs).
+      if (hasStandardUtmParams()) ph.createPersonProfile()
+    },
     debug: false,
   })
 }
