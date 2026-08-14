@@ -19,6 +19,7 @@ const ALLOWED_PROFILE_FIELDS = [
   'procedures_performed',
   'procedures_desired',
   'terms_accepted',
+  'industry_partnership_acknowledged',
   'data_sharing',
   'onboarding_complete',
   'signup_date',
