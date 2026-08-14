@@ -47,7 +47,7 @@ const PRACTICE_SETTINGS = [
 ]
 
 const PROFILE_FORM_SELECT =
-  'user_id, email, first_name, last_name, npi, phone, preferred_state, start_year, clinical_focus, training_status, practice_setting_preference, current_practice, procedures_performed, procedures_desired, terms_accepted, data_sharing, onboarding_complete, is_internal'
+  'user_id, email, first_name, last_name, npi, phone, preferred_state, start_year, clinical_focus, training_status, practice_setting_preference, current_practice, procedures_performed, procedures_desired, terms_accepted, industry_partnership_acknowledged, data_sharing, onboarding_complete, is_internal'
 
 const inputStyle = {
   width: '100%',
@@ -86,6 +86,7 @@ type OnboardingForm = {
   procedures_performed: string[]
   procedures_desired: string[]
   terms_accepted: boolean
+  industry_partnership_acknowledged: boolean
   data_sharing: boolean
 }
 
@@ -103,6 +104,7 @@ const EMPTY_FORM: OnboardingForm = {
   procedures_performed: [],
   procedures_desired: [],
   terms_accepted: false,
+  industry_partnership_acknowledged: false,
   data_sharing: false,
 }
 
@@ -121,6 +123,7 @@ function profileToForm(profile: Record<string, unknown>): OnboardingForm {
     procedures_performed: (profile.procedures_performed as string[]) || [],
     procedures_desired: (profile.procedures_desired as string[]) || [],
     terms_accepted: Boolean(profile.terms_accepted),
+    industry_partnership_acknowledged: Boolean(profile.industry_partnership_acknowledged),
     data_sharing: Boolean(profile.data_sharing),
   }
 }
@@ -140,6 +143,7 @@ function hasDraftProgress(form: OnboardingForm): boolean {
     form.procedures_performed.length ||
     form.procedures_desired.length ||
     form.terms_accepted ||
+    form.industry_partnership_acknowledged ||
     form.data_sharing
   )
 }
@@ -380,6 +384,10 @@ export default function OnboardingPage() {
       setError('Please accept the Terms of Service to continue.')
       return
     }
+    if (!form.industry_partnership_acknowledged) {
+      setError('Please acknowledge Atlas industry partnerships to continue.')
+      return
+    }
     setLoading(true)
     setError('')
 
@@ -416,6 +424,7 @@ export default function OnboardingPage() {
       training_status: form.training_status,
       start_year: form.start_year,
       data_sharing: form.data_sharing,
+      industry_partnership_acknowledged: true,
     })
 
     setShowSuccess(true)
@@ -582,6 +591,24 @@ export default function OnboardingPage() {
                     <a href={LEGAL_PRIVACY_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#1C4A45' }}>Privacy Policy</a>.
                   </span>
                 </label>
+              </div>
+
+              <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 20, marginBottom: 16 }}>
+                <p style={{ fontSize: 13, fontWeight: 600, color: '#111', marginBottom: 10 }}>Industry partnerships *</p>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={form.industry_partnership_acknowledged}
+                    onChange={e => setForm(f => ({ ...f, industry_partnership_acknowledged: e.target.checked }))}
+                    style={{ marginTop: 2, accentColor: '#1C4A45' }}
+                  />
+                  <span style={{ fontSize: 13, color: '#374151', lineHeight: 1.5 }}>
+                    I acknowledge that Atlas is supported in part by industry partners and may present relevant industry-supported educational, training, research, event, and career opportunities.
+                  </span>
+                </label>
+                <p style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.5, margin: '8px 0 0 26px' }}>
+                  Industry partners do not influence Atlas practice scores, rankings, search results, or how practice information is presented.
+                </p>
               </div>
 
               <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 20, marginBottom: 24 }}>
