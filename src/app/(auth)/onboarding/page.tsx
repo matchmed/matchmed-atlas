@@ -47,7 +47,7 @@ const PRACTICE_SETTINGS = [
 ]
 
 const PROFILE_FORM_SELECT =
-  'user_id, email, first_name, last_name, npi, phone, preferred_state, start_year, clinical_focus, training_status, practice_setting_preference, current_practice, procedures_performed, procedures_desired, terms_accepted, industry_partnership_acknowledged, data_sharing, onboarding_complete, is_internal'
+  'user_id, email, first_name, last_name, npi, phone, preferred_state, start_year, clinical_focus, training_status, practice_setting_preference, current_practice, procedures_performed, procedures_desired, terms_accepted, industry_partnership_acknowledged, onboarding_complete, is_internal'
 
 const inputStyle = {
   width: '100%',
@@ -87,7 +87,6 @@ type OnboardingForm = {
   procedures_desired: string[]
   terms_accepted: boolean
   industry_partnership_acknowledged: boolean
-  data_sharing: boolean
 }
 
 const EMPTY_FORM: OnboardingForm = {
@@ -105,7 +104,6 @@ const EMPTY_FORM: OnboardingForm = {
   procedures_desired: [],
   terms_accepted: false,
   industry_partnership_acknowledged: false,
-  data_sharing: false,
 }
 
 function profileToForm(profile: Record<string, unknown>): OnboardingForm {
@@ -124,7 +122,6 @@ function profileToForm(profile: Record<string, unknown>): OnboardingForm {
     procedures_desired: (profile.procedures_desired as string[]) || [],
     terms_accepted: Boolean(profile.terms_accepted),
     industry_partnership_acknowledged: Boolean(profile.industry_partnership_acknowledged),
-    data_sharing: Boolean(profile.data_sharing),
   }
 }
 
@@ -143,8 +140,7 @@ function hasDraftProgress(form: OnboardingForm): boolean {
     form.procedures_performed.length ||
     form.procedures_desired.length ||
     form.terms_accepted ||
-    form.industry_partnership_acknowledged ||
-    form.data_sharing
+    form.industry_partnership_acknowledged
   )
 }
 
@@ -264,6 +260,8 @@ export default function OnboardingPage() {
     }
     if (options.complete) {
       payload.signup_date = new Date().toISOString()
+      payload.industry_partnership_acknowledged = true
+      payload.data_sharing = true
     }
     return upsertProfileByUserId(supabase, payload)
   }
@@ -417,13 +415,13 @@ export default function OnboardingPage() {
       training_status: form.training_status,
       start_year: form.start_year,
       preferred_state: form.preferred_state,
-      data_sharing: form.data_sharing,
+      data_sharing: true,
       is_internal: profile?.is_internal === true,
     })
     posthog.capture('onboarding_completed', {
       training_status: form.training_status,
       start_year: form.start_year,
-      data_sharing: form.data_sharing,
+      data_sharing: true,
       industry_partnership_acknowledged: true,
     })
 
@@ -593,7 +591,7 @@ export default function OnboardingPage() {
                 </label>
               </div>
 
-              <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 20, marginBottom: 16 }}>
+              <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 20, marginBottom: 24 }}>
                 <p style={{ fontSize: 13, fontWeight: 600, color: '#111', marginBottom: 10 }}>Industry partnerships *</p>
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
                   <input
@@ -603,22 +601,12 @@ export default function OnboardingPage() {
                     style={{ marginTop: 2, accentColor: '#1C4A45' }}
                   />
                   <span style={{ fontSize: 13, color: '#374151', lineHeight: 1.5 }}>
-                    I acknowledge that Atlas is supported in part by industry partners and may present relevant industry-supported educational, training, research, event, and career opportunities.
+                    I understand that Atlas is supported in part by industry partners and agree to receive relevant educational, training, research, event, career, and professional opportunities from Atlas and its partners. I can opt out at any time.
                   </span>
                 </label>
                 <p style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.5, margin: '8px 0 0 26px' }}>
                   Industry partners do not influence Atlas practice scores, rankings, search results, or how practice information is presented.
                 </p>
-              </div>
-
-              <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 20, marginBottom: 24 }}>
-                <p style={{ fontSize: 13, fontWeight: 600, color: '#111', marginBottom: 10 }}>Introductions & Opportunities</p>
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
-                  <input type="checkbox" checked={form.data_sharing} onChange={e => setForm(f => ({ ...f, data_sharing: e.target.checked }))} style={{ marginTop: 2, accentColor: '#1C4A45' }} />
-                  <span style={{ fontSize: 13, color: '#374151', lineHeight: 1.5 }}>
-                    I agree to be contactable by ophthalmology practices and industry partners. This is what keeps Atlas free for physicians. I can opt out at any time.
-                  </span>
-                </label>
               </div>
 
               {error && (
