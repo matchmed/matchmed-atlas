@@ -173,7 +173,7 @@ The Privacy Policy mentions profile CV/areas of expertise, payment data, cookies
 - CV upload/storage;
 - payments or subscription billing;
 - SMS integration or SMS consent collection;
-- analytics/advertising SDKs, pixels, or cookie banner;
+- advertising SDKs, pixels, or a cookie banner (PostHog is present: production-only pageviews/heatmaps, identified-only person profiles, no public session replay);
 - marketing email platform;
 - sale/share opt-out implementation.
 
