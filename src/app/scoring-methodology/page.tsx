@@ -139,8 +139,7 @@ export default function ScoringMethodologyPage() {
         <li style={{ marginBottom: 4 }}>Extract facts from CMS data (tenure distribution, roster size, churn rate)</li>
         <li style={{ marginBottom: 4 }}>Identify patterns (for example top-heavy tenure or significant roster reduction)</li>
         <li style={{ marginBottom: 4 }}>Describe the observation factually</li>
-        <li style={{ marginBottom: 4 }}>List assumptions that could affect interpretation</li>
-        <li>Specify confidence (high for observed facts)</li>
+        <li>List assumptions that could affect interpretation</li>
       </ol>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
