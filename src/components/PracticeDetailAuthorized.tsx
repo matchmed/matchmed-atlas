@@ -505,26 +505,9 @@ export default function PracticeDetailAuthorized() {
 
       {/* Insight */}
       <div style={{ borderLeft: `3px solid ${hasScore ? '#1C4A45' : '#ccc'}`, padding: '12px 16px', background: hasScore ? '#E8F0EF' : '#f9f9f9', borderRadius: '0 8px 8px 0', marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: insight.assumptions.length ? 8 : 0 }}>
-          <p style={{ fontSize: 13, color: hasScore ? '#333' : '#888', lineHeight: 1.6, margin: 0, flex: 1 }}>
-            {insight.text}
-          </p>
-          <span style={{
-            flexShrink: 0,
-            fontSize: 11,
-            fontWeight: 600,
-            letterSpacing: '.04em',
-            textTransform: 'uppercase',
-            color: '#1C4A45',
-            background: '#fff',
-            border: '1px solid #c5d8d5',
-            borderRadius: 20,
-            padding: '3px 9px',
-            whiteSpace: 'nowrap',
-          }}>
-            Confidence: {insight.confidence}
-          </span>
-        </div>
+        <p style={{ fontSize: 13, color: hasScore ? '#333' : '#888', lineHeight: 1.6, margin: 0, marginBottom: insight.assumptions.length ? 8 : 0 }}>
+          {insight.text}
+        </p>
         {insight.assumptions.length > 0 && (
           <details style={{ marginTop: 4 }}>
             <summary style={{ fontSize: 12, color: '#1C4A45', cursor: 'pointer', userSelect: 'none', listStyle: 'none' }}>
