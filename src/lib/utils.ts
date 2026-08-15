@@ -59,24 +59,6 @@ export function scoreLabel(s: number | null): { text: string; bg: string; color:
   return { text: s.toFixed(1), bg: '#ffebee', color: '#C0392B' }
 }
 
-export function deltaColor(d: number): string {
-  if (d > 5) return '#1A6B3A'
-  if (d < -5) return '#A32D2D'
-  return '#888'
-}
-
-export function deltaBg(d: number): string {
-  if (d > 5) return '#e8f5ee'
-  if (d < -5) return '#fdeaea'
-  return '#f0f0f0'
-}
-
-export function deltaArrow(d: number): string {
-  if (d > 5) return '▲'
-  if (d < -5) return '▼'
-  return '—'
-}
-
 // ── Time helpers ───────────────────────────────────────────
 export function daysAgo(isoString: string | null): string | null {
   if (!isoString) return null

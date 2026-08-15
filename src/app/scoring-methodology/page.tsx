@@ -111,17 +111,6 @@ export default function ScoringMethodologyPage() {
         <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, margin: 0 }}>Specific component weights are proprietary.</p>
       </ScoreCard>
 
-      <SectionLabel>Delta scores: change since 2019</SectionLabel>
-      <p style={{ fontSize: 14, lineHeight: 1.7, color: '#444', marginBottom: 16 }}>Every metric is compared against a 2019 baseline. Delta scores show whether a practice's retention pattern has strengthened, weakened, or held steady over time.</p>
-      <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
-        {[['#1A6B3A', '▲ +', 'More stable than 2019'], ['#888', '—', 'No meaningful change'], ['#A32D2D', '▼ −', 'Less stable than 2019']].map(([color, symbol, label]) => (
-          <div key={label} style={{ flex: 1, background: '#f9f9f9', borderRadius: 8, padding: '14px 16px', textAlign: 'center', border: '0.5px solid #e8e8e8' }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color, marginBottom: 4 }}>{symbol}</div>
-            <div style={{ fontSize: 11, color: '#888' }}>{label}</div>
-          </div>
-        ))}
-      </div>
-
       <SectionLabel>Insights &amp; Observations</SectionLabel>
       <p style={{ fontSize: 14, lineHeight: 1.7, color: '#444', marginBottom: 16 }}>Practice detail pages include a short insight derived from the same CMS-derived fields shown in the metrics. Insights are deterministic observations, not AI-generated advice.</p>
 

@@ -129,11 +129,16 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
 
           <div className="locked-gate-stack">
             <div className="locked-tenure-block">
-              <div className="locked-section-subhead">Physician tenure distribution</div>
+              <div className="locked-section-subhead">Tenure outcomes among all physicians observed since 2019</div>
               <div className="locked-tenure-bars">
-                {(['0–1', '2–3', '4–5', '6–7', '8+'] as const).map((label, i) => (
+                {(['0–1', '2–3', '4–5', '6–7', '8+ observed yrs'] as const).map((label, i) => (
                   <div key={label} className="locked-tenure-row">
-                    <span className="locked-tenure-label">{label}</span>
+                    <span
+                      className="locked-tenure-label"
+                      title={label === '8+ observed yrs'
+                        ? 'Affiliations are observed beginning in 2019. Physicians already affiliated at the start of the data window may have longer actual tenure.'
+                        : undefined}
+                    >{label}</span>
                     <div className="locked-tenure-gated" aria-hidden="true">
                       <div className="locked-tenure-track">
                         <div
