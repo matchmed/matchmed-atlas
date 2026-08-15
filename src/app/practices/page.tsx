@@ -3,7 +3,7 @@ import { Suspense, useEffect, useState, useRef, useMemo } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import posthog from 'posthog-js'
-import { scoreClass, scoreLabel, deltaColor, deltaBg, deltaArrow, getInitials, nameToColor } from '@/lib/utils'
+import { scoreClass, scoreLabel, getInitials, nameToColor } from '@/lib/utils'
 import { loadAtlasCache, peekAtlasCache, saveAtlasCache } from '@/lib/atlas-cache'
 import {
   PRACTICES_CACHE_DB,
@@ -39,13 +39,12 @@ const CACHE_STORE = PRACTICES_CACHE_STORE
 
 type Practice = PracticeListRow
 
-type SortKey = 'practice_name' | 'retention_score' | 'retention_score_delta' | 'latest_roster_size'
+type SortKey = 'practice_name' | 'retention_score' | 'latest_roster_size'
 
 function sortLabel(key: SortKey): string {
   const labels: Record<SortKey, string> = {
     practice_name: 'name',
     retention_score: 'score',
-    retention_score_delta: 'change vs 2019',
     latest_roster_size: 'roster size',
   }
   return labels[key]
@@ -343,21 +342,6 @@ function PracticesPageContent() {
 
   function clearStates() {
     patchUrl({ states: null, page: null })
-  }
-
-  function deltaChip(d: number | null) {
-    if (d === null) return <span style={{ color: '#ccc', fontSize: 12 }}>—</span>
-    const sign = d > 0 ? '+' : ''
-    return (
-      <span style={{
-        display: 'inline-flex', alignItems: 'center', gap: 3,
-        fontSize: 11, fontWeight: 600,
-        color: deltaColor(d), background: deltaBg(d),
-        padding: '2px 7px', borderRadius: 20, whiteSpace: 'nowrap',
-      }}>
-        {deltaArrow(d)} {sign}{d.toFixed(1)}
-      </span>
-    )
   }
 
   function scoreColor(s: number | null) {
@@ -873,9 +857,6 @@ function PracticesPageContent() {
                     <span className="data-table-label-short">Retention</span>
                     {' '}{sortKey === 'retention_score' ? (sortDir === 1 ? '↑' : '↓') : '↕'}
                   </th>
-                  <th style={thStyle('retention_score_delta')} onClick={() => handleSort('retention_score_delta')}>
-                    vs 2019 {sortKey === 'retention_score_delta' ? (sortDir === 1 ? '↑' : '↓') : '↕'}
-                  </th>
                   <th style={thStyle('latest_roster_size')} onClick={() => handleSort('latest_roster_size')}>
                     Roster {sortKey === 'latest_roster_size' ? (sortDir === 1 ? '↑' : '↓') : '↕'}
                   </th>
@@ -893,9 +874,6 @@ function PracticesPageContent() {
                         {p.retention_score !== null ? p.retention_score.toFixed(1) : '—'}
                       </span>
                     </td>
-                    <td style={{ padding: '11px 14px', borderTop: '1px solid #f0f0f0' }}>
-                      {deltaChip(p.retention_score_delta)}
-                    </td>
                     <td style={{ padding: '11px 14px', borderTop: '1px solid #f0f0f0', color: '#666' }}>
                       {p.latest_roster_size || '—'}
                     </td>
@@ -910,7 +888,7 @@ function PracticesPageContent() {
                   </tr>
                 ))}
                 {!loading && pagePractices.length === 0 && (
-                  <tr><td colSpan={5} style={{ padding: 40, textAlign: 'center', color: '#aaa' }}>No practices match your filters.</td></tr>
+                  <tr><td colSpan={4} style={{ padding: 40, textAlign: 'center', color: '#aaa' }}>No practices match your filters.</td></tr>
                 )}
               </tbody>
             </table>

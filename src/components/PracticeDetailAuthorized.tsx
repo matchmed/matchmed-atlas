@@ -12,7 +12,7 @@ import {
   normalizePracticeLocation,
   type PracticeLocation,
 } from '@/lib/practice-locations'
-import { nameToColor, getInitials, scoreColor, scoreBg, deltaColor, deltaBg, deltaArrow } from '@/lib/utils'
+import { nameToColor, getInitials, scoreColor, scoreBg } from '@/lib/utils'
 import PracticeErrorReportModal from '@/components/PracticeErrorReportModal'
 import PracticeLocationsDisclaimer from '@/components/PracticeLocationsDisclaimer'
 import {
@@ -58,20 +58,9 @@ interface Affiliation {
 }
 
 
-function deltaChip(d: number | null) {
-  if (d === null) return <span style={{ color: '#ccc', fontSize: 11 }}>— vs 2019</span>
-  const sign = d > 0 ? '+' : ''
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 3,
-      fontSize: 11, fontWeight: 600,
-      color: deltaColor(d), background: deltaBg(d),
-      padding: '3px 8px', borderRadius: 20, whiteSpace: 'nowrap',
-    }}>
-      {deltaArrow(d)} {sign}{d.toFixed(1)} vs 2019
-    </span>
-  )
-}
+const TENURE_TOP_BUCKET = '8+ observed yrs'
+const TENURE_TOP_BUCKET_TOOLTIP =
+  'Affiliations are observed beginning in 2019. Physicians already affiliated at the start of the data window may have longer actual tenure.'
 
 function badge(text: string, color = '#1C4A45', bg = '#E8F0EF') {
   return <span key={text} style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, color, background: bg, whiteSpace: 'nowrap' }}>{text}</span>
@@ -219,20 +208,20 @@ export default function PracticeDetailAuthorized() {
   const onRoster = affiliations.filter(a => (a.status || '').toLowerCase() === 'on roster')
   const notRoster = affiliations.filter(a => (a.status || '').toLowerCase() !== 'on roster')
 
-  const BUCKET_ORDER = ['8+ yrs', '6-7 yrs', '4-5 yrs', '2-3 yrs', '0-1 yrs'] as const
+  const BUCKET_ORDER = [TENURE_TOP_BUCKET, '6-7 yrs', '4-5 yrs', '2-3 yrs', '0-1 yrs'] as const
   const buckets = {
-    '8+ yrs': practice.tenure_8_plus || 0,
+    [TENURE_TOP_BUCKET]: practice.tenure_8_plus || 0,
     '6-7 yrs': practice.tenure_6_7 || 0,
     '4-5 yrs': practice.tenure_4_5 || 0,
     '2-3 yrs': practice.tenure_2_3 || 0,
     '0-1 yrs': practice.tenure_0_1 || 0,
   }
   const maxVal = Math.max(...Object.values(buckets), 1)
-  const barColors = { '8+ yrs': '#1A6B3A', '6-7 yrs': '#4CAF50', '4-5 yrs': '#1C4A45', '2-3 yrs': '#6a9e98', '0-1 yrs': '#d0d0d0' }
+  const barColors = { [TENURE_TOP_BUCKET]: '#1A6B3A', '6-7 yrs': '#4CAF50', '4-5 yrs': '#1C4A45', '2-3 yrs': '#6a9e98', '0-1 yrs': '#d0d0d0' }
 
   // ── OBSERVATIONS (boolean pattern flags) ──────────────────────────────────
   const observations = {
-    topHeavy: (buckets['8+ yrs'] + buckets['6-7 yrs']) > (buckets['0-1 yrs'] + buckets['2-3 yrs']),
+    topHeavy: (buckets[TENURE_TOP_BUCKET] + buckets['6-7 yrs']) > (buckets['0-1 yrs'] + buckets['2-3 yrs']),
     significantReduction: rosterSize === 1 && alltime > 3,
     highChurnRate: churnRate > 0.4,
   }
@@ -263,7 +252,7 @@ export default function PracticeDetailAuthorized() {
     }
   } else if ((score || 0) >= 85 && observations.topHeavy) {
     insight = {
-      text: `${buckets['8+ yrs']} of ${alltime} all-time physicians reached 8+ years. Concentrated long-tenure workforce.`,
+      text: `${buckets[TENURE_TOP_BUCKET]} of ${alltime} all-time physicians reached 8+ years. Concentrated long-tenure workforce.`,
       assumptions: [
         'Long tenure may correlate with historical stability.',
         'Could also reflect limited growth, geographic constraints, or market conditions.',
@@ -309,7 +298,8 @@ export default function PracticeDetailAuthorized() {
   }
 
   const metricCards = [
-    { label: 'Retention score', value: hasScore ? score!.toFixed(1) : '—', color: scoreColor(score), bg: scoreBg(score), sub: deltaChip(practice.retention_score_delta) },
+    { label: 'Retention score', value: hasScore ? score!.toFixed(1) : '—', color: scoreColor(score), bg: scoreBg(score), sub: null },
+    { label: 'Experience Level', value: practice.experience_level !== null ? practice.experience_level.toFixed(1) : '—', color: '#1a1a1a', bg: '#ffffff', sub: null },
     { label: 'Current roster', value: String(rosterSize), color: '#1a1a1a', bg: '#ffffff', sub: null },
     { label: 'All-time physicians', value: String(alltime), color: '#1a1a1a', bg: '#ffffff', sub: null },
     { label: 'Short exits', value: String(churn), color: observations.highChurnRate ? '#C0392B' : '#1a1a1a', bg: observations.highChurnRate ? '#fdf2f2' : '#ffffff', sub: null },
@@ -452,7 +442,7 @@ export default function PracticeDetailAuthorized() {
       </div>
 
       {/* Metrics grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10, marginBottom: 24 }}>
+      <div className="practice-metric-grid">
         {metricCards.map(c => {
           const isRetention = c.label === 'Retention score'
           return (
@@ -488,13 +478,22 @@ export default function PracticeDetailAuthorized() {
       </div>
 
       {/* Tenure bars */}
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>Physician tenure distribution</div>
+      <div className="practice-tenure-chart" style={{ marginBottom: 24 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}>Tenure outcomes among all physicians observed since 2019</div>
+        <p style={{ fontSize: 12, color: '#888', lineHeight: 1.45, margin: '0 0 12px' }}>
+          Includes {alltime} physicians observed since 2019, both current and former.
+        </p>
         {BUCKET_ORDER.map(b => {
           const pct = Math.round((buckets[b] / maxVal) * 100)
+          const isTopBucket = b === TENURE_TOP_BUCKET
           return (
             <div key={b} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7 }}>
-              <span style={{ fontSize: 11, color: '#888', width: 54, textAlign: 'right', flexShrink: 0 }}>{b}</span>
+              <span
+                title={isTopBucket ? TENURE_TOP_BUCKET_TOOLTIP : undefined}
+                style={{ fontSize: 11, color: '#888', width: 96, textAlign: 'right', flexShrink: 0, cursor: isTopBucket ? 'help' : undefined }}
+              >
+                {b}
+              </span>
               <div style={{ flex: 1, background: '#ebebeb', borderRadius: 4, height: 20, overflow: 'hidden' }}>
                 <div style={{ width: `${pct}%`, background: barColors[b], height: '100%', borderRadius: 4 }} />
               </div>
@@ -538,33 +537,6 @@ export default function PracticeDetailAuthorized() {
             </ul>
           </details>
         )}
-      </div>
-
-      {/* Score rows */}
-      <div style={{ marginBottom: 32 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>Scores vs 2019 baseline</div>
-        {[
-          { label: 'Experience Level', value: practice.experience_level, delta: practice.experience_level_delta, composite: false },
-          { label: 'Retention Score', value: practice.retention_score, delta: practice.retention_score_delta, composite: true },
-        ].map(r => (
-          <div
-            key={r.label}
-            style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              padding: '10px 14px', borderRadius: 8, marginBottom: 4,
-              background: r.composite ? (hasScore ? scoreBg(r.value) : '#f9f9f9') : '#ffffff',
-              border: '0.5px solid rgba(0,0,0,0.06)',
-            }}
-          >
-            <span style={{ fontSize: 13, color: '#444', fontWeight: r.composite ? 600 : 400 }}>{r.label}</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: r.composite ? 18 : 15, fontWeight: r.composite ? 700 : 600, color: r.value !== null ? scoreColor(r.value) : '#aaa' }}>
-                {r.value !== null ? r.value.toFixed(1) : '—'}
-              </span>
-              {deltaChip(r.delta)}
-            </div>
-          </div>
-        ))}
       </div>
 
       {/* Job postings */}
