@@ -1,9 +1,17 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { isOnboardingExemptPath, needsOnboardingRedirect } from '@/lib/onboarding-gate'
-import { isAnonymousAllowlistedPath } from '@/lib/public-routes'
+import { isAnonymousAllowlistedPath, isPostHogIngestPath } from '@/lib/public-routes'
 
 export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // Analytics reverse proxy must not hit login/onboarding redirects.
+  // Rewrites in next.config.ts forward /ingest/* to PostHog.
+  if (isPostHogIngestPath(pathname)) {
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -28,7 +36,6 @@ export async function proxy(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
-  const { pathname } = request.nextUrl
   const isPublic = isAnonymousAllowlistedPath(pathname)
 
   if (!user && !isPublic) {
@@ -66,6 +73,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|ingest(?:/|$)|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

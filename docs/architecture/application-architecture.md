@@ -50,7 +50,7 @@ flowchart LR
 
 The root layout (`src/app/layout.tsx`) supplies metadata, fonts, global CSS, and the navigation wrapper. Most product pages are client components; notable server-rendered boundaries are the root page, legal and informational pages, the admin layout, and the admin report inbox loader.
 
-`src/proxy.ts` runs for nearly all non-static paths. It constructs a Supabase SSR client, reads and writes auth cookies, calls `auth.getUser()`, redirects unauthenticated requests outside the public allowlist, and signs out accounts whose profile has a non-null `deleted_at`. This is route gating and session refresh; it is not a substitute for database authorization.
+`src/proxy.ts` runs for nearly all non-static paths, excluding the PostHog reverse-proxy prefix `/ingest`. It constructs a Supabase SSR client, reads and writes auth cookies, calls `auth.getUser()`, redirects unauthenticated requests outside the public allowlist, and signs out accounts whose profile has a non-null `deleted_at`. This is route gating and session refresh; it is not a substitute for database authorization.
 
 The server Supabase helper (`src/lib/supabase-server.ts`) reads request cookies and attempts to write refreshed cookies. The caught cookie-write exception accommodates contexts in which cookie mutation is unavailable.
 
