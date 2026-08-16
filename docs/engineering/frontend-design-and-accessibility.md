@@ -28,9 +28,7 @@ Shared tokens in `tailwind.config.ts` are:
 
 ### Scoring colors
 
-Global classes `.s-dg`, `.s-lg`, `.s-yw`, `.s-or`, `.s-rd`, and `.s-na` provide score bands, and `.score-pill` supplies shared sizing. Existing CSS says these colors should not change. That comment establishes current implementation intent, not approved brand or accessibility governance.
-
-Always pair a score color with visible text/value and a programmatic label. Never require users to distinguish green, yellow, orange, and red alone. Any palette change must remain consistent across list, detail, map, reports, legends, and public methodology copy.
+Numeric Retention Scores use Atlas teal `#1C4A45` on `#E8F0EF` regardless of value. Unavailable scores use muted gray via `.s-na`. `.s-score` and `.score-pill` supply the numeric presentation. Do not reintroduce value-dependent red, yellow, green, or orange treatments for Retention Score.
 
 ## Layout and responsive behavior
 

@@ -77,7 +77,7 @@ No thresholds, window, minimum counts, similarity rule, or adjustment is present
 
 ### Experience Level
 
-Published copy says Experience Level is context only, derived from median years since medical-school graduation for the current roster, and is not part of the retention composite. The UI nevertheless colors this 0–100-like value with the same score palette and shows a delta versus 2019.
+Published copy says Experience Level is context only, derived from median years since medical-school graduation for the current roster, and is not part of the retention composite. The UI presents Experience Level in neutral ink and does not apply Retention Score coloring to it.
 
 - **Owner confirmation required:** Confirm the actual composite formula, all component formulas, bounds, missing-value handling, and order of operations.
 - **Owner confirmation required:** Resolve tenure-band boundary inclusivity and publish non-overlapping definitions.
@@ -116,18 +116,14 @@ These fallbacks can blur “missing” and “zero.”
 
 ## Score bands and color semantics
 
-Shared UI helpers implement these exact bands:
+Numeric thresholds still exist in scoring and insight branching. Presentation no longer maps those bands to traffic-light colors.
 
-- score `>= 85`: dark green;
-- `>= 80` and `< 85`: green;
-- `>= 70` and `< 80`: yellow/olive;
-- `>= 60` and `< 70`: orange;
-- `< 60`: red;
-- null: gray.
+Shared UI helpers apply:
 
-The map legend labels these as `85+`, `80-85`, `70-80`, `60-70`, and `Below 60`. Those labels visually overlap at the endpoints even though implementation uses the non-overlapping ranges above. The application does not publish qualitative names for these bands, but color can imply an evaluative ranking.
+- any numeric Retention Score: Atlas teal `#1C4A45` on `#E8F0EF`;
+- null / unavailable: muted gray.
 
-- **Owner confirmation required:** Approve band thresholds, labels, endpoint notation, accessibility treatment, and whether the same palette should apply to Experience Level.
+The map key uses operational meanings (Practice, Cluster, No score), not score bands. Score chips show the numeric value or “No score”; they do not publish qualitative band names.
 
 ## Deltas and the 2019 baseline
 

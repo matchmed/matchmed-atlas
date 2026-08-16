@@ -23,40 +23,34 @@ export function getInitials(name: string): string {
 }
 
 // ── Score helpers ──────────────────────────────────────────
+// Numeric Retention Scores use a single Atlas teal treatment.
+// Muted gray is reserved for unavailable scores, not performance.
+export const RETENTION_SCORE_INK = '#1C4A45'
+export const RETENTION_SCORE_FILL = '#E8F0EF'
+export const RETENTION_SCORE_UNAVAILABLE_INK = '#aaa'
+export const RETENTION_SCORE_UNAVAILABLE_FILL = '#f5f5f5'
+
 export function scoreColor(s: number | null): string {
-  if (s === null) return '#aaa'
-  if (s >= 85) return '#1A6B3A'
-  if (s >= 80) return '#4CAF50'
-  if (s >= 70) return '#C8B400'
-  if (s >= 60) return '#E07B00'
-  return '#C0392B'
+  return s === null ? RETENTION_SCORE_UNAVAILABLE_INK : RETENTION_SCORE_INK
 }
 
 export function scoreBg(s: number | null): string {
-  if (s === null) return '#f5f5f5'
-  if (s >= 85) return '#f0faf4'
-  if (s >= 80) return '#f4faf4'
-  if (s >= 70) return '#fdfbe6'
-  if (s >= 60) return '#fff7ed'
-  return '#fdf2f2'
+  return s === null ? RETENTION_SCORE_UNAVAILABLE_FILL : RETENTION_SCORE_FILL
 }
 
 export function scoreClass(s: number | null): string {
-  if (s === null) return 's-na'
-  if (s >= 85) return 's-dg'
-  if (s >= 80) return 's-lg'
-  if (s >= 70) return 's-yw'
-  if (s >= 60) return 's-or'
-  return 's-rd'
+  return s === null ? 's-na' : 's-score'
 }
 
 export function scoreLabel(s: number | null): { text: string; bg: string; color: string } {
-  if (s === null) return { text: 'No score', bg: '#f5f5f5', color: '#aaa' }
-  if (s >= 85) return { text: s.toFixed(1), bg: '#d4edda', color: '#1A6B3A' }
-  if (s >= 80) return { text: s.toFixed(1), bg: '#e8f5e9', color: '#2e7d32' }
-  if (s >= 70) return { text: s.toFixed(1), bg: '#fffde7', color: '#7a6800' }
-  if (s >= 60) return { text: s.toFixed(1), bg: '#fff3e0', color: '#b85c00' }
-  return { text: s.toFixed(1), bg: '#ffebee', color: '#C0392B' }
+  if (s === null) {
+    return {
+      text: 'No score',
+      bg: RETENTION_SCORE_UNAVAILABLE_FILL,
+      color: RETENTION_SCORE_UNAVAILABLE_INK,
+    }
+  }
+  return { text: s.toFixed(1), bg: RETENTION_SCORE_FILL, color: RETENTION_SCORE_INK }
 }
 
 // ── Time helpers ───────────────────────────────────────────

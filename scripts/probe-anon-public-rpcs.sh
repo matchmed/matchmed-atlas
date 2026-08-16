@@ -106,7 +106,7 @@ def rpc(name: str, payload: dict) -> None:
         return
 
     keys = sorted(walk_keys(data))
-    allowed = {"retention_score"} if name == "public_get_practice" else set()
+    allowed = set()
     leaked = sorted((set(keys) & FORBIDDEN_KEYS) - allowed)
     summary = ""
     if isinstance(data, dict):
