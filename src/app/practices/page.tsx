@@ -552,7 +552,7 @@ function PracticesPageContent() {
         filter: ['==', ['get', 'practiceId'], ''],
         paint: {
           'circle-color': ['get', 'color'],
-          'circle-radius': ['+', ['interpolate', ['linear'], ['zoom'], 4, 4, 8, 7, 12, 10], 3],
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 7, 8, 10, 12, 13],
           'circle-opacity': 1,
           'circle-stroke-width': 3,
           'circle-stroke-color': '#1C4A45',
