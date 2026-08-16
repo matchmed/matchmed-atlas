@@ -8,7 +8,8 @@ import {
 import PublicPracticeLocations from '@/components/PublicPracticeLocations'
 import PublicPracticeRoster from '@/components/PublicPracticeRoster'
 import UnlockAnalysisCta from '@/components/UnlockAnalysisCta'
-import { nameToColor, getInitials, scoreColor, scoreBg } from '@/lib/utils'
+import { nameToColor, getInitials } from '@/lib/utils'
+import { withNextParam } from '@/lib/safe-next-path'
 
 /** Hard-coded neutral bar widths — not derived from any practice data. */
 const TENURE_PLACEHOLDER_WIDTHS = ['42%', '68%', '54%', '36%', '58%'] as const
@@ -36,8 +37,7 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
   const [fg, bg] = nameToColor(name)
   const initials = getInitials(name)
   const nextPath = `/practices/${practice.id}`
-  const hasScore = practice.retention_score != null
-  const scoreLabel = hasScore ? practice.retention_score!.toFixed(1) : '—'
+  const unlockHref = withNextParam('/signup', nextPath)
 
   return (
     <div className="public-profile">
@@ -90,23 +90,14 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
 
         <div className="locked-analysis-module-body">
           <div className="locked-metric-grid is-three">
-            <div
-              className="locked-metric-card is-public locked-metric-card-score"
-              style={{ background: scoreBg(practice.retention_score) }}
-            >
-              <div className="locked-metric-label">Retention Score</div>
-              <div className="locked-metric-value">
-                <span
-                  className="locked-metric-score-number"
-                  style={{ color: scoreColor(practice.retention_score) }}
-                >
-                  {scoreLabel}
-                </span>
-                {hasScore && <span className="locked-metric-score-scale"> / 100</span>}
-              </div>
-              <p className="locked-metric-score-note">
-                Higher scores reflect greater observed physician retention.
+            <div className="locked-metric-card is-locked">
+              <div className="locked-metric-label">Retention Analysis</div>
+              <p className="locked-metric-copy">
+                Review observed physician retention, tenure patterns, and departure history based on longitudinal CMS data.
               </p>
+              <Link href={unlockHref} className="locked-metric-unlock">
+                Unlock analysis
+              </Link>
             </div>
             <div className="locked-metric-card is-locked">
               <div className="locked-metric-label">Experience Level</div>
@@ -123,7 +114,7 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
           <UnlockAnalysisCta
             className="unlock-cta-emphasis unlock-cta-bridge"
             nextPath={nextPath}
-            title="Why did this practice score this way?"
+            title="What’s included in the analysis?"
             body="See physician tenure, former physician history, and the full Atlas analysis."
           />
 

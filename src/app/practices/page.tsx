@@ -3,7 +3,7 @@ import { Suspense, useEffect, useState, useRef, useMemo } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import posthog from 'posthog-js'
-import { scoreClass, scoreLabel, getInitials, nameToColor } from '@/lib/utils'
+import { scoreClass, scoreColor, scoreLabel, getInitials, nameToColor } from '@/lib/utils'
 import { loadAtlasCache, peekAtlasCache, saveAtlasCache } from '@/lib/atlas-cache'
 import {
   PRACTICES_CACHE_DB,
@@ -40,6 +40,27 @@ const CACHE_STORE = PRACTICES_CACHE_STORE
 type Practice = PracticeListRow
 
 type SortKey = 'practice_name' | 'retention_score' | 'latest_roster_size'
+
+const MAP_INTERACTIVE_LAYERS = [
+  'unclustered',
+  'unclustered-highlight',
+  'clusters',
+  'cluster-count',
+] as const
+
+function existingMapLayerIds(map: mapboxgl.Map, ids: readonly string[]): string[] {
+  return ids.filter(id => Boolean(map.getLayer(id)))
+}
+
+function queryExistingLayers(
+  map: mapboxgl.Map,
+  point: mapboxgl.PointLike,
+  ids: readonly string[],
+): mapboxgl.MapboxGeoJSONFeature[] {
+  const layers = existingMapLayerIds(map, ids)
+  if (layers.length === 0) return []
+  return map.queryRenderedFeatures(point, { layers })
+}
 
 function sortLabel(key: SortKey): string {
   const labels: Record<SortKey, string> = {
@@ -188,6 +209,7 @@ function PracticesPageContent() {
   const [highlightedClusterId, setHighlightedClusterId] = useState<number | null>(null)
   const [spiderPracticeId, setSpiderPracticeId] = useState<string | null>(null)
   const [spiderHub, setSpiderHub] = useState<[number, number] | null>(null)
+  const [selectedPracticeId, setSelectedPracticeId] = useState<string | null>(null)
   const [shortlistedPracticeIds, setShortlistedPracticeIds] = useState<Set<string>>(new Set())
   const [profileId, setProfileId] = useState<string | null>(null)
 
@@ -344,24 +366,6 @@ function PracticesPageContent() {
     patchUrl({ states: null, page: null })
   }
 
-  function scoreColor(s: number | null) {
-    if (s === null) return '#aaa'
-    if (s >= 85) return '#1A6B3A'
-    if (s >= 80) return '#4CAF50'
-    if (s >= 70) return '#C8B400'
-    if (s >= 60) return '#E07B00'
-    return '#C0392B'
-  }
-
-  function scoreLabelLocal(s: number | null): { text: string; bg: string; color: string } {
-    if (s === null) return { text: 'No score', bg: '#f5f5f5', color: '#aaa' }
-    if (s >= 85) return { text: s.toFixed(1), bg: '#d4edda', color: '#1A6B3A' }
-    if (s >= 80) return { text: s.toFixed(1), bg: '#e8f5e9', color: '#2e7d32' }
-    if (s >= 70) return { text: s.toFixed(1), bg: '#fffde7', color: '#7a6800' }
-    if (s >= 60) return { text: s.toFixed(1), bg: '#fff3e0', color: '#b85c00' }
-    return { text: s.toFixed(1), bg: '#ffebee', color: '#C0392B' }
-  }
-
   function clearSpider() {
     setSpiderPracticeId(null)
     setSpiderHub(null)
@@ -371,7 +375,7 @@ function PracticesPageContent() {
     if (!mapRef.current) return
     lastPopupRef.current = { coords, props }
     const score = props.score === 'null' || props.score === null ? null : parseFloat(props.score)
-    const sl = scoreLabelLocal(score)
+    const sl = scoreLabel(score)
     const isShortlisted = shortlistedPracticeIdsRef.current.has(props.practiceId)
     if (popupRef.current) popupRef.current.remove()
 
@@ -394,9 +398,12 @@ function PracticesPageContent() {
       }, sl, isShortlisted))
       .addTo(mapRef.current)
 
+    setSelectedPracticeId(props.practiceId)
+
     popupRef.current.on('close', () => {
       if (lastPopupRef.current?.props.practiceId === props.practiceId) {
         clearSpider()
+        setSelectedPracticeId(null)
       }
     })
   }
@@ -538,11 +545,26 @@ function PracticesPageContent() {
       map.addLayer({ id: 'unclustered', type: 'circle', source: 'practices', filter: ['!', ['has', 'point_count']],
         paint: { 'circle-color': ['get', 'color'], 'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 4, 8, 7, 12, 10], 'circle-opacity': 0.88, 'circle-stroke-width': 1.5, 'circle-stroke-color': 'rgba(255,255,255,0.5)' }
       })
+      map.addLayer({
+        id: 'unclustered-highlight',
+        type: 'circle',
+        source: 'practices',
+        filter: ['==', ['get', 'practiceId'], ''],
+        paint: {
+          'circle-color': ['get', 'color'],
+          'circle-radius': ['+', ['interpolate', ['linear'], ['zoom'], 4, 4, 8, 7, 12, 10], 3],
+          'circle-opacity': 1,
+          'circle-stroke-width': 3,
+          'circle-stroke-color': '#1C4A45',
+        },
+      })
 
       map.on('click', 'clusters', e => {
         e.originalEvent.stopPropagation()
+        if (popupRef.current) popupRef.current.remove()
         clearSpider()
-        const f = map.queryRenderedFeatures(e.point, { layers: ['clusters', 'cluster-count'] })
+        setSelectedPracticeId(null)
+        const f = queryExistingLayers(map, e.point, ['clusters', 'cluster-count'])
         if (!f || !f.length) return
         const src = map.getSource('practices') as mapboxgl.GeoJSONSource
         const clusterId = f[0].properties!.cluster_id
@@ -559,8 +581,10 @@ function PracticesPageContent() {
 
       map.on('click', 'cluster-count', e => {
         e.originalEvent.stopPropagation()
+        if (popupRef.current) popupRef.current.remove()
         clearSpider()
-        const f = map.queryRenderedFeatures(e.point, { layers: ['clusters', 'cluster-count'] })
+        setSelectedPracticeId(null)
+        const f = queryExistingLayers(map, e.point, ['clusters', 'cluster-count'])
         if (!f || !f.length) return
         const src = map.getSource('practices') as mapboxgl.GeoJSONSource
         const clusterId = f[0].properties!.cluster_id
@@ -581,14 +605,23 @@ function PracticesPageContent() {
         const coords = (e.features![0].geometry as any).coordinates.slice() as [number, number]
         showPracticePopupRef.current(coords, props)
       })
+      if (map.getLayer('unclustered-highlight')) {
+        map.on('click', 'unclustered-highlight', e => {
+          e.originalEvent.stopPropagation()
+          const props = e.features![0].properties!
+          const coords = (e.features![0].geometry as any).coordinates.slice() as [number, number]
+          showPracticePopupRef.current(coords, props)
+        })
+        map.on('mouseenter', 'unclustered-highlight', () => { map.getCanvas().style.cursor = 'pointer' })
+        map.on('mouseleave', 'unclustered-highlight', () => { map.getCanvas().style.cursor = '' })
+      }
 
       map.on('click', e => {
-        const hits = map.queryRenderedFeatures(e.point, {
-          layers: ['unclustered', 'clusters', 'cluster-count'],
-        })
+        const hits = queryExistingLayers(map, e.point, MAP_INTERACTIVE_LAYERS)
         if (hits.length) return
         if (popupRef.current) popupRef.current.remove()
         clearSpider()
+        setSelectedPracticeId(null)
       })
 
       map.on('mouseenter', 'unclustered', () => map.getCanvas().style.cursor = 'pointer')
@@ -618,6 +651,13 @@ function PracticesPageContent() {
     }
   }, [highlightedClusterId])
 
+  useEffect(() => {
+    if (!mapInitedRef.current || !mapRef.current) return
+    const map = mapRef.current
+    if (!map.getLayer('unclustered-highlight')) return
+    map.setFilter('unclustered-highlight', ['==', ['get', 'practiceId'], selectedPracticeId ?? ''])
+  }, [selectedPracticeId])
+
   // Update map when filter or locations change
   useEffect(() => {
     if (!mapInitedRef.current || !mapRef.current) return
@@ -642,7 +682,10 @@ function PracticesPageContent() {
   }, [spiderPracticeId, spiderHub, locationsByPracticeId])
 
   useEffect(() => {
-    if (view !== 'map') clearSpider()
+    if (view !== 'map') {
+      clearSpider()
+      setSelectedPracticeId(null)
+    }
   }, [view])
 
   function buildGeoJSON(records: Practice[]): GeoJSON.FeatureCollection {
@@ -942,11 +985,15 @@ function PracticesPageContent() {
         <div style={{ position: 'relative', height: 600, borderRadius: 10, overflow: 'hidden' }}>
           <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }} />
           <div style={{ position: 'absolute', bottom: 12, left: 12, zIndex: 10, background: 'rgba(255,255,255,0.92)', borderRadius: 8, padding: '10px 14px', boxShadow: '0 1px 4px rgba(0,0,0,0.12)', fontSize: 11 }}>
-            <div style={{ fontSize: 10, fontWeight: 500, color: '#888', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}>Retention score</div>
-            {[['#1A6B3A', '85+'], ['#4CAF50', '80-85'], ['#C8B400', '70-80'], ['#E07B00', '60-70'], ['#C0392B', 'Below 60'], ['#aaa', 'No score']].map(([color, label]) => (
-              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, color: '#555' }}>
-                <div style={{ width: 9, height: 9, borderRadius: '50%', background: color, flexShrink: 0 }} />
-                {label}
+            <div style={{ fontSize: 10, fontWeight: 500, color: '#888', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}>Map key</div>
+            {([
+              { color: '#1C4A45', size: 9, label: 'Practice' },
+              { color: '#1C4A45', size: 14, label: 'Cluster' },
+              { color: '#aaa', size: 9, label: 'No score' },
+            ] as const).map(item => (
+              <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, color: '#555' }}>
+                <div style={{ width: item.size, height: item.size, borderRadius: '50%', background: item.color, flexShrink: 0 }} />
+                {item.label}
               </div>
             ))}
           </div>
@@ -980,6 +1027,7 @@ function PracticesPageContent() {
                     setClusterPractices([])
                     setHighlightedClusterId(null)
                     clearSpider()
+                    setSelectedPracticeId(null)
                   }}
                   aria-label="Close panel"
                   style={{ background: 'none', border: 'none', fontSize: 20, lineHeight: 1, color: '#888', cursor: 'pointer', padding: '0 4px' }}
