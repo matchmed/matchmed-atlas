@@ -21,6 +21,14 @@ export function isPublicProfileDetailPath(pathname: string): boolean {
   return isPublicPracticeDetailPath(pathname) || isPublicPhysicianDetailPath(pathname)
 }
 
+/**
+ * PostHog reverse-proxy paths (`api_host: '/ingest'`).
+ * These are not application routes and must not share the public page allowlist.
+ */
+export function isPostHogIngestPath(pathname: string): boolean {
+  return pathname === '/ingest' || pathname.startsWith('/ingest/')
+}
+
 /** Routes anonymous visitors may open without logging in. */
 export function isAnonymousAllowlistedPath(pathname: string): boolean {
   if (

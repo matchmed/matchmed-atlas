@@ -11,7 +11,9 @@ This inventory is derived from `src/app/**`, `src/proxy.ts`, `src/app/admin/layo
 
 ## Global request policy
 
-`src/proxy.ts` matches all paths except Next.js static/image assets, the favicon, and common image extensions. Its public allowlist is:
+`src/proxy.ts` matches all paths except Next.js static/image assets, the favicon, common image extensions, and the PostHog reverse-proxy prefix `/ingest` (`/ingest`, `/ingest/static/*`, `/ingest/array/*`, and other `/ingest/*` paths). Ingest requests skip session checks and continue to the rewrites in `next.config.ts`. They are not on the application public-page allowlist.
+
+Its public allowlist is:
 
 - `/login`
 - `/signup`
