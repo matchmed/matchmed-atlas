@@ -190,6 +190,12 @@ function PracticesPageContent() {
   const shortlistedPracticeIdsRef = useRef<Set<string>>(new Set())
   const showPracticePopupRef = useRef<(coords: [number, number], props: Record<string, any>) => void>(() => {})
   const toggleShortlistRef = useRef<(practiceId: string) => void>(() => {})
+  /** Latest pin GeoJSON builder — map load/update must not close over a stale render. */
+  const buildGeoJSONRef = useRef<(records: Practice[]) => GeoJSON.FeatureCollection>(() => ({
+    type: 'FeatureCollection',
+    features: [],
+  }))
+  const filteredRef = useRef<Practice[]>([])
 
   function patchUrl(updates: Record<string, string | null | undefined>) {
     replaceListParams(pathname, router, searchParams, updates)
@@ -481,155 +487,184 @@ function PracticesPageContent() {
     ;(window as any).__toggleShortlist = (practiceId: string) => toggleShortlistRef.current(practiceId)
   }, [])
 
-  // Map init
+  // Map init — destroy on leave/unmount. The map container is conditionally
+  // rendered, so skipping map.remove() leaves mapInitedRef true and a dead
+  // Mapbox instance; switching back to Map then shows an empty shell until refresh.
   useEffect(() => {
-    if (view !== 'map' || mapInitedRef.current || !mapContainerRef.current) return
+    if (view !== 'map') return
 
     const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
     if (!token) return
 
-    setTimeout(() => {
-    mapboxgl.accessToken = token
+    let cancelled = false
+    let map: mapboxgl.Map | null = null
 
-    const restore = mapRestoreRef.current
-    const map = new mapboxgl.Map({
-      container: mapContainerRef.current!,
-      style: 'mapbox://styles/mapbox/light-v11',
-      center: restore?.center || [-96, 38],
-      zoom: restore?.zoom || 4,
-    })
-    mapRef.current = map
-    mapRestoreRef.current = null
-    map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right')
+    const frame = window.requestAnimationFrame(() => {
+      if (cancelled || !mapContainerRef.current) return
 
-    map.on('load', () => {
-      mapInitedRef.current = true
-      const geo = buildGeoJSON(filtered)
-      map.addSource('practices', { type: 'geojson', data: geo, cluster: true, clusterMaxZoom: 10, clusterRadius: 40 })
-      map.addSource('spider-lines', {
-        type: 'geojson',
-        data: { type: 'FeatureCollection', features: [] },
+      mapboxgl.accessToken = token
+      const restore = mapRestoreRef.current
+      map = new mapboxgl.Map({
+        container: mapContainerRef.current,
+        style: 'mapbox://styles/mapbox/light-v11',
+        center: restore?.center || [-96, 38],
+        zoom: restore?.zoom || 4,
       })
-      map.addLayer({
-        id: 'spider-lines',
-        type: 'line',
-        source: 'spider-lines',
-        paint: {
-          'line-color': '#1C4A45',
-          'line-width': 1.75,
-          'line-opacity': 0.55,
-          'line-dasharray': [2, 1.5],
-        },
-      })
-      map.addLayer({
-        id: 'cluster-highlight',
-        type: 'circle',
-        source: 'practices',
-        filter: ['==', ['get', 'cluster_id'], -1],
-        paint: {
-          'circle-color': '#1C4A45',
-          'circle-radius': ['+', ['step', ['get', 'point_count'], 16, 10, 22, 50, 28], 14],
-          'circle-opacity': 0.22,
-          'circle-stroke-width': 4,
-          'circle-stroke-color': '#1C4A45',
-          'circle-stroke-opacity': 0.55,
-        },
-      })
-      map.addLayer({ id: 'clusters', type: 'circle', source: 'practices', filter: ['has', 'point_count'],
-        paint: { 'circle-color': '#1C4A45', 'circle-radius': ['step', ['get', 'point_count'], 16, 10, 22, 50, 28], 'circle-opacity': 0.85, 'circle-stroke-width': 1.5, 'circle-stroke-color': 'rgba(255,255,255,0.4)' }
-      })
-      map.addLayer({ id: 'cluster-count', type: 'symbol', source: 'practices', filter: ['has', 'point_count'],
-        layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-size': 12, 'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'] },
-        paint: { 'text-color': '#fff' }
-      })
-      map.addLayer({ id: 'unclustered', type: 'circle', source: 'practices', filter: ['!', ['has', 'point_count']],
-        paint: { 'circle-color': ['get', 'color'], 'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 4, 8, 7, 12, 10], 'circle-opacity': 0.88, 'circle-stroke-width': 1.5, 'circle-stroke-color': 'rgba(255,255,255,0.5)' }
-      })
-      map.addLayer({
-        id: 'unclustered-highlight',
-        type: 'circle',
-        source: 'practices',
-        filter: ['==', ['get', 'practiceId'], ''],
-        paint: {
-          'circle-color': ['get', 'color'],
-          'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 7, 8, 10, 12, 13],
-          'circle-opacity': 1,
-          'circle-stroke-width': 3,
-          'circle-stroke-color': '#1C4A45',
-        },
-      })
+      mapRef.current = map
+      mapRestoreRef.current = null
+      map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right')
 
-      map.on('click', 'clusters', e => {
-        e.originalEvent.stopPropagation()
-        if (popupRef.current) popupRef.current.remove()
-        clearSpider()
-        setSelectedPracticeId(null)
-        const f = queryExistingLayers(map, e.point, ['clusters', 'cluster-count'])
-        if (!f || !f.length) return
-        const src = map.getSource('practices') as mapboxgl.GeoJSONSource
-        const clusterId = f[0].properties!.cluster_id
-        src.getClusterLeaves(clusterId, 100, 0, (err, features) => {
-          if (err || !features) return
-          const leaves = features.map(f => f.properties)
-          setTimeout(() => {
-            setClusterPractices(leaves)
-            setClusterPanelOpen(true)
-            setHighlightedClusterId(clusterId)
-          }, 0)
+      map.on('load', () => {
+        if (cancelled || !map) return
+        mapInitedRef.current = true
+        // Prefer latest filtered/locations via refs — locations often resolve after open.
+        const geo = buildGeoJSONRef.current(filteredRef.current)
+        map.addSource('practices', { type: 'geojson', data: geo, cluster: true, clusterMaxZoom: 10, clusterRadius: 40 })
+        map.addSource('spider-lines', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: [] },
         })
-      })
-
-      map.on('click', 'cluster-count', e => {
-        e.originalEvent.stopPropagation()
-        if (popupRef.current) popupRef.current.remove()
-        clearSpider()
-        setSelectedPracticeId(null)
-        const f = queryExistingLayers(map, e.point, ['clusters', 'cluster-count'])
-        if (!f || !f.length) return
-        const src = map.getSource('practices') as mapboxgl.GeoJSONSource
-        const clusterId = f[0].properties!.cluster_id
-        src.getClusterLeaves(clusterId, 100, 0, (err, features) => {
-          if (err || !features) return
-          const leaves = features.map(f => f.properties)
-          setTimeout(() => {
-            setClusterPractices(leaves)
-            setClusterPanelOpen(true)
-            setHighlightedClusterId(clusterId)
-          }, 0)
+        map.addLayer({
+          id: 'spider-lines',
+          type: 'line',
+          source: 'spider-lines',
+          paint: {
+            'line-color': '#1C4A45',
+            'line-width': 1.75,
+            'line-opacity': 0.55,
+            'line-dasharray': [2, 1.5],
+          },
         })
-      })
+        map.addLayer({
+          id: 'cluster-highlight',
+          type: 'circle',
+          source: 'practices',
+          filter: ['==', ['get', 'cluster_id'], -1],
+          paint: {
+            'circle-color': '#1C4A45',
+            'circle-radius': ['+', ['step', ['get', 'point_count'], 16, 10, 22, 50, 28], 14],
+            'circle-opacity': 0.22,
+            'circle-stroke-width': 4,
+            'circle-stroke-color': '#1C4A45',
+            'circle-stroke-opacity': 0.55,
+          },
+        })
+        map.addLayer({ id: 'clusters', type: 'circle', source: 'practices', filter: ['has', 'point_count'],
+          paint: { 'circle-color': '#1C4A45', 'circle-radius': ['step', ['get', 'point_count'], 16, 10, 22, 50, 28], 'circle-opacity': 0.85, 'circle-stroke-width': 1.5, 'circle-stroke-color': 'rgba(255,255,255,0.4)' }
+        })
+        map.addLayer({ id: 'cluster-count', type: 'symbol', source: 'practices', filter: ['has', 'point_count'],
+          layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-size': 12, 'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'] },
+          paint: { 'text-color': '#fff' }
+        })
+        map.addLayer({ id: 'unclustered', type: 'circle', source: 'practices', filter: ['!', ['has', 'point_count']],
+          paint: { 'circle-color': ['get', 'color'], 'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 4, 8, 7, 12, 10], 'circle-opacity': 0.88, 'circle-stroke-width': 1.5, 'circle-stroke-color': 'rgba(255,255,255,0.5)' }
+        })
+        map.addLayer({
+          id: 'unclustered-highlight',
+          type: 'circle',
+          source: 'practices',
+          filter: ['==', ['get', 'practiceId'], ''],
+          paint: {
+            'circle-color': ['get', 'color'],
+            'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 7, 8, 10, 12, 13],
+            'circle-opacity': 1,
+            'circle-stroke-width': 3,
+            'circle-stroke-color': '#1C4A45',
+          },
+        })
 
-      map.on('click', 'unclustered', e => {
-        e.originalEvent.stopPropagation()
-        const props = e.features![0].properties!
-        const coords = (e.features![0].geometry as any).coordinates.slice() as [number, number]
-        showPracticePopupRef.current(coords, props)
-      })
-      if (map.getLayer('unclustered-highlight')) {
-        map.on('click', 'unclustered-highlight', e => {
+        map.on('click', 'clusters', e => {
+          e.originalEvent.stopPropagation()
+          if (popupRef.current) popupRef.current.remove()
+          clearSpider()
+          setSelectedPracticeId(null)
+          const f = queryExistingLayers(map!, e.point, ['clusters', 'cluster-count'])
+          if (!f || !f.length) return
+          const src = map!.getSource('practices') as mapboxgl.GeoJSONSource
+          const clusterId = f[0].properties!.cluster_id
+          src.getClusterLeaves(clusterId, 100, 0, (err, features) => {
+            if (err || !features) return
+            const leaves = features.map(f => f.properties)
+            setTimeout(() => {
+              setClusterPractices(leaves)
+              setClusterPanelOpen(true)
+              setHighlightedClusterId(clusterId)
+            }, 0)
+          })
+        })
+
+        map.on('click', 'cluster-count', e => {
+          e.originalEvent.stopPropagation()
+          if (popupRef.current) popupRef.current.remove()
+          clearSpider()
+          setSelectedPracticeId(null)
+          const f = queryExistingLayers(map!, e.point, ['clusters', 'cluster-count'])
+          if (!f || !f.length) return
+          const src = map!.getSource('practices') as mapboxgl.GeoJSONSource
+          const clusterId = f[0].properties!.cluster_id
+          src.getClusterLeaves(clusterId, 100, 0, (err, features) => {
+            if (err || !features) return
+            const leaves = features.map(f => f.properties)
+            setTimeout(() => {
+              setClusterPractices(leaves)
+              setClusterPanelOpen(true)
+              setHighlightedClusterId(clusterId)
+            }, 0)
+          })
+        })
+
+        map.on('click', 'unclustered', e => {
           e.originalEvent.stopPropagation()
           const props = e.features![0].properties!
           const coords = (e.features![0].geometry as any).coordinates.slice() as [number, number]
           showPracticePopupRef.current(coords, props)
         })
-        map.on('mouseenter', 'unclustered-highlight', () => { map.getCanvas().style.cursor = 'pointer' })
-        map.on('mouseleave', 'unclustered-highlight', () => { map.getCanvas().style.cursor = '' })
-      }
+        if (map.getLayer('unclustered-highlight')) {
+          map.on('click', 'unclustered-highlight', e => {
+            e.originalEvent.stopPropagation()
+            const props = e.features![0].properties!
+            const coords = (e.features![0].geometry as any).coordinates.slice() as [number, number]
+            showPracticePopupRef.current(coords, props)
+          })
+          map.on('mouseenter', 'unclustered-highlight', () => { map!.getCanvas().style.cursor = 'pointer' })
+          map.on('mouseleave', 'unclustered-highlight', () => { map!.getCanvas().style.cursor = '' })
+        }
 
-      map.on('click', e => {
-        const hits = queryExistingLayers(map, e.point, MAP_INTERACTIVE_LAYERS)
-        if (hits.length) return
-        if (popupRef.current) popupRef.current.remove()
-        clearSpider()
-        setSelectedPracticeId(null)
+        map.on('click', e => {
+          const hits = queryExistingLayers(map!, e.point, MAP_INTERACTIVE_LAYERS)
+          if (hits.length) return
+          if (popupRef.current) popupRef.current.remove()
+          clearSpider()
+          setSelectedPracticeId(null)
+        })
+
+        map.on('mouseenter', 'unclustered', () => map!.getCanvas().style.cursor = 'pointer')
+        map.on('mouseleave', 'unclustered', () => map!.getCanvas().style.cursor = '')
+        map.on('mouseenter', 'clusters', () => map!.getCanvas().style.cursor = 'pointer')
+        map.on('mouseleave', 'clusters', () => map!.getCanvas().style.cursor = '')
+
+        // Container may have been zero-sized at construction; refresh layout + data.
+        map.resize()
+        const src = map.getSource('practices') as mapboxgl.GeoJSONSource | undefined
+        if (src) src.setData(buildGeoJSONRef.current(filteredRef.current))
       })
-
-      map.on('mouseenter', 'unclustered', () => map.getCanvas().style.cursor = 'pointer')
-      map.on('mouseleave', 'unclustered', () => map.getCanvas().style.cursor = '')
-      map.on('mouseenter', 'clusters', () => map.getCanvas().style.cursor = 'pointer')
-      map.on('mouseleave', 'clusters', () => map.getCanvas().style.cursor = '')
     })
-    }, 0)
+
+    return () => {
+      cancelled = true
+      window.cancelAnimationFrame(frame)
+      mapInitedRef.current = false
+      if (popupRef.current) {
+        popupRef.current.remove()
+        popupRef.current = null
+      }
+      if (map) {
+        map.remove()
+      } else if (mapRef.current) {
+        mapRef.current.remove()
+      }
+      mapRef.current = null
+    }
   }, [view])
 
   useEffect(() => {
@@ -657,36 +692,6 @@ function PracticesPageContent() {
     if (!map.getLayer('unclustered-highlight')) return
     map.setFilter('unclustered-highlight', ['==', ['get', 'practiceId'], selectedPracticeId ?? ''])
   }, [selectedPracticeId])
-
-  // Update map when filter or locations change
-  useEffect(() => {
-    if (!mapInitedRef.current || !mapRef.current) return
-    const src = mapRef.current.getSource('practices') as mapboxgl.GeoJSONSource | undefined
-    if (src) src.setData(buildGeoJSON(filtered))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtered, locations, locationsByPracticeId])
-
-  // Spider lines for the selected multi-location practice
-  useEffect(() => {
-    if (!mapInitedRef.current || !mapRef.current) return
-    const src = mapRef.current.getSource('spider-lines') as mapboxgl.GeoJSONSource | undefined
-    if (!src) return
-
-    if (!spiderPracticeId || !spiderHub) {
-      src.setData({ type: 'FeatureCollection', features: [] })
-      return
-    }
-
-    const locs = locationsByPracticeId.get(spiderPracticeId) ?? []
-    src.setData(buildPracticeSpiderGeoJSON(locs, spiderHub))
-  }, [spiderPracticeId, spiderHub, locationsByPracticeId])
-
-  useEffect(() => {
-    if (view !== 'map') {
-      clearSpider()
-      setSelectedPracticeId(null)
-    }
-  }, [view])
 
   function buildGeoJSON(records: Practice[]): GeoJSON.FeatureCollection {
     const practiceById = new Map(records.map(r => [r.id, r]))
@@ -726,6 +731,38 @@ function PracticesPageContent() {
 
     return { type: 'FeatureCollection', features }
   }
+
+  filteredRef.current = filtered
+  buildGeoJSONRef.current = buildGeoJSON
+
+  // Update map when filter or locations change
+  useEffect(() => {
+    if (!mapInitedRef.current || !mapRef.current) return
+    const src = mapRef.current.getSource('practices') as mapboxgl.GeoJSONSource | undefined
+    if (src) src.setData(buildGeoJSON(filtered))
+  }, [filtered, locations, locationsByPracticeId])
+
+  // Spider lines for the selected multi-location practice
+  useEffect(() => {
+    if (!mapInitedRef.current || !mapRef.current) return
+    const src = mapRef.current.getSource('spider-lines') as mapboxgl.GeoJSONSource | undefined
+    if (!src) return
+
+    if (!spiderPracticeId || !spiderHub) {
+      src.setData({ type: 'FeatureCollection', features: [] })
+      return
+    }
+
+    const locs = locationsByPracticeId.get(spiderPracticeId) ?? []
+    src.setData(buildPracticeSpiderGeoJSON(locs, spiderHub))
+  }, [spiderPracticeId, spiderHub, locationsByPracticeId])
+
+  useEffect(() => {
+    if (view !== 'map') {
+      clearSpider()
+      setSelectedPracticeId(null)
+    }
+  }, [view])
 
   const mapPinCount = useMemo(() => {
     const ids = new Set(filtered.map(p => p.id))
