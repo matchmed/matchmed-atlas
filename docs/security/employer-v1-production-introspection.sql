@@ -1,0 +1,5 @@
+-- Employer V1 pre-migration introspection (READ-ONLY).
+-- Run individual queries via: npx supabase db query --linked "SELECT ..."
+-- Supabase CLI does not support psql meta-commands in -f files.
+-- Executed against production project yisjyqnxaimdaeiylbuy on 2026-08-28.
+-- See docs/security/employer-v1-production-introspection-findings.md for results.
