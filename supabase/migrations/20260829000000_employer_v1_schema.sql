@@ -243,7 +243,9 @@ AS $$
   );
 $$;
 
+-- Boolean existence only; required for practice_claims INSERT RLS evaluation.
 REVOKE ALL ON FUNCTION public._employer_active_operates_link_exists(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public._employer_active_operates_link_exists(uuid) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public._employer_slugify(p_name text)
 RETURNS text
@@ -455,7 +457,7 @@ END;
 $$;
 
 CREATE TRIGGER organization_memberships_enforce_role_change
-  BEFORE UPDATE OF role ON public.organization_memberships
+  BEFORE UPDATE ON public.organization_memberships
   FOR EACH ROW
   EXECUTE FUNCTION public.enforce_organization_membership_role_change();
 

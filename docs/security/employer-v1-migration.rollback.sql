@@ -55,7 +55,6 @@ DROP FUNCTION IF EXISTS public.employer_overlay_publicly_visible(uuid);
 DROP FUNCTION IF EXISTS public.can_edit_practice(uuid, uuid);
 DROP FUNCTION IF EXISTS public.can_admin_organization(uuid, uuid);
 DROP FUNCTION IF EXISTS public.can_access_organization(uuid, uuid);
-DROP FUNCTION IF EXISTS public.organization_descendant_ids(uuid);
 DROP FUNCTION IF EXISTS public._organization_descendant_ids(uuid);
 
 -- Internal helpers
