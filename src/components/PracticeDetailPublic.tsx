@@ -1,12 +1,17 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-server'
 import {
+  publicGetEmployerPracticeOverlay,
   publicGetPractice,
   publicGetPracticeLocations,
   publicGetPracticeRoster,
+  resolveEmployerLogoUrl,
 } from '@/lib/public-search'
 import PublicPracticeLocations from '@/components/PublicPracticeLocations'
 import PublicPracticeRoster from '@/components/PublicPracticeRoster'
+import PublicEmployerContact from '@/components/PublicEmployerContact'
+import PublicEmployerContext from '@/components/PublicEmployerContext'
+import PracticeVerifiedBadge from '@/components/PracticeVerifiedBadge'
 import UnlockAnalysisCta from '@/components/UnlockAnalysisCta'
 import { nameToColor, getInitials } from '@/lib/utils'
 import { withNextParam } from '@/lib/safe-next-path'
@@ -16,10 +21,11 @@ const TENURE_PLACEHOLDER_WIDTHS = ['42%', '68%', '54%', '36%', '58%'] as const
 
 export default async function PracticeDetailPublic({ id }: { id: string }) {
   const supabase = await createClient()
-  const [practiceRes, locationsRes, rosterRes] = await Promise.all([
+  const [practiceRes, locationsRes, rosterRes, overlayRes] = await Promise.all([
     publicGetPractice(supabase, id),
     publicGetPracticeLocations(supabase, id),
     publicGetPracticeRoster(supabase, id),
+    publicGetEmployerPracticeOverlay(supabase, id),
   ])
 
   const practice = practiceRes.data
@@ -33,6 +39,11 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
 
   const locations = locationsRes.data
   const roster = rosterRes.data
+  const overlay = overlayRes.data?.visible ? overlayRes.data : null
+  const logoUrl = overlay?.profile?.logo_storage_path
+    ? await resolveEmployerLogoUrl(supabase, overlay.profile.logo_storage_path)
+    : null
+
   const name = practice.practice_name || 'Practice'
   const [fg, bg] = nameToColor(name)
   const initials = getInitials(name)
@@ -48,40 +59,37 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
       </div>
 
       <div className="public-profile-header">
-        <div
-          className="public-profile-avatar is-practice"
-          style={{ background: bg, color: fg }}
-        >
-          {initials}
-        </div>
-        <div className="public-profile-identity">
-          <h1 className="font-serif public-profile-title is-practice">
-            {name}
-          </h1>
-          <div className="public-profile-contact">
-            {practice.phone && (
-              <a href={`tel:${practice.phone}`} className="public-profile-link">
-                {practice.phone}
-              </a>
-            )}
-            {practice.website && (
-              <a
-                href={practice.website.startsWith('http') ? practice.website : `https://${practice.website}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="public-profile-link"
-                style={{ wordBreak: 'break-all' }}
-              >
-                {practice.website}
-              </a>
-            )}
+        {logoUrl ? (
+          <div className="public-profile-avatar is-practice has-logo">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={logoUrl} alt="" className="public-profile-avatar-logo" />
           </div>
+        ) : (
+          <div
+            className="public-profile-avatar is-practice"
+            style={{ background: bg, color: fg }}
+          >
+            {initials}
+          </div>
+        )}
+        <div className="public-profile-identity">
+          <div className="public-profile-title-row">
+            <h1 className="font-serif public-profile-title is-practice">
+              {name}
+            </h1>
+            {overlay && <PracticeVerifiedBadge />}
+          </div>
+          <PublicEmployerContact
+            practice={practice}
+            profile={overlay?.profile}
+          />
         </div>
       </div>
 
-      <PublicPracticeLocations locations={locations} />
-
-      <PublicPracticeRoster roster={roster} />
+      <PublicPracticeLocations
+        locations={locations}
+        employerLocations={overlay?.locations}
+      />
 
       <section className="locked-analysis-module" aria-labelledby="locked-analysis-heading">
         <h2 id="locked-analysis-heading" className="locked-analysis-module-label">
@@ -164,6 +172,20 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
           </div>
         </div>
       </section>
+
+      <PublicPracticeRoster
+        roster={roster}
+        rosterAssertions={overlay?.roster_assertions}
+        rosterLastReviewedAt={overlay?.profile?.roster_last_reviewed_at}
+        showProvenance={Boolean(overlay)}
+      />
+
+      {overlay && (
+        <PublicEmployerContext
+          profile={overlay.profile}
+          logoUrl={null}
+        />
+      )}
 
       <section className="public-profile-caveats" aria-labelledby="caveats-heading">
         <h2 id="caveats-heading" className="public-profile-caveats-title">

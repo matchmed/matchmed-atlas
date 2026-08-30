@@ -19,6 +19,17 @@ import {
   fetchPhysicianJobsForPractice,
   type PhysicianJob,
 } from '@/lib/physician-jobs'
+import PublicEmployerContext from '@/components/PublicEmployerContext'
+import PublicPracticeLocations from '@/components/PublicPracticeLocations'
+import PracticeVerifiedBadge from '@/components/PracticeVerifiedBadge'
+import EmployerRecruitingContact from '@/components/EmployerRecruitingContact'
+import RosterProvenanceNotes from '@/components/RosterProvenanceNotes'
+import {
+  publicGetEmployerPracticeOverlay,
+  resolveEmployerLogoUrl,
+  type EmployerPracticeOverlay,
+} from '@/lib/public-search'
+import { assertionsByDoctorId, formatRosterReviewedLabel } from '@/lib/employer-overlay'
 
 /** Session-scoped guard against Strict Mode / remount duplicate practice_viewed events. */
 const viewedPracticeIds = new Set<string>()
@@ -81,13 +92,15 @@ export default function PracticeDetailAuthorized() {
   const [favLoading, setFavLoading] = useState(false)
   const [favId, setFavId] = useState<string | null>(null)
   const [profileId, setProfileId] = useState<string | null>(null)
+  const [employerOverlay, setEmployerOverlay] = useState<EmployerPracticeOverlay | null>(null)
+  const [employerLogoUrl, setEmployerLogoUrl] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
       const supabase = createClient()
       setLoading(true)
       setLocationsExpanded(false)
-      const [practiceRes, locationsRes, affilRes, jobRes] = await Promise.all([
+      const [practiceRes, locationsRes, affilRes, jobRes, overlayRes] = await Promise.all([
         supabase.from('practices').select('*').eq('id', id).single(),
         supabase
           .from('practice_locations')
@@ -95,6 +108,7 @@ export default function PracticeDetailAuthorized() {
           .eq('practice_id', id),
         supabase.from('affiliations').select('id,npi,status,first_seen_year_at_org,last_seen_year_at_org,tenure_years,grad_yr,doctors(id,physician_name,npi)').eq('practice_id', id).order('last_seen_year_at_org', { ascending: false }),
         fetchPhysicianJobsForPractice(id),
+        publicGetEmployerPracticeOverlay(supabase, id),
       ])
       if (practiceRes.data) {
         setPractice(practiceRes.data)
@@ -127,6 +141,20 @@ export default function PracticeDetailAuthorized() {
       if (affilRes.data) setAffiliations(affilRes.data as any)
       if (!jobRes.error) setJobs(jobRes.data)
       else setJobs([])
+
+      if (overlayRes.data?.visible) {
+        setEmployerOverlay(overlayRes.data)
+        const logoPath = overlayRes.data.profile?.logo_storage_path
+        if (logoPath) {
+          const url = await resolveEmployerLogoUrl(supabase, logoPath)
+          setEmployerLogoUrl(url)
+        } else {
+          setEmployerLogoUrl(null)
+        }
+      } else {
+        setEmployerOverlay(null)
+        setEmployerLogoUrl(null)
+      }
 
       // Get profile id and check if favorited
       const { data: { user } } = await supabase.auth.getUser()
@@ -207,6 +235,21 @@ export default function PracticeDetailAuthorized() {
 
   const onRoster = affiliations.filter(a => (a.status || '').toLowerCase() === 'on roster')
   const notRoster = affiliations.filter(a => (a.status || '').toLowerCase() !== 'on roster')
+  const employerAssertionMap = assertionsByDoctorId(employerOverlay?.roster_assertions)
+
+  const displayPhone = employerOverlay?.profile?.primary_phone || practice.phone
+  const displayWebsite = employerOverlay?.profile?.website || practice.website
+  const hasEmployerOverlay = Boolean(employerOverlay?.visible)
+  const rosterReviewedLabel = formatRosterReviewedLabel(
+    employerOverlay?.profile?.roster_last_reviewed_at,
+  )
+  const publicLocations = locations.map(loc => ({
+    id: loc.id,
+    address: loc.address,
+    city: loc.city,
+    state: loc.state,
+    zip: loc.zip,
+  }))
 
   const BUCKET_ORDER = [TENURE_TOP_BUCKET, '6-7 yrs', '4-5 yrs', '2-3 yrs', '0-1 yrs'] as const
   const buckets = {
@@ -313,15 +356,26 @@ export default function PracticeDetailAuthorized() {
     const tenure = a.tenure_years || 0
     const tenureLabel = tenure >= 8 ? '8+ yrs' : tenure === 1 ? '1 yr' : `${tenure} yrs`
     const [fg2, bg2] = nameToColor(n)
+    const doctorId = a.doctors?.id
+    const employerAssertion = doctorId ? employerAssertionMap.get(doctorId) : undefined
     return (
-      <div key={a.id} onClick={() => a.doctors?.id && router.push(`/physicians/${a.doctors.id}`)} style={{ background: '#ffffff', border: '1px solid #DDD8D0', borderRadius: 10, padding: '14px 16px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 14, cursor: a.doctors?.id ? 'pointer' : 'default' }}>
+      <div key={a.id} onClick={() => doctorId && router.push(`/physicians/${doctorId}`)} style={{ background: '#ffffff', border: '1px solid #DDD8D0', borderRadius: 10, padding: '14px 16px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 14, cursor: doctorId ? 'pointer' : 'default' }}>
         <div style={{ width: 40, height: 40, borderRadius: '50%', background: bg2, color: fg2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
           {getInitials(n)}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n}</div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 99, fontSize: 11, fontWeight: 500, background: isOn ? '#d4edda' : '#f5f5f5', color: isOn ? '#1A6B3A' : '#888' }}>{a.status}</span>
+          {hasEmployerOverlay ? (
+            <RosterProvenanceNotes
+              cmsStatus={a.status}
+              employerAssertion={employerAssertion?.assertion}
+            />
+          ) : (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 99, fontSize: 11, fontWeight: 500, background: isOn ? '#d4edda' : '#f5f5f5', color: isOn ? '#1A6B3A' : '#888' }}>{a.status}</span>
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 6 }}>
             <span style={{ fontSize: 12, color: '#888' }}>{a.first_seen_year_at_org} - {a.last_seen_year_at_org}</span>
             <span style={{ fontSize: 12, color: '#555', fontWeight: 500 }}>{tenureLabel}</span>
             {a.grad_yr && <span style={{ fontSize: 12, color: '#aaa' }}>Med school grad: {a.grad_yr}</span>}
@@ -374,13 +428,23 @@ export default function PracticeDetailAuthorized() {
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20, flexWrap: 'wrap', marginBottom: 32 }}>
-        <div style={{ width: 88, height: 88, borderRadius: 14, background: bg, color: fg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, fontWeight: 600, flexShrink: 0, letterSpacing: '-0.5px' }}>
-          {initials}
-        </div>
+        {employerLogoUrl ? (
+          <div style={{ width: 88, height: 88, borderRadius: 14, overflow: 'hidden', flexShrink: 0, border: '1px solid #DDD8D0', background: '#fff' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={employerLogoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
+        ) : (
+          <div style={{ width: 88, height: 88, borderRadius: 14, background: bg, color: fg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, fontWeight: 600, flexShrink: 0, letterSpacing: '-0.5px' }}>
+            {initials}
+          </div>
+        )}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="font-serif" style={{ fontSize: 24, fontWeight: 700, color: '#1a1a1a', letterSpacing: '-0.02em', marginBottom: 8, lineHeight: 1.2 }}>{name}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>
+            <div className="font-serif" style={{ fontSize: 24, fontWeight: 700, color: '#1a1a1a', letterSpacing: '-0.02em', lineHeight: 1.2 }}>{name}</div>
+            {hasEmployerOverlay && <PracticeVerifiedBadge />}
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {locations.length > 0 && (
+            {!hasEmployerOverlay && locations.length > 0 && (
               locations.length === 1 ? (
                 <div style={{ fontSize: 13, color: '#888', display: 'inline' }}>
                   {formatPracticeLocationAddress(locations[0]) || formatPracticeLocationSummary(locations)}
@@ -435,11 +499,27 @@ export default function PracticeDetailAuthorized() {
                 </div>
               )
             )}
-            {practice.phone && <a href={`tel:${practice.phone}`} style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none' }}>{practice.phone}</a>}
-            {practice.website && <a href={practice.website} target="_blank" rel="noopener" style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 320 }}>{practice.website}</a>}
+            {displayPhone && <a href={`tel:${displayPhone}`} style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none' }}>{displayPhone}</a>}
+            {displayWebsite && <a href={displayWebsite.startsWith('http') ? displayWebsite : `https://${displayWebsite}`} target="_blank" rel="noopener" style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 320 }}>{displayWebsite}</a>}
+            {hasEmployerOverlay && (
+              <EmployerRecruitingContact
+                email={employerOverlay?.profile?.recruiting_email}
+                phone={employerOverlay?.profile?.recruiting_phone}
+                careersUrl={employerOverlay?.profile?.careers_url}
+                linkClassName=""
+                linkStyle={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none' }}
+              />
+            )}
           </div>
         </div>
       </div>
+
+      {hasEmployerOverlay ? (
+        <PublicPracticeLocations
+          locations={publicLocations}
+          employerLocations={employerOverlay?.locations}
+        />
+      ) : null}
 
       {/* Metrics grid */}
       <div className="practice-metric-grid">
@@ -562,6 +642,11 @@ export default function PracticeDetailAuthorized() {
             <div style={{ fontSize: 11, fontWeight: 600, color: '#1A6B3A', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
               Current Physicians ({onRoster.length})
             </div>
+            {rosterReviewedLabel && (
+              <p className="roster-reviewed-label" style={{ marginTop: -4, marginBottom: 10 }}>
+                {rosterReviewedLabel}
+              </p>
+            )}
             {onRoster.map(renderPhysicianCard)}
           </>
         )}
@@ -576,6 +661,15 @@ export default function PracticeDetailAuthorized() {
           </div>
         )}
       </div>
+
+      {employerOverlay && (
+        <div style={{ marginTop: 32 }}>
+          <PublicEmployerContext
+            profile={employerOverlay.profile}
+            logoUrl={null}
+          />
+        </div>
+      )}
     </div>
   )
 }

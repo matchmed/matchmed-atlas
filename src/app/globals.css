@@ -1537,6 +1537,14 @@ body:has(.public-profile-shell) {
   margin-bottom: 8px;
 }
 
+.public-roster-list li,
+.public-roster-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
 .public-roster-link {
   display: block;
   background: #FFFFFF;
@@ -1674,6 +1682,129 @@ body:has(.public-profile-shell) {
   margin-bottom: 28px;
 }
 
+.practice-locations-panel.has-employer-overlay {
+  margin-bottom: 16px;
+}
+
+.practice-current-locations {
+  margin-bottom: 14px;
+}
+
+.practice-cms-locations.is-secondary {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #ece8e0;
+}
+
+.public-profile-section-label.is-secondary {
+  font-size: 10px;
+  font-weight: 600;
+  color: #9a958d;
+  letter-spacing: .07em;
+}
+
+.practice-locations-disclaimer-wrap {
+  margin-top: 8px;
+}
+
+.public-profile-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.public-profile-title-row .public-profile-title.is-practice {
+  margin-bottom: 0;
+}
+
+.practice-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #1c4a45;
+  background: #e8f0ef;
+  border: 1px solid #c5d9d6;
+  white-space: nowrap;
+  cursor: help;
+}
+
+.employer-recruiting-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.employer-recruiting-contact-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.employer-recruiting-contact-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8a867f;
+  letter-spacing: 0.02em;
+}
+
+.employer-recruiting-contact-items {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}
+
+.employer-recruiting-contact-sep {
+  color: #b8b3ab;
+}
+
+.roster-provenance {
+  font-size: 11px;
+  line-height: 1.45;
+  color: #8a867f;
+  margin: 4px 0 0;
+}
+
+.roster-provenance.is-compact {
+  margin-top: 2px;
+}
+
+.roster-provenance-kicker {
+  font-weight: 600;
+  color: #9a958d;
+}
+
+.roster-provenance-value {
+  color: #68645e;
+}
+
+.roster-provenance-sep {
+  color: #c5c0b8;
+}
+
+.roster-reviewed-label {
+  font-size: 11px;
+  color: #8a867f;
+  line-height: 1.4;
+  margin: 0 0 10px;
+}
+
+.public-employer-context-provenance {
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+.public-profile-section + .locked-analysis-module,
+.practice-locations-panel.has-employer-overlay + .locked-analysis-module {
+  margin-top: 0;
+}
+
 .public-profile-section-label {
   font-size: 11px;
   font-weight: 700;
@@ -1790,6 +1921,75 @@ body:has(.public-profile-shell) {
 
 .public-profile-caveats-body:last-child {
   margin-bottom: 0;
+}
+
+.employer-overlay-attribution {
+  font-size: 11px;
+  color: #8a847c;
+  margin: 4px 0 0;
+  line-height: 1.4;
+}
+
+.public-employer-context {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #e8e4dc;
+}
+
+.public-employer-context-logo {
+  margin: 12px 0 16px;
+}
+
+.public-employer-context-logo img {
+  max-width: 160px;
+  max-height: 80px;
+  object-fit: contain;
+}
+
+.public-employer-locations {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #ece8e0;
+}
+
+/* legacy selector kept for compatibility */
+
+.employer-location-primary {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #1c4a45;
+  background: #e8f0ef;
+}
+
+.employer-assertion-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #5c4a1a;
+  background: #f5f0e4;
+  vertical-align: middle;
+}
+
+.public-profile-avatar.has-logo {
+  padding: 6px;
+  background: #fff;
+  border: 1px solid #e8e4dc;
+}
+
+.public-profile-avatar-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
 }
 
 @media (max-width: 640px) {
