@@ -11,6 +11,7 @@ import PublicPracticeLocations from '@/components/PublicPracticeLocations'
 import PublicPracticeRoster from '@/components/PublicPracticeRoster'
 import PublicEmployerContact from '@/components/PublicEmployerContact'
 import PublicEmployerContext from '@/components/PublicEmployerContext'
+import PracticeVerifiedBadge from '@/components/PracticeVerifiedBadge'
 import UnlockAnalysisCta from '@/components/UnlockAnalysisCta'
 import { nameToColor, getInitials } from '@/lib/utils'
 import { withNextParam } from '@/lib/safe-next-path'
@@ -48,7 +49,6 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
   const initials = getInitials(name)
   const nextPath = `/practices/${practice.id}`
   const unlockHref = withNextParam('/signup', nextPath)
-  const attribution = overlay?.attribution_label
 
   return (
     <div className="public-profile">
@@ -73,13 +73,15 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
           </div>
         )}
         <div className="public-profile-identity">
-          <h1 className="font-serif public-profile-title is-practice">
-            {name}
-          </h1>
+          <div className="public-profile-title-row">
+            <h1 className="font-serif public-profile-title is-practice">
+              {name}
+            </h1>
+            {overlay && <PracticeVerifiedBadge />}
+          </div>
           <PublicEmployerContact
             practice={practice}
             profile={overlay?.profile}
-            attributionLabel={attribution}
           />
         </div>
       </div>
@@ -87,7 +89,6 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
       <PublicPracticeLocations
         locations={locations}
         employerLocations={overlay?.locations}
-        employerAttribution={attribution}
       />
 
       <section className="locked-analysis-module" aria-labelledby="locked-analysis-heading">
@@ -175,13 +176,14 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
       <PublicPracticeRoster
         roster={roster}
         rosterAssertions={overlay?.roster_assertions}
+        rosterLastReviewedAt={overlay?.profile?.roster_last_reviewed_at}
+        showProvenance={Boolean(overlay)}
       />
 
       {overlay && (
         <PublicEmployerContext
           profile={overlay.profile}
           logoUrl={null}
-          attributionLabel={attribution}
         />
       )}
 

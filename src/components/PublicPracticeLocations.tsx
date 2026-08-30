@@ -28,44 +28,49 @@ function formatEmployerLocationLine(loc: EmployerOverlayLocation): string {
   return parts.join(' · ')
 }
 
-export default function PublicPracticeLocations({
+function CmsLocationsBlock({
   locations,
-  employerLocations = [],
-  employerAttribution,
+  secondary = false,
+  headingId,
 }: {
   locations: PublicPracticeLocation[]
-  employerLocations?: EmployerOverlayLocation[]
-  employerAttribution?: string
+  secondary?: boolean
+  headingId?: string
 }) {
   const [expanded, setExpanded] = useState(false)
   const listId = useId()
+  const label = secondary ? 'CMS-observed billing locations' : 'Locations'
+
+  if (locations.length === 0) {
+    return secondary ? null : (
+      <p className="public-profile-muted">No CMS billing locations listed.</p>
+    )
+  }
+
+  const labelClass = secondary
+    ? 'public-profile-section-label is-secondary'
+    : 'public-profile-section-label'
 
   return (
-    <section className="public-profile-section" aria-labelledby="public-locations-heading">
+    <div className={secondary ? 'practice-cms-locations is-secondary' : undefined}>
       {locations.length <= 1 ? (
         <>
-          <h2 id="public-locations-heading" className="public-profile-section-label">
-            Locations
-          </h2>
-          {locations.length === 0 ? (
-            <p className="public-profile-muted">No CMS billing locations listed.</p>
-          ) : (
-            <p className="public-profile-text">
-              {formatLocationLine(locations[0]) || 'Location'}
-            </p>
-          )}
+          <h2 id={headingId} className={labelClass}>{label}</h2>
+          <p className="public-profile-text">
+            {formatLocationLine(locations[0]) || 'Location'}
+          </p>
         </>
       ) : (
         <>
           <button
             type="button"
-            id="public-locations-heading"
+            id={headingId}
             aria-expanded={expanded}
             aria-controls={listId}
             onClick={() => setExpanded(open => !open)}
-            className="public-profile-section-label is-interactive"
+            className={`${labelClass} is-interactive`}
           >
-            <span>Locations ({locations.length})</span>
+            <span>{label} ({locations.length})</span>
             <span
               aria-hidden="true"
               className={`public-profile-chevron${expanded ? ' is-open' : ''}`}
@@ -73,7 +78,6 @@ export default function PublicPracticeLocations({
               ▼
             </span>
           </button>
-
           <ul id={listId} className="public-profile-location-list">
             {locations.map((loc, i) => (
               <li
@@ -87,30 +91,64 @@ export default function PublicPracticeLocations({
           </ul>
         </>
       )}
-      <div style={{ marginTop: 8 }}>
+      <div className="practice-locations-disclaimer-wrap">
         <PracticeLocationsDisclaimer />
       </div>
+    </div>
+  )
+}
 
-      {employerLocations.length > 0 && (
-        <div className="public-employer-locations">
-          <h3 className="public-profile-section-label is-accent">
-            Practice-reported locations
-          </h3>
-          {employerAttribution && (
-            <p className="employer-overlay-attribution">{employerAttribution}</p>
-          )}
-          <ul className="public-profile-location-list">
-            {employerLocations.map(loc => (
-              <li key={loc.id} className="public-profile-text">
-                {formatEmployerLocationLine(loc) || 'Location'}
-                {loc.is_primary && (
-                  <span className="employer-location-primary">Primary</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+function EmployerLocationsBlock({
+  employerLocations,
+}: {
+  employerLocations: EmployerOverlayLocation[]
+}) {
+  return (
+    <div className="practice-current-locations">
+      <h2 id="current-locations-heading" className="public-profile-section-label is-accent">
+        Current locations
+      </h2>
+      <ul className="public-profile-location-list">
+        {employerLocations.map(loc => (
+          <li key={loc.id} className="public-profile-text">
+            {formatEmployerLocationLine(loc) || 'Location'}
+            {loc.is_primary && (
+              <span className="employer-location-primary">Primary</span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+export default function PublicPracticeLocations({
+  locations,
+  employerLocations = [],
+}: {
+  locations: PublicPracticeLocation[]
+  employerLocations?: EmployerOverlayLocation[]
+}) {
+  const hasEmployerLocations = employerLocations.length > 0
+
+  if (!hasEmployerLocations) {
+    return (
+      <section className="public-profile-section" aria-labelledby="public-locations-heading">
+        <CmsLocationsBlock
+          locations={locations}
+          headingId="public-locations-heading"
+        />
+      </section>
+    )
+  }
+
+  return (
+    <section
+      className="public-profile-section practice-locations-panel has-employer-overlay"
+      aria-labelledby="current-locations-heading"
+    >
+      <EmployerLocationsBlock employerLocations={employerLocations} />
+      <CmsLocationsBlock locations={locations} secondary />
     </section>
   )
 }

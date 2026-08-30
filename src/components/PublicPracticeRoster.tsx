@@ -3,17 +3,22 @@
 import { useId, useState } from 'react'
 import Link from 'next/link'
 import type { EmployerOverlayRosterAssertion, PublicRosterPhysician } from '@/lib/public-search'
-import { employerAssertionLabel } from '@/lib/public-search'
-import { assertionsByDoctorId } from '@/lib/employer-overlay'
+import { assertionsByDoctorId, formatRosterReviewedLabel } from '@/lib/employer-overlay'
+import RosterProvenanceNotes from '@/components/RosterProvenanceNotes'
 
 export default function PublicPracticeRoster({
   roster,
   rosterAssertions = [],
+  rosterLastReviewedAt,
+  showProvenance = false,
 }: {
   roster: PublicRosterPhysician[]
   rosterAssertions?: EmployerOverlayRosterAssertion[]
+  rosterLastReviewedAt?: string | null
+  showProvenance?: boolean
 }) {
   const assertionMap = assertionsByDoctorId(rosterAssertions)
+  const rosterReviewedLabel = formatRosterReviewedLabel(rosterLastReviewedAt)
   const [expanded, setExpanded] = useState(false)
   const listId = useId()
   const multi = roster.length >= 2
@@ -26,6 +31,9 @@ export default function PublicPracticeRoster({
       <h2 id="roster-heading" className="public-roster-heading">
         Currently observed physicians ({roster.length})
       </h2>
+      {rosterReviewedLabel && (
+        <p className="roster-reviewed-label">{rosterReviewedLabel}</p>
+      )}
       {roster.length === 0 ? (
         <p className="public-roster-empty">No currently observed physicians listed.</p>
       ) : (
@@ -35,20 +43,24 @@ export default function PublicPracticeRoster({
               {roster.map((doc, i) => {
                 const assertion = assertionMap.get(doc.id)
                 return (
-                <li
-                  key={doc.id}
-                  hidden={multi && !expanded && i > 1}
-                >
-                  <Link href={`/physicians/${doc.id}`} className="public-roster-link">
-                    {doc.physician_name || 'Physician'}
-                  </Link>
-                  {assertion && (
-                    <span className="employer-assertion-badge" title="Practice-reported roster note">
-                      {employerAssertionLabel(assertion.assertion)}
-                    </span>
-                  )}
-                </li>
-              )})}
+                  <li
+                    key={doc.id}
+                    hidden={multi && !expanded && i > 1}
+                    className="public-roster-item"
+                  >
+                    <Link href={`/physicians/${doc.id}`} className="public-roster-link">
+                      {doc.physician_name || 'Physician'}
+                    </Link>
+                    {showProvenance && (
+                      <RosterProvenanceNotes
+                        cmsStatus="On roster"
+                        employerAssertion={assertion?.assertion}
+                        compact
+                      />
+                    )}
+                  </li>
+                )
+              })}
             </ul>
             {multi && !expanded && (
               <div className="public-roster-fade" aria-hidden="true" />
