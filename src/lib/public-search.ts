@@ -48,6 +48,67 @@ export type PublicRosterPhysician = {
   physician_name: string | null
 }
 
+export type EmployerRosterAssertionType =
+  | 'confirm_current'
+  | 'report_departed'
+  | 'billing_only'
+  | 'incorrect_association'
+  | 'affiliated_elsewhere_in_org'
+  | 'report_still_affiliated'
+  | 'confirm_former'
+  | 'other'
+
+export type EmployerOverlayProfile = {
+  website: string | null
+  primary_phone: string | null
+  recruiting_email: string | null
+  recruiting_phone: string | null
+  careers_url: string | null
+  overview: string | null
+  logo_storage_path: string | null
+  roster_last_reviewed_at: string | null
+}
+
+export type EmployerOverlayLocation = {
+  id: string
+  status: string
+  address: string | null
+  city: string | null
+  state: string | null
+  zip: string | null
+  phone: string | null
+  is_primary: boolean
+}
+
+export type EmployerOverlayRosterAssertion = {
+  doctor_id: string
+  physician_name: string | null
+  assertion: EmployerRosterAssertionType
+}
+
+export type EmployerPracticeOverlay = {
+  visible: boolean
+  attribution_label?: string
+  profile?: EmployerOverlayProfile | null
+  locations?: EmployerOverlayLocation[]
+  roster_assertions?: EmployerOverlayRosterAssertion[]
+}
+
+const ASSERTION_LABELS: Record<EmployerRosterAssertionType, string> = {
+  confirm_current: 'Confirmed current',
+  report_departed: 'Reported departed',
+  billing_only: 'Billing only',
+  incorrect_association: 'Incorrect association',
+  affiliated_elsewhere_in_org: 'Elsewhere in organization',
+  report_still_affiliated: 'Still affiliated',
+  confirm_former: 'Confirmed former',
+  other: 'Practice note',
+}
+
+export function employerAssertionLabel(assertion: string): string {
+  return (ASSERTION_LABELS as Record<string, string>)[assertion] ?? 'Practice note'
+}
+
 export type PublicPhysicianAffiliation = {
   practice_id: string | null
   practice_name: string | null
@@ -199,6 +260,87 @@ export async function publicGetPracticeLocations(
       .filter((row): row is PublicPracticeLocation => row !== null),
     error: null,
   }
+}
+
+function parseEmployerOverlayProfile(value: unknown): EmployerOverlayProfile | null {
+  const obj = asObject(value)
+  if (!obj) return null
+  return {
+    website: str(obj.website),
+    primary_phone: str(obj.primary_phone),
+    recruiting_email: str(obj.recruiting_email),
+    recruiting_phone: str(obj.recruiting_phone),
+    careers_url: str(obj.careers_url),
+    overview: str(obj.overview),
+    logo_storage_path: str(obj.logo_storage_path),
+    roster_last_reviewed_at: str(obj.roster_last_reviewed_at),
+  }
+}
+
+export async function publicGetEmployerPracticeOverlay(
+  supabase: AnySupabase,
+  practiceId: string,
+): Promise<{ data: EmployerPracticeOverlay | null; error: string | null }> {
+  const { data, error } = await supabase.rpc('public_get_employer_practice_overlay', {
+    p_practice_id: practiceId,
+  })
+  if (error) return { data: null, error: error.message }
+  if (data == null) return { data: null, error: null }
+  const obj = asObject(data)
+  if (!obj) return { data: { visible: false }, error: null }
+  if (obj.visible === false) return { data: { visible: false }, error: null }
+
+  const locations = asArray(obj.locations)
+    .map(row => {
+      const r = asObject(row)
+      if (!r || !str(r.id)) return null
+      return {
+        id: str(r.id)!,
+        status: str(r.status) ?? 'active',
+        address: str(r.address),
+        city: str(r.city),
+        state: str(r.state),
+        zip: str(r.zip),
+        phone: str(r.phone),
+        is_primary: r.is_primary === true,
+      } satisfies EmployerOverlayLocation
+    })
+    .filter((row): row is EmployerOverlayLocation => row !== null)
+
+  const roster_assertions = asArray(obj.roster_assertions)
+    .map(row => {
+      const r = asObject(row)
+      if (!r || !str(r.doctor_id) || !str(r.assertion)) return null
+      return {
+        doctor_id: str(r.doctor_id)!,
+        physician_name: str(r.physician_name),
+        assertion: str(r.assertion)! as EmployerRosterAssertionType,
+      } satisfies EmployerOverlayRosterAssertion
+    })
+    .filter((row): row is EmployerOverlayRosterAssertion => row !== null)
+
+  return {
+    data: {
+      visible: true,
+      attribution_label: str(obj.attribution_label) ?? undefined,
+      profile: parseEmployerOverlayProfile(obj.profile),
+      locations,
+      roster_assertions,
+    },
+    error: null,
+  }
+}
+
+export async function resolveEmployerLogoUrl(
+  supabase: AnySupabase,
+  storagePath: string | null | undefined,
+): Promise<string | null> {
+  if (!storagePath) return null
+  const { data, error } = await supabase.storage
+    .from('employer-practice-logos')
+    .createSignedUrl(storagePath, 3600)
+  if (error || !data?.signedUrl) return null
+  return data.signedUrl
 }
 
 export async function publicGetPracticeRoster(

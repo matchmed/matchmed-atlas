@@ -1792,6 +1792,80 @@ body:has(.public-profile-shell) {
   margin-bottom: 0;
 }
 
+.employer-overlay-attribution {
+  font-size: 11px;
+  color: #8a847c;
+  margin: 4px 0 0;
+  line-height: 1.4;
+}
+
+.public-employer-context {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #e8e4dc;
+}
+
+.public-employer-context-logo {
+  margin: 12px 0 16px;
+}
+
+.public-employer-context-logo img {
+  max-width: 160px;
+  max-height: 80px;
+  object-fit: contain;
+}
+
+.public-employer-locations {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #ece8e0;
+}
+
+.employer-location-primary {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #1c4a45;
+  background: #e8f0ef;
+}
+
+.employer-assertion-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #5c4a1a;
+  background: #f5f0e4;
+  vertical-align: middle;
+}
+
+.public-profile-avatar.has-logo {
+  padding: 6px;
+  background: #fff;
+  border: 1px solid #e8e4dc;
+}
+
+.public-profile-avatar-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.public-roster-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
 @media (max-width: 640px) {
   .public-chrome {
     padding: 10px 12px;

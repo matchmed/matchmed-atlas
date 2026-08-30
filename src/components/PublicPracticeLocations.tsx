@@ -4,6 +4,7 @@ import { useId, useState } from 'react'
 import {
   formatPublicCityState,
   formatPublicZip,
+  type EmployerOverlayLocation,
   type PublicPracticeLocation,
 } from '@/lib/public-search'
 import PracticeLocationsDisclaimer from '@/components/PracticeLocationsDisclaimer'
@@ -17,10 +18,24 @@ function formatLocationLine(loc: PublicPracticeLocation): string {
   return parts.join(' · ')
 }
 
+function formatEmployerLocationLine(loc: EmployerOverlayLocation): string {
+  const parts = [
+    (loc.address || '').trim(),
+    formatPublicCityState(loc.city, loc.state),
+    formatPublicZip(loc.zip),
+  ].filter(Boolean)
+  if (loc.phone) parts.push(loc.phone)
+  return parts.join(' · ')
+}
+
 export default function PublicPracticeLocations({
   locations,
+  employerLocations = [],
+  employerAttribution,
 }: {
   locations: PublicPracticeLocation[]
+  employerLocations?: EmployerOverlayLocation[]
+  employerAttribution?: string
 }) {
   const [expanded, setExpanded] = useState(false)
   const listId = useId()
@@ -75,6 +90,27 @@ export default function PublicPracticeLocations({
       <div style={{ marginTop: 8 }}>
         <PracticeLocationsDisclaimer />
       </div>
+
+      {employerLocations.length > 0 && (
+        <div className="public-employer-locations">
+          <h3 className="public-profile-section-label is-accent">
+            Practice-reported locations
+          </h3>
+          {employerAttribution && (
+            <p className="employer-overlay-attribution">{employerAttribution}</p>
+          )}
+          <ul className="public-profile-location-list">
+            {employerLocations.map(loc => (
+              <li key={loc.id} className="public-profile-text">
+                {formatEmployerLocationLine(loc) || 'Location'}
+                {loc.is_primary && (
+                  <span className="employer-location-primary">Primary</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </section>
   )
 }
