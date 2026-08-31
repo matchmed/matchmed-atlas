@@ -59,6 +59,7 @@ export type EmployerRosterAssertionType =
   | 'other'
 
 export type EmployerOverlayProfile = {
+  public_display_name: string | null
   website: string | null
   primary_phone: string | null
   recruiting_email: string | null
@@ -266,6 +267,7 @@ function parseEmployerOverlayProfile(value: unknown): EmployerOverlayProfile | n
   const obj = asObject(value)
   if (!obj) return null
   return {
+    public_display_name: str(obj.public_display_name),
     website: str(obj.website),
     primary_phone: str(obj.primary_phone),
     recruiting_email: str(obj.recruiting_email),

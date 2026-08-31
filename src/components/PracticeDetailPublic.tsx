@@ -44,7 +44,10 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
     ? await resolveEmployerLogoUrl(supabase, overlay.profile.logo_storage_path)
     : null
 
-  const name = practice.practice_name || 'Practice'
+  const name =
+    overlay?.profile?.public_display_name?.trim() ||
+    practice.practice_name ||
+    'Practice'
   const [fg, bg] = nameToColor(name)
   const initials = getInitials(name)
   const nextPath = `/practices/${practice.id}`

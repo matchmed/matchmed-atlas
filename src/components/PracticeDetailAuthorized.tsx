@@ -216,7 +216,10 @@ export default function PracticeDetailAuthorized() {
   if (loading) return <div className="loading-bar"><div className="loading-bar-inner" /></div>
   if (!practice) return <div style={{ padding: 40, color: '#aaa', textAlign: 'center' }}>Practice not found.</div>
 
-  const name = practice.practice_name || 'Unknown Practice'
+  const name =
+    employerOverlay?.profile?.public_display_name?.trim() ||
+    practice.practice_name ||
+    'Unknown Practice'
   const [fg, bg] = nameToColor(name)
   const initials = getInitials(name)
 
