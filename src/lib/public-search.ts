@@ -64,6 +64,7 @@ export type EmployerOverlayProfile = {
   primary_phone: string | null
   recruiting_email: string | null
   recruiting_phone: string | null
+  recruiting_contact_name: string | null
   careers_url: string | null
   overview: string | null
   logo_storage_path: string | null
@@ -272,6 +273,7 @@ function parseEmployerOverlayProfile(value: unknown): EmployerOverlayProfile | n
     primary_phone: str(obj.primary_phone),
     recruiting_email: str(obj.recruiting_email),
     recruiting_phone: str(obj.recruiting_phone),
+    recruiting_contact_name: str(obj.recruiting_contact_name),
     careers_url: str(obj.careers_url),
     overview: str(obj.overview),
     logo_storage_path: str(obj.logo_storage_path),

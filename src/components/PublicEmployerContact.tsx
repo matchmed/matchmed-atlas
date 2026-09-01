@@ -34,6 +34,7 @@ export default function PublicEmployerContact({
         </a>
       )}
       <EmployerRecruitingContact
+        contactName={profile?.recruiting_contact_name}
         email={profile?.recruiting_email}
         phone={profile?.recruiting_phone}
         careersUrl={profile?.careers_url}

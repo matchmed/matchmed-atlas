@@ -5,6 +5,7 @@ function externalHref(url: string): string {
 }
 
 export default function EmployerRecruitingContact({
+  contactName,
   email,
   phone,
   careersUrl,
@@ -12,6 +13,7 @@ export default function EmployerRecruitingContact({
   linkClassName = 'public-profile-link',
   linkStyle,
 }: {
+  contactName?: string | null
   email?: string | null
   phone?: string | null
   careersUrl?: string | null
@@ -19,7 +21,7 @@ export default function EmployerRecruitingContact({
   linkClassName?: string
   linkStyle?: CSSProperties
 }) {
-  const hasRecruiting = Boolean(email || phone)
+  const hasRecruiting = Boolean(contactName || email || phone)
   if (!hasRecruiting && !careersUrl) return null
 
   return (
@@ -28,6 +30,10 @@ export default function EmployerRecruitingContact({
         <div className="employer-recruiting-contact-group">
           <span className="employer-recruiting-contact-label">Recruiting contact</span>
           <span className="employer-recruiting-contact-items">
+            {contactName && <span>{contactName}</span>}
+            {contactName && (email || phone) && (
+              <span className="employer-recruiting-contact-sep" aria-hidden="true">·</span>
+            )}
             {email && (
               <a href={`mailto:${email}`} className={linkClassName || undefined} style={linkStyle}>
                 {email}
