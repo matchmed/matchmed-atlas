@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-server'
+import { resolvePracticePublicName } from '@/lib/practice-display-name'
 import {
   publicGetEmployerPracticeOverlay,
   publicGetPractice,
@@ -45,9 +46,10 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
     : null
 
   const name =
-    overlay?.profile?.public_display_name?.trim() ||
-    practice.practice_name ||
-    'Practice'
+    resolvePracticePublicName(
+      practice.practice_name,
+      overlay?.profile?.public_display_name,
+    )
   const [fg, bg] = nameToColor(name)
   const initials = getInitials(name)
   const nextPath = `/practices/${practice.id}`

@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import {
   formatPublicCityState,
+  fetchApprovedPracticeDisplayNames,
   publicPlatformCounts,
   publicSearch,
   type PublicSearchPractice,
   type PublicSearchPhysician,
 } from '@/lib/public-search'
+import { resolvePracticePublicName } from '@/lib/practice-display-name'
 import { captureAnalyticsEvent } from '@/lib/posthog-client'
 
 type Hit =
@@ -106,7 +108,17 @@ export default function PublicSearchCombobox({
       } else {
         const nextPractices = data?.practices ?? []
         const nextPhysicians = data?.physicians ?? []
-        setFetchedPractices(nextPractices)
+        const approved = await fetchApprovedPracticeDisplayNames(
+          supabase,
+          nextPractices.map(p => p.id),
+        )
+        if (cancelled) return
+        setFetchedPractices(
+          nextPractices.map(p => ({
+            ...p,
+            practice_name: resolvePracticePublicName(p.practice_name, approved.get(p.id) ?? null),
+          })),
+        )
         setFetchedPhysicians(nextPhysicians)
         captureAnalyticsEvent('public_search_performed', {
           source: 'atlas',

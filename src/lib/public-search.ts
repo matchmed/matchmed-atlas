@@ -279,6 +279,25 @@ function parseEmployerOverlayProfile(value: unknown): EmployerOverlayProfile | n
   }
 }
 
+/** Fetch approved public_display_name values for a small set of practice IDs. */
+export async function fetchApprovedPracticeDisplayNames(
+  supabase: AnySupabase,
+  practiceIds: string[],
+): Promise<Map<string, string>> {
+  const uniqueIds = [...new Set(practiceIds.filter(Boolean))]
+  const found = new Map<string, string>()
+  if (uniqueIds.length === 0) return found
+
+  await Promise.all(
+    uniqueIds.map(async practiceId => {
+      const { data } = await publicGetEmployerPracticeOverlay(supabase, practiceId)
+      const approved = data?.visible ? data.profile?.public_display_name?.trim() : null
+      if (approved) found.set(practiceId, approved)
+    }),
+  )
+  return found
+}
+
 export async function publicGetEmployerPracticeOverlay(
   supabase: AnySupabase,
   practiceId: string,

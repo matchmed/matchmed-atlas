@@ -28,10 +28,17 @@ import {
 import { replaceListParams, pageFromParams, statesFromParams } from '@/lib/list-url'
 import { useListSearch } from '@/lib/use-list-search'
 import { invalidateFavoritesCache } from '@/lib/favorites-cache'
+import {
+  practiceMapLabelName,
+  resolvePracticePublicName,
+} from '@/lib/practice-display-name'
+import { fetchApprovedPracticeDisplayNames } from '@/lib/public-search'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 const PAGE_SIZE = 50
+/** Cap overlay enrichment so we do not N+1 across the full ~6700 practice corpus. */
+const DISPLAY_NAME_ENRICH_MAX = 100
 const CACHE_KEY = PRACTICES_CACHE_KEY
 const CACHE_TTL = PRACTICES_CACHE_TTL
 const CACHE_DB = PRACTICES_CACHE_DB
@@ -115,15 +122,17 @@ function practicePopupHtml(
 
 function PracticeCard({
   practice,
+  displayName,
   locationSummary,
   onOpen,
 }: {
   practice: Practice
+  displayName: string
   locationSummary: string
   onOpen: () => void
 }) {
-  const [fg, bg] = nameToColor(practice.practice_name || '')
-  const initials = getInitials(practice.practice_name || '?')
+  const [fg, bg] = nameToColor(displayName || '')
+  const initials = getInitials(displayName || '?')
   const sl = scoreLabel(practice.retention_score)
   const roster = practice.latest_roster_size
     ? `${practice.latest_roster_size} physician${practice.latest_roster_size === 1 ? '' : 's'}`
@@ -137,7 +146,7 @@ function PracticeCard({
         {initials}
       </div>
       <div className="practice-card-body">
-        <div className="practice-card-name">{practice.practice_name || '—'}</div>
+        <div className="practice-card-name">{displayName || '—'}</div>
         <div className="practice-card-meta">{meta}</div>
       </div>
       <div className="practice-card-score" style={{ background: sl.bg, color: sl.color }}>
@@ -218,6 +227,19 @@ function PracticesPageContent() {
   const [selectedPracticeId, setSelectedPracticeId] = useState<string | null>(null)
   const [shortlistedPracticeIds, setShortlistedPracticeIds] = useState<Set<string>>(new Set())
   const [profileId, setProfileId] = useState<string | null>(null)
+  const [approvedDisplayNames, setApprovedDisplayNames] = useState<Record<string, string>>({})
+  const approvedDisplayNamesRef = useRef<Record<string, string>>({})
+
+  useEffect(() => {
+    approvedDisplayNamesRef.current = approvedDisplayNames
+  }, [approvedDisplayNames])
+
+  function practiceLabel(practice: Practice): string {
+    return resolvePracticePublicName(
+      practice.practice_name,
+      approvedDisplayNames[practice.id],
+    )
+  }
 
   // Load practices + practice_locations with IndexedDB cache (stale-while-revalidate)
   useEffect(() => {
@@ -331,24 +353,67 @@ function PracticesPageContent() {
 
   const allStates = useMemo(() => uniqueSortedStates(locations), [locations])
 
-  const filtered = practices.filter(p => {
-    const q = search.toLowerCase()
-    const locs = locationsByPracticeId.get(p.id) ?? []
-    const matchesSearch =
-      !q ||
-      (p.practice_name || '').toLowerCase().includes(q) ||
-      practiceMatchesLocationSearch(locs, q)
-    const matchesState = practiceMatchesSelectedStates(locs, selectedStates)
-    return matchesSearch && matchesState
-  }).sort((a, b) => {
-    const av = a[sortKey]
-    const bv = b[sortKey]
-    if (av === null && bv === null) return 0
-    if (av === null) return 1
-    if (bv === null) return -1
-    if (typeof av === 'string') return av.localeCompare(bv as string) * sortDir
-    return ((av as number) - (bv as number)) * sortDir
-  })
+  const filtered = useMemo(() => {
+    return practices
+      .filter(p => {
+        const q = search.toLowerCase()
+        const locs = locationsByPracticeId.get(p.id) ?? []
+        const approved = approvedDisplayNames[p.id] || ''
+        const matchesSearch =
+          !q ||
+          (p.practice_name || '').toLowerCase().includes(q) ||
+          approved.toLowerCase().includes(q) ||
+          practiceMatchesLocationSearch(locs, q)
+        const matchesState = practiceMatchesSelectedStates(locs, selectedStates)
+        return matchesSearch && matchesState
+      })
+      .sort((a, b) => {
+        const av = a[sortKey]
+        const bv = b[sortKey]
+        if (av === null && bv === null) return 0
+        if (av === null) return 1
+        if (bv === null) return -1
+        if (typeof av === 'string') return av.localeCompare(bv as string) * sortDir
+        return ((av as number) - (bv as number)) * sortDir
+      })
+  }, [
+    practices,
+    search,
+    selectedStates,
+    locationsByPracticeId,
+    sortKey,
+    sortDir,
+    approvedDisplayNames,
+  ])
+
+  // Enrich approved display names for narrowed result sets (search/filter), not the full corpus.
+  useEffect(() => {
+    if (filtered.length === 0 || filtered.length > DISPLAY_NAME_ENRICH_MAX) return
+    const missing = filtered
+      .map(p => p.id)
+      .filter(id => approvedDisplayNamesRef.current[id] === undefined)
+    if (missing.length === 0) return
+
+    let cancelled = false
+    ;(async () => {
+      const supabase = createClient()
+      const found = await fetchApprovedPracticeDisplayNames(supabase, missing)
+      if (cancelled) return
+      // Mark checked IDs so we do not re-fetch empty overlays on every render.
+      setApprovedDisplayNames(prev => {
+        const next = { ...prev }
+        for (const id of missing) {
+          if (!(id in next)) next[id] = found.get(id) ?? ''
+        }
+        for (const [id, name] of found) next[id] = name
+        return next
+      })
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [filtered])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const pagePractices = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
@@ -379,15 +444,26 @@ function PracticesPageContent() {
 
   function showPracticePopup(coords: [number, number], props: Record<string, any>) {
     if (!mapRef.current) return
-    lastPopupRef.current = { coords, props }
-    const score = props.score === 'null' || props.score === null ? null : parseFloat(props.score)
+    const approved = approvedDisplayNamesRef.current[props.practiceId]
+    const resolvedProps: Record<string, any> = {
+      ...props,
+      name: practiceMapLabelName(
+        props.name,
+        approved && approved.length > 0 ? approved : null,
+      ),
+    }
+    lastPopupRef.current = { coords, props: resolvedProps }
+    const score =
+      resolvedProps.score === 'null' || resolvedProps.score === null
+        ? null
+        : parseFloat(resolvedProps.score)
     const sl = scoreLabel(score)
-    const isShortlisted = shortlistedPracticeIdsRef.current.has(props.practiceId)
+    const isShortlisted = shortlistedPracticeIdsRef.current.has(resolvedProps.practiceId)
     if (popupRef.current) popupRef.current.remove()
 
-    const locs = locationsByPracticeId.get(props.practiceId) ?? []
+    const locs = locationsByPracticeId.get(resolvedProps.practiceId) ?? []
     if (locs.filter(l => l.latitude != null && l.longitude != null).length > 1) {
-      setSpiderPracticeId(props.practiceId)
+      setSpiderPracticeId(resolvedProps.practiceId)
       setSpiderHub(coords)
     } else {
       clearSpider()
@@ -395,7 +471,7 @@ function PracticesPageContent() {
 
     popupRef.current = new mapboxgl.Popup({ closeButton: true, maxWidth: '240px' })
       .setLngLat(coords)
-      .setHTML(practicePopupHtml(props as {
+      .setHTML(practicePopupHtml(resolvedProps as {
         name: string
         location: string
         locationCount?: string
@@ -404,14 +480,53 @@ function PracticesPageContent() {
       }, sl, isShortlisted))
       .addTo(mapRef.current)
 
-    setSelectedPracticeId(props.practiceId)
+    setSelectedPracticeId(resolvedProps.practiceId)
 
     popupRef.current.on('close', () => {
-      if (lastPopupRef.current?.props.practiceId === props.practiceId) {
+      if (lastPopupRef.current?.props.practiceId === resolvedProps.practiceId) {
         clearSpider()
         setSelectedPracticeId(null)
       }
     })
+
+    // Lazy-resolve approved display name for this pin when not yet enriched.
+    if (approvedDisplayNamesRef.current[resolvedProps.practiceId] === undefined) {
+      const practiceId = resolvedProps.practiceId as string
+      void (async () => {
+        const supabase = createClient()
+        const found = await fetchApprovedPracticeDisplayNames(supabase, [practiceId])
+        const approvedName = found.get(practiceId) ?? ''
+        setApprovedDisplayNames(prev =>
+          practiceId in prev ? prev : { ...prev, [practiceId]: approvedName },
+        )
+        if (
+          approvedName &&
+          lastPopupRef.current?.props.practiceId === practiceId &&
+          mapRef.current
+        ) {
+          const nextProps: Record<string, any> = {
+            ...lastPopupRef.current.props,
+            name: approvedName,
+          }
+          lastPopupRef.current = { coords, props: nextProps }
+          if (popupRef.current) {
+            popupRef.current.setHTML(
+              practicePopupHtml(
+                nextProps as {
+                  name: string
+                  location: string
+                  locationCount?: string
+                  phone?: string
+                  practiceId: string
+                },
+                sl,
+                shortlistedPracticeIdsRef.current.has(practiceId),
+              ),
+            )
+          }
+        }
+      })()
+    }
   }
 
   async function toggleShortlist(practiceId: string) {
@@ -715,7 +830,10 @@ function PracticesPageContent() {
             coordinates: pin.coordinates,
           },
           properties: {
-            name: practice.practice_name || '',
+            name: practiceMapLabelName(
+              practice.practice_name,
+              approvedDisplayNamesRef.current[practice.id] || null,
+            ),
             location:
               formatCityState(loc?.city ?? null, loc?.state ?? null) ||
               formatPracticeLocationSummary(locs),
@@ -735,12 +853,12 @@ function PracticesPageContent() {
   filteredRef.current = filtered
   buildGeoJSONRef.current = buildGeoJSON
 
-  // Update map when filter or locations change
+  // Update map when filter, locations, or approved display names change
   useEffect(() => {
     if (!mapInitedRef.current || !mapRef.current) return
     const src = mapRef.current.getSource('practices') as mapboxgl.GeoJSONSource | undefined
     if (src) src.setData(buildGeoJSON(filtered))
-  }, [filtered, locations, locationsByPracticeId])
+  }, [filtered, locations, locationsByPracticeId, approvedDisplayNames])
 
   // Spider lines for the selected multi-location practice
   useEffect(() => {
@@ -947,7 +1065,7 @@ function PracticesPageContent() {
                 {pagePractices.map(p => (
                   <tr key={p.id} style={{ cursor: 'pointer' }} onClick={() => router.push(`/practices/${p.id}`)}>
                     <td style={{ padding: '11px 14px', borderTop: '1px solid #f0f0f0', fontWeight: 500, maxWidth: 320 }}>
-                      {p.practice_name || '—'}
+                      {practiceLabel(p)}
                     </td>
                     <td style={{ padding: '11px 14px', borderTop: '1px solid #f0f0f0' }}>
                       <span className={`score-pill ${scoreClass(p.retention_score)}`}>
@@ -981,6 +1099,7 @@ function PracticesPageContent() {
               <PracticeCard
                 key={p.id}
                 practice={p}
+                displayName={practiceLabel(p)}
                 locationSummary={formatPracticeLocationSummary(locationsByPracticeId.get(p.id) ?? [])}
                 onOpen={() => openPractice(p.id)}
               />
