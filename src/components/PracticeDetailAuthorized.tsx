@@ -508,6 +508,7 @@ export default function PracticeDetailAuthorized() {
             {displayWebsite && <a href={displayWebsite.startsWith('http') ? displayWebsite : `https://${displayWebsite}`} target="_blank" rel="noopener" style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 320 }}>{displayWebsite}</a>}
             {hasEmployerOverlay && (
               <EmployerRecruitingContact
+                contactName={employerOverlay?.profile?.recruiting_contact_name}
                 email={employerOverlay?.profile?.recruiting_email}
                 phone={employerOverlay?.profile?.recruiting_phone}
                 careersUrl={employerOverlay?.profile?.careers_url}
