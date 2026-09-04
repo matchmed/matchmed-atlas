@@ -1722,16 +1722,28 @@ body:has(.public-profile-shell) {
 .practice-verified-badge {
   display: inline-flex;
   align-items: center;
-  padding: 3px 9px;
-  border-radius: 99px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: #1c4a45;
-  background: #e8f0ef;
-  border: 1px solid #c5d9d6;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: transparent;
   white-space: nowrap;
   cursor: help;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.practice-verified-badge-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.practice-verified-badge-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #1c4a45;
 }
 
 .employer-recruiting-contact {
