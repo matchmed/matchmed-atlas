@@ -21,6 +21,7 @@ import {
   type PhysicianJob,
 } from '@/lib/physician-jobs'
 import PublicEmployerContext from '@/components/PublicEmployerContext'
+import EmployerPhysicianReadySections from '@/components/EmployerPhysicianReadySections'
 import PublicPracticeLocations from '@/components/PublicPracticeLocations'
 import PracticeVerifiedBadge from '@/components/PracticeVerifiedBadge'
 import EmployerRecruitingContact from '@/components/EmployerRecruitingContact'
@@ -674,6 +675,7 @@ export default function PracticeDetailAuthorized() {
             profile={employerOverlay.profile}
             logoUrl={null}
           />
+          <EmployerPhysicianReadySections overlay={employerOverlay} />
         </div>
       )}
     </div>

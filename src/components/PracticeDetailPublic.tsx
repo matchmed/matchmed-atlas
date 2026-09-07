@@ -12,6 +12,7 @@ import PublicPracticeLocations from '@/components/PublicPracticeLocations'
 import PublicPracticeRoster from '@/components/PublicPracticeRoster'
 import PublicEmployerContact from '@/components/PublicEmployerContact'
 import PublicEmployerContext from '@/components/PublicEmployerContext'
+import EmployerPhysicianReadySections from '@/components/EmployerPhysicianReadySections'
 import PracticeVerifiedBadge from '@/components/PracticeVerifiedBadge'
 import UnlockAnalysisCta from '@/components/UnlockAnalysisCta'
 import { nameToColor, getInitials } from '@/lib/utils'
@@ -191,6 +192,8 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
           logoUrl={null}
         />
       )}
+
+      <EmployerPhysicianReadySections overlay={overlay} />
 
       <section className="public-profile-caveats" aria-labelledby="caveats-heading">
         <h2 id="caveats-heading" className="public-profile-caveats-title">
