@@ -28,3 +28,9 @@ export function statesFromParams(searchParams: URLSearchParams): Set<string> {
   if (!raw) return new Set()
   return new Set(raw.split(',').map(s => s.trim()).filter(Boolean))
 }
+
+/** Shareable Practices list flag: physician-ready / verified overlay only. */
+export function physicianReadyOnlyFromParams(searchParams: URLSearchParams): boolean {
+  const raw = searchParams.get('ready')
+  return raw === '1' || raw === 'true'
+}

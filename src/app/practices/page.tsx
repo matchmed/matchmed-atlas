@@ -25,14 +25,14 @@ import {
   uniqueSortedStates,
   type PracticeLocation,
 } from '@/lib/practice-locations'
-import { replaceListParams, pageFromParams, statesFromParams } from '@/lib/list-url'
+import { replaceListParams, pageFromParams, statesFromParams, physicianReadyOnlyFromParams } from '@/lib/list-url'
 import { useListSearch } from '@/lib/use-list-search'
 import { invalidateFavoritesCache } from '@/lib/favorites-cache'
 import {
   practiceMapLabelName,
   resolvePracticePublicName,
 } from '@/lib/practice-display-name'
-import { fetchApprovedPracticeDisplayNames } from '@/lib/public-search'
+import { fetchApprovedPracticeDisplayNames, listPhysicianReadyPracticeIds } from '@/lib/public-search'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
@@ -189,6 +189,10 @@ function PracticesPageContent() {
   )
   const { search, setSearch } = useListSearch()
   const selectedStates = useMemo(() => statesFromParams(searchParams), [searchParams])
+  const physicianReadyOnly = useMemo(
+    () => physicianReadyOnlyFromParams(searchParams),
+    [searchParams],
+  )
   const page = pageFromParams(searchParams)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const mapContainerRef = useRef<HTMLDivElement>(null)
@@ -229,10 +233,31 @@ function PracticesPageContent() {
   const [profileId, setProfileId] = useState<string | null>(null)
   const [approvedDisplayNames, setApprovedDisplayNames] = useState<Record<string, string>>({})
   const approvedDisplayNamesRef = useRef<Record<string, string>>({})
+  const [physicianReadyIds, setPhysicianReadyIds] = useState<Set<string> | null>(null)
+  const [physicianReadyError, setPhysicianReadyError] = useState<string | null>(null)
 
   useEffect(() => {
     approvedDisplayNamesRef.current = approvedDisplayNames
   }, [approvedDisplayNames])
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      const supabase = createClient()
+      const { data, error } = await listPhysicianReadyPracticeIds(supabase)
+      if (cancelled) return
+      if (error) {
+        setPhysicianReadyError(error)
+        setPhysicianReadyIds(new Set())
+        return
+      }
+      setPhysicianReadyError(null)
+      setPhysicianReadyIds(new Set(data))
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   function practiceLabel(practice: Practice): string {
     return resolvePracticePublicName(
@@ -365,7 +390,9 @@ function PracticesPageContent() {
           approved.toLowerCase().includes(q) ||
           practiceMatchesLocationSearch(locs, q)
         const matchesState = practiceMatchesSelectedStates(locs, selectedStates)
-        return matchesSearch && matchesState
+        const matchesReady =
+          !physicianReadyOnly || (physicianReadyIds?.has(p.id) ?? false)
+        return matchesSearch && matchesState && matchesReady
       })
       .sort((a, b) => {
         const av = a[sortKey]
@@ -380,6 +407,8 @@ function PracticesPageContent() {
     practices,
     search,
     selectedStates,
+    physicianReadyOnly,
+    physicianReadyIds,
     locationsByPracticeId,
     sortKey,
     sortDir,
@@ -436,6 +465,41 @@ function PracticesPageContent() {
   function clearStates() {
     patchUrl({ states: null, page: null })
   }
+
+  function setPhysicianReadyOnly(next: boolean) {
+    patchUrl({
+      ready: next ? '1' : null,
+      page: null,
+    })
+  }
+
+  const filtersActive = search.length > 0 || selectedStates.size > 0 || physicianReadyOnly
+
+  const physicianReadyCheckbox = (
+    <label
+      className="practices-ready-filter"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 8,
+        fontSize: 13,
+        color: '#333',
+        cursor: 'pointer',
+        userSelect: 'none',
+        whiteSpace: 'nowrap',
+        height: 36,
+        padding: '0 4px',
+      }}
+    >
+      <input
+        type="checkbox"
+        checked={physicianReadyOnly}
+        onChange={e => setPhysicianReadyOnly(e.target.checked)}
+        style={{ width: 14, height: 14, accentColor: '#1C4A45' }}
+      />
+      Physician-ready only
+    </label>
+  )
 
   function clearSpider() {
     setSpiderPracticeId(null)
@@ -945,9 +1009,9 @@ function PracticesPageContent() {
 
           <button
             type="button"
-            className={`practices-filter-btn-mobile ${selectedStates.size > 0 ? 'practices-filter-btn-mobile-active' : ''}`}
+            className={`practices-filter-btn-mobile ${selectedStates.size > 0 || physicianReadyOnly ? 'practices-filter-btn-mobile-active' : ''}`}
             onClick={() => setStateOpen(true)}
-            aria-label="Filter by state"
+            aria-label="Filter practices"
           >
             <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -990,6 +1054,30 @@ function PracticesPageContent() {
             )}
           </div>
 
+          <label
+            className="practices-ready-filter practices-ready-filter-desktop"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              fontSize: 13,
+              color: '#333',
+              cursor: 'pointer',
+              userSelect: 'none',
+              whiteSpace: 'nowrap',
+              height: 36,
+              padding: '0 4px',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={physicianReadyOnly}
+              onChange={e => setPhysicianReadyOnly(e.target.checked)}
+              style={{ width: 14, height: 14, accentColor: '#1C4A45' }}
+            />
+            Physician-ready only
+          </label>
+
           {/* View toggle — desktop */}
           <div className="practices-view-toggle-desktop" style={{ display: 'flex', border: '1px solid #ddd', borderRadius: 8, overflow: 'hidden', marginLeft: 'auto' }}>
             {(['table', 'map'] as const).map(v => (
@@ -1013,9 +1101,15 @@ function PracticesPageContent() {
             <div className="practices-filter-sheet-backdrop" onClick={() => setStateOpen(false)} />
             <div className="practices-filter-sheet">
               <div className="practices-filter-sheet-header">
-                <span>Filter by state</span>
+                <span>Filters</span>
                 <button type="button" onClick={() => setStateOpen(false)}>Done</button>
               </div>
+              <div style={{ marginBottom: 14, paddingBottom: 14, borderBottom: '1px solid #ece8e0' }}>
+                {physicianReadyCheckbox}
+              </div>
+              <p style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 600, color: '#141210' }}>
+                Filter by state
+              </p>
               {stateFilterPanel}
             </div>
           </div>
@@ -1023,6 +1117,20 @@ function PracticesPageContent() {
       </div>
 
       {loading && <div className="loading-bar"><div className="loading-bar-inner" /></div>}
+
+      {physicianReadyError && physicianReadyOnly && (
+        <div style={{
+          marginBottom: 12,
+          padding: '10px 14px',
+          borderRadius: 8,
+          border: '1px solid #f5c2c7',
+          background: '#fff5f5',
+          color: '#842029',
+          fontSize: 13,
+        }}>
+          Could not load physician-ready practices: {physicianReadyError}
+        </div>
+      )}
 
       {locationsError && (
         <div style={{
@@ -1113,7 +1221,7 @@ function PracticesPageContent() {
 
           {/* Footer — desktop */}
           <div className="practices-footer-desktop" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, fontSize: 12, color: '#aaa', flexWrap: 'wrap', gap: 8 }}>
-            <span>{filtered.length.toLocaleString()} practices{search || selectedStates.size > 0 ? ' (filtered)' : ''}</span>
+            <span>{filtered.length.toLocaleString()} practices{filtersActive ? ' (filtered)' : ''}</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <button onClick={() => goToPage(Math.max(0, page - 1))} disabled={page === 0} style={{ fontSize: 12, padding: '4px 10px', border: '1px solid #ddd', borderRadius: 6, background: '#fff', cursor: page === 0 ? 'default' : 'pointer', opacity: page === 0 ? 0.35 : 1 }}>← Prev</button>
               <span style={{ fontSize: 12, color: '#888' }}>Page {page + 1} of {totalPages}</span>

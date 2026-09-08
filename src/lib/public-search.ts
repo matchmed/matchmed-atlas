@@ -484,6 +484,19 @@ export async function resolveEmployerLogoUrl(
   return data.signedUrl
 }
 
+/** Practice IDs with verified overlay + physician_ready_at (authenticated list filter). */
+export async function listPhysicianReadyPracticeIds(
+  supabase: AnySupabase,
+): Promise<{ data: string[]; error: string | null }> {
+  const { data, error } = await supabase.rpc('list_physician_ready_practice_ids')
+  if (error) return { data: [], error: error.message }
+  if (!Array.isArray(data)) return { data: [], error: null }
+  const ids = data
+    .map((row) => (typeof row === 'string' ? row : str(row)))
+    .filter((id): id is string => Boolean(id))
+  return { data: ids, error: null }
+}
+
 export async function publicGetPracticeRoster(
   supabase: AnySupabase,
   id: string,
