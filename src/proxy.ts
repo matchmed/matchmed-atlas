@@ -12,6 +12,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next({ request })
   }
 
+  // This API owns session/admin checks and returns JSON 401/403, not page redirects.
+  if (pathname === '/api/generate-report') {
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(

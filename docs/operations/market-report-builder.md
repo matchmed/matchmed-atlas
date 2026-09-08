@@ -13,13 +13,13 @@ The current flow is:
 5. parse model JSON and allow editing;
 6. generate escaped HTML, preview it in an iframe, and print/save as PDF.
 
-## Access and current security caveat
+## Access and request protections
 
-The page is under the server-protected `/admin` layout and also checks `profiles.is_admin` in the browser. However, `/api/generate-report` itself currently validates only that a non-empty prompt was supplied; it does not independently authenticate the caller or verify admin status.
+The page and API require Atlas admin access. The API validates the Supabase session and checks `profiles.is_admin` plus a non-deleted profile before reading input or calling Anthropic. Its exact path bypasses proxy page redirects so anonymous callers receive 401 and non-admin callers receive 403.
 
-Until that route is fixed, deployment-layer restrictions and the obscurity of the route must not be treated as adequate authorization. Avoid exposing the endpoint publicly where possible, monitor unexpected usage, and prioritize server-side auth/admin checks.
+The API limits JSON request bodies to 256 KiB, including streamed bodies without Content-Length, and requires a non-empty string prompt. Successful provider responses are unchanged. Failures return generic errors; internal logs contain only failure stage and provider HTTP status, never prompts, credentials, or provider bodies.
 
-**Owner confirmation required:** API authorization policy, approved model/vendor, rate limits, cost limits, and monitoring.
+There is no request-frequency limiter. **Owner confirmation required:** rate limits, cost limits, and monitoring.
 
 ## Permitted data
 
