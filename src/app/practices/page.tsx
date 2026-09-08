@@ -497,7 +497,7 @@ function PracticesPageContent() {
         onChange={e => setPhysicianReadyOnly(e.target.checked)}
         style={{ width: 14, height: 14, accentColor: '#1C4A45' }}
       />
-      Physician-ready only
+      Verified Practices only
     </label>
   )
 
@@ -1075,7 +1075,7 @@ function PracticesPageContent() {
               onChange={e => setPhysicianReadyOnly(e.target.checked)}
               style={{ width: 14, height: 14, accentColor: '#1C4A45' }}
             />
-            Physician-ready only
+            Verified Practices only
           </label>
 
           {/* View toggle — desktop */}
