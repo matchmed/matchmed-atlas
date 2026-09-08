@@ -4,6 +4,23 @@ import { createClient } from '@/lib/supabase-server'
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (!profile?.is_admin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const body = await req.json()
     const prompt = typeof body?.prompt === 'string' ? body.prompt.trim() : ''
 
@@ -41,9 +58,7 @@ export async function POST(req: NextRequest) {
 
     // Analytics must never fail report generation. Distinct ID = Supabase auth UUID.
     try {
-      const supabase = await createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      await captureServerEvent(user?.id ?? 'anonymous', 'report_generated', {
+      await captureServerEvent(user.id, 'report_generated', {
         prompt_length: prompt.length,
       })
     } catch {
