@@ -16,10 +16,6 @@ import { nameToColor, getInitials, scoreColor, scoreBg } from '@/lib/utils'
 import { resolvePracticePublicName } from '@/lib/practice-display-name'
 import PracticeErrorReportModal from '@/components/PracticeErrorReportModal'
 import PracticeLocationsDisclaimer from '@/components/PracticeLocationsDisclaimer'
-import {
-  fetchPhysicianJobsForPractice,
-  type PhysicianJob,
-} from '@/lib/physician-jobs'
 import PublicEmployerContext from '@/components/PublicEmployerContext'
 import EmployerPhysicianReadySections from '@/components/EmployerPhysicianReadySections'
 import PublicPracticeLocations from '@/components/PublicPracticeLocations'
@@ -76,10 +72,6 @@ const TENURE_TOP_BUCKET = '8+ observed yrs'
 const TENURE_TOP_BUCKET_TOOLTIP =
   'Affiliations are observed beginning in 2019. Physicians already affiliated at the start of the data window may have longer actual tenure.'
 
-function badge(text: string, color = '#1C4A45', bg = '#E8F0EF') {
-  return <span key={text} style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, color, background: bg, whiteSpace: 'nowrap' }}>{text}</span>
-}
-
 export default function PracticeDetailAuthorized() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
@@ -87,10 +79,8 @@ export default function PracticeDetailAuthorized() {
   const [locations, setLocations] = useState<PracticeLocation[]>([])
   const [locationsExpanded, setLocationsExpanded] = useState(false)
   const [affiliations, setAffiliations] = useState<Affiliation[]>([])
-  const [jobs, setJobs] = useState<PhysicianJob[]>([])
   const [loading, setLoading] = useState(true)
   const [showFormer, setShowFormer] = useState(true)
-  const [jobsOpen, setJobsOpen] = useState(true)
   const [isFavorited, setIsFavorited] = useState(false)
   const [favLoading, setFavLoading] = useState(false)
   const [favId, setFavId] = useState<string | null>(null)
@@ -103,14 +93,13 @@ export default function PracticeDetailAuthorized() {
       const supabase = createClient()
       setLoading(true)
       setLocationsExpanded(false)
-      const [practiceRes, locationsRes, affilRes, jobRes, overlayRes] = await Promise.all([
+      const [practiceRes, locationsRes, affilRes, overlayRes] = await Promise.all([
         supabase.from('practices').select('*').eq('id', id).single(),
         supabase
           .from('practice_locations')
           .select('id,practice_id,address,city,state,zip,latitude,longitude,doctor_count,rank_by_doctors')
           .eq('practice_id', id),
         supabase.from('affiliations').select('id,npi,status,first_seen_year_at_org,last_seen_year_at_org,tenure_years,grad_yr,doctors(id,physician_name,npi)').eq('practice_id', id).order('last_seen_year_at_org', { ascending: false }),
-        fetchPhysicianJobsForPractice(id),
         publicGetEmployerPracticeOverlay(supabase, id),
       ])
       if (practiceRes.data) {
@@ -142,8 +131,7 @@ export default function PracticeDetailAuthorized() {
         setLocations([])
       }
       if (affilRes.data) setAffiliations(affilRes.data as any)
-      if (!jobRes.error) setJobs(jobRes.data)
-      else setJobs([])
+      else setAffiliations([])
 
       if (overlayRes.data?.visible) {
         setEmployerOverlay(overlayRes.data)
@@ -621,36 +609,6 @@ export default function PracticeDetailAuthorized() {
         )}
       </div>
 
-      {/* Job postings */}
-      {jobs.length > 0 && (
-        <div style={{ marginBottom: 32 }}>
-          <button onClick={() => setJobsOpen(o => !o)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 10px' }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: '#1A6B3A', letterSpacing: '.06em', textTransform: 'uppercase' }}>
-              Active Job Opportunities <span style={{ fontWeight: 400, color: '#888' }}>({jobs.length})</span>
-            </span>
-            <span style={{ fontSize: 14, color: '#aaa', transform: jobsOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
-          </button>
-          {jobsOpen && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {jobs.map(j => (
-                <div key={j.id} style={{ border: '1px solid #DDD8D0', borderRadius: 12, padding: '16px 20px', background: '#ffffff', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-                  {j.primary_location && <div style={{ fontSize: 13, color: '#888', marginBottom: 10 }}>📍 {j.primary_location}</div>}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-                    {(j.subspecialties_interest || []).map(s => badge(s, '#1A6B3A', '#D4EDDA'))}
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {j.practice_setting && badge(j.practice_setting)}
-                    {j.clinical_surgical_mix && badge(j.clinical_surgical_mix, '#7B3FA0', '#EEE0F8')}
-                    {j.ideal_hiring_timeline && badge(`Timeline: ${j.ideal_hiring_timeline}`, '#C8640A', '#FFF0E0')}
-                  </div>
-                  {j.additional_details && <div style={{ marginTop: 10, fontSize: 13, color: '#555', lineHeight: 1.5, borderTop: '1px solid #f0f0f0', paddingTop: 10 }}>{j.additional_details}</div>}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Physicians */}
       <div>
         <p style={{ fontSize: 11, color: '#999', lineHeight: 1.5, margin: '0 0 12px' }}>
@@ -687,7 +645,10 @@ export default function PracticeDetailAuthorized() {
             profile={employerOverlay.profile}
             logoUrl={null}
           />
-          <EmployerPhysicianReadySections overlay={employerOverlay} />
+          <EmployerPhysicianReadySections
+            overlay={employerOverlay}
+            practiceId={practice.id}
+          />
         </div>
       )}
     </div>

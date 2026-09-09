@@ -26,8 +26,8 @@ const primaryTabs = [
     icon: <FavoritesIcon />,
   },
   {
-    href: '/jobs',
-    label: 'Jobs',
+    href: '/opportunities',
+    label: 'Opportunities',
     icon: <JobsIcon />,
   },
   {

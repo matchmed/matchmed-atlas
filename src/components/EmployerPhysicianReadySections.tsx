@@ -1,3 +1,11 @@
+'use client'
+
+import ConnectPracticeCta from '@/components/ConnectPracticeCta'
+import {
+  formatOpportunityCompensation,
+  opportunityHorizonLabel,
+  OPPORTUNITY_REASON_LABELS,
+} from '@/lib/opportunity-labels'
 import type { EmployerPracticeOverlay } from '@/lib/public-search'
 
 const OWNERSHIP_LABELS: Record<string, string> = {
@@ -10,38 +18,15 @@ const OWNERSHIP_LABELS: Record<string, string> = {
   other: 'Other',
 }
 
-const HORIZON_LABELS: Record<string, string> = {
-  now: 'Now',
-  within_1_year: 'Within 1 year',
-  within_2_years: 'Within 2 years',
-  within_3_to_5_years: 'Within 3–5 years',
-}
-
-const REASON_LABELS: Record<string, string> = {
-  growth: 'Practice growth',
-  retiring_doctor: 'Replacing a retiring physician',
-  new_subspecialty_offering: 'Adding a new subspecialty',
-  recent_loss_of_doctor: 'Recent physician departure',
-  other: 'Other',
-}
-
-function formatUsd(min: number, max: number | null, openEnded: boolean): string {
-  const fmt = (n: number) =>
-    n >= 1_000_000
-      ? '$1,000,000+'
-      : new Intl.NumberFormat('en-US', {
-          style: 'currency',
-          currency: 'USD',
-          maximumFractionDigits: 0,
-        }).format(n)
-  if (openEnded) return `${fmt(min)}–$1,000,000+`
-  return `${fmt(min)}–${fmt(max ?? min)}`
-}
-
 export default function EmployerPhysicianReadySections({
   overlay,
+  practiceId,
+  showConnect = false,
 }: {
   overlay: EmployerPracticeOverlay | null | undefined
+  practiceId?: string
+  /** Authorized practice detail can show Connect per opportunity. */
+  showConnect?: boolean
 }) {
   if (!overlay?.visible || !overlay.physician_ready) return null
 
@@ -73,61 +58,81 @@ export default function EmployerPhysicianReadySections({
         </section>
       )}
 
-      {outlook && (
+      {outlook && outlook.opportunities.length > 0 && (
         <section className="public-profile-section">
-          <h2 className="public-profile-section-label">Recruiting outlook</h2>
+          <h2 className="public-profile-section-label">Opportunities</h2>
           <div className="public-profile-card">
-            <p className="public-profile-text" style={{ fontWeight: 600 }}>
-              {outlook.status === 'actively_recruiting'
-                ? 'Actively recruiting now'
-                : 'Open to future conversations'}
-            </p>
-            <div style={{ display: 'grid', gap: 16, marginTop: 14 }}>
+            <div style={{ display: 'grid', gap: 18 }}>
               {outlook.opportunities.map((opp) => (
-                <div key={opp.clinical_focus}>
-                  <p className="public-profile-text" style={{ fontWeight: 600 }}>
-                    {opp.clinical_focus}
-                    {opp.actively_recruiting_now ? ' · Actively recruiting now' : ''}
-                  </p>
-                  <p className="public-profile-muted">
-                    Expected hiring: {HORIZON_LABELS[opp.hiring_horizon] ?? opp.hiring_horizon}
-                  </p>
-                  <p className="public-profile-muted">
+                <div
+                  key={opp.id ?? opp.clinical_focus}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 8,
+                    paddingBottom: 14,
+                    borderBottom: '1px solid #f0f0f0',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                      flexWrap: 'wrap',
+                      alignItems: 'flex-start',
+                    }}
+                  >
+                    <div>
+                      <p className="public-profile-text" style={{ fontWeight: 600, margin: 0 }}>
+                        {opp.clinical_focus}
+                      </p>
+                      <p className="public-profile-muted" style={{ margin: '4px 0 0' }}>
+                        {opportunityHorizonLabel(opp.hiring_horizon)}
+                      </p>
+                    </div>
+                    {showConnect && practiceId && opp.id && (
+                      <ConnectPracticeCta
+                        practiceId={practiceId}
+                        opportunityId={opp.id}
+                        source="practice_opportunity"
+                      />
+                    )}
+                  </div>
+                  <p className="public-profile-muted" style={{ margin: 0 }}>
                     Reason:{' '}
                     {opp.reasons
                       .map((r) =>
                         r.reason === 'other' && r.other_text
                           ? r.other_text
-                          : REASON_LABELS[r.reason] ?? r.reason,
+                          : OPPORTUNITY_REASON_LABELS[r.reason] ?? r.reason,
                       )
                       .join(', ') || '—'}
                   </p>
-                  <p className="public-profile-muted">
+                  <p className="public-profile-muted" style={{ margin: 0 }}>
                     Base compensation:{' '}
-                    {formatUsd(
+                    {formatOpportunityCompensation(
                       opp.base_compensation_min_usd,
                       opp.base_compensation_max_usd,
                       opp.base_compensation_max_is_open_ended,
                     )}
                   </p>
-                  <p className="public-profile-muted">
+                  <p className="public-profile-muted" style={{ margin: 0 }}>
                     Productivity structure: {opp.productivity_structure_available ? 'Yes' : 'No'}
-                  </p>
-                  <p className="public-profile-muted">
+                    {' · '}
                     Signing bonus: {opp.signing_bonus_available ? 'Yes' : 'No'}
-                  </p>
-                  <p className="public-profile-muted">
-                    Relocation assistance: {opp.relocation_assistance_available ? 'Yes' : 'No'}
+                    {' · '}
+                    Relocation: {opp.relocation_assistance_available ? 'Yes' : 'No'}
                   </p>
                   {opp.hiring_notes && (
-                    <p className="public-profile-text" style={{ marginTop: 6 }}>
+                    <p className="public-profile-text" style={{ margin: '4px 0 0' }}>
                       {opp.hiring_notes}
                     </p>
                   )}
                 </div>
               ))}
             </div>
-            <p className="public-profile-muted" style={{ marginTop: 12 }}>
+            <p className="public-profile-muted" style={{ marginTop: 4 }}>
               {attribution}
             </p>
           </div>

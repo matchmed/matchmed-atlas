@@ -11,13 +11,13 @@ import {
   ScoringIcon,
   ShieldCheckIcon,
 } from '@/components/nav-icons'
-import { countPhysicianJobs } from '@/lib/physician-jobs'
+import { countPhysicianOpportunities } from '@/lib/physician-opportunities'
 
 interface Stats {
   practices: number
   doctors: number
   affiliations: number
-  jobs: number
+  opportunities: number
 }
 
 const navCardStyle: CSSProperties = {
@@ -100,17 +100,17 @@ export default function HomePageClient() {
     if (!ready) return
     async function load() {
       const supabase = createClient()
-      const [p, d, a, j] = await Promise.all([
+      const [p, d, a, o] = await Promise.all([
         supabase.from('practices').select('id', { count: 'exact', head: true }),
         supabase.from('doctors').select('id', { count: 'exact', head: true }),
         supabase.from('affiliations').select('id', { count: 'exact', head: true }),
-        countPhysicianJobs(),
+        countPhysicianOpportunities(),
       ])
       setStats({
         practices: p.count || 0,
         doctors: d.count || 0,
         affiliations: a.count || 0,
-        jobs: j.error ? 0 : j.count,
+        opportunities: o.error ? 0 : o.count,
       })
     }
     load()
@@ -124,13 +124,13 @@ export default function HomePageClient() {
     { label: 'Ophthalmology Practices', value: stats?.practices.toLocaleString() ?? '—', href: '/practices' },
     { label: 'Physician Careers Tracked', value: stats?.doctors.toLocaleString() ?? '—', href: '/physicians' },
     { label: 'Career Affiliations', value: stats?.affiliations.toLocaleString() ?? '—', href: '/practices' },
-    { label: 'Active Job Listings', value: stats?.jobs.toLocaleString() ?? '—', href: '/jobs' },
+    { label: 'Opportunities', value: stats?.opportunities.toLocaleString() ?? '—', href: '/opportunities' },
   ]
 
   const quickLinks = [
     { href: '/practices', label: 'Browse Practices', desc: 'Search 6,800+ ophthalmology practices with retention scores and career history', icon: <PracticesIcon size={20} /> },
     { href: '/physicians', label: 'Physician Directory', desc: 'Explore 22,000+ ophthalmologist career records from CMS data', icon: <PhysiciansIcon size={20} /> },
-    { href: '/jobs', label: 'Job Opportunities', desc: 'View open positions from practices actively recruiting', icon: <JobsIcon size={20} /> },
+    { href: '/opportunities', label: 'Opportunities', desc: 'Browse practice-reported recruiting opportunities by specialty, state, and hiring horizon', icon: <JobsIcon size={20} /> },
     { href: '/favorites', label: 'My Favorites', desc: 'Practices you have saved for later review', icon: <FavoritesIcon size={20} /> },
   ]
 

@@ -97,6 +97,7 @@ export type EmployerOverlayOwnership = {
 }
 
 export type EmployerOverlayOpportunity = {
+  id?: string | null
   clinical_focus: string
   hiring_horizon: string
   hiring_notes: string | null
@@ -402,10 +403,11 @@ export async function publicGetEmployerPracticeOverlay(
         const outlook = asObject(obj.recruiting_outlook)
         if (!outlook || !str(outlook.status)) return null
         const opportunities = asArray(outlook.opportunities)
-          .map((row) => {
+          .map((row): EmployerOverlayOpportunity | null => {
             const r = asObject(row)
             if (!r || !str(r.clinical_focus)) return null
             return {
+              id: str(r.id),
               clinical_focus: str(r.clinical_focus)!,
               hiring_horizon: str(r.hiring_horizon) ?? '',
               hiring_notes: str(r.hiring_notes),
@@ -425,7 +427,7 @@ export async function publicGetEmployerPracticeOverlay(
                 })
                 .filter((x): x is { reason: string; other_text: string | null } => Boolean(x)),
               last_confirmed_at: str(r.last_confirmed_at),
-            } satisfies EmployerOverlayOpportunity
+            }
           })
           .filter((row): row is EmployerOverlayOpportunity => row !== null)
         return {

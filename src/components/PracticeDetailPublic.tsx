@@ -193,7 +193,7 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
         />
       )}
 
-      <EmployerPhysicianReadySections overlay={overlay} />
+      <EmployerPhysicianReadySections overlay={overlay} practiceId={practice.id} />
 
       <section className="public-profile-caveats" aria-labelledby="caveats-heading">
         <h2 id="caveats-heading" className="public-profile-caveats-title">
