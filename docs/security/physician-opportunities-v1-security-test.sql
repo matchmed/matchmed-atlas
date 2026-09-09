@@ -15,6 +15,8 @@ CREATE TEMP TABLE opp_sec_results (
   pass boolean NOT NULL
 );
 
+GRANT ALL ON TABLE opp_sec_results TO authenticated;
+
 CREATE OR REPLACE FUNCTION pg_temp.record(
   p_case int,
   p_desc text,
