@@ -370,7 +370,10 @@ BEGIN
 
       -- Deactivate within this transaction only (ROLLBACK restores).
       UPDATE public.employer_organization_practices
-      SET status = 'inactive', updated_at = now()
+      SET
+        status = 'inactive',
+        inactive_at = now(),
+        inactive_reason = 'mat12-security-test-deactivate'
       WHERE id = link_id;
 
       PERFORM pg_temp.set_jwt(u_phys);
