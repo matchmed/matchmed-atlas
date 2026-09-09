@@ -195,9 +195,9 @@ BEGIN
   PERFORM pg_temp.reset_auth();
 
   -- 4. Specialty filter
-  PERFORM pg_temp.set_jwt(u_phys);
   SELECT clinical_focus INTO err
   FROM public.employer_practice_recruiting_opportunities WHERE id = opp_ready;
+  PERFORM pg_temp.set_jwt(u_phys);
   payload := public.list_physician_opportunities(500, 0, err, NULL, NULL);
   ok := (
     SELECT bool_and((e->>'clinical_focus') = err)
@@ -206,9 +206,14 @@ BEGIN
   PERFORM pg_temp.record(4, 'clinical_focus filter', 'exact match only', COALESCE(ok, true) AND jsonb_array_length(payload) >= 1, payload::text);
   PERFORM pg_temp.reset_auth();
 
-  -- 5. State filter via practice geography
+  -- 5. State filter via practice geography (use RPC payload states; helpers are not granted to authenticated)
   PERFORM pg_temp.set_jwt(u_phys);
-  SELECT (public._physician_opportunity_practice_states(practice_ready))[1] INTO err;
+  payload := public.list_physician_opportunities_for_practice(practice_ready);
+  SELECT e->'practice_states'->>0 INTO err
+  FROM jsonb_array_elements(payload) AS e
+  WHERE jsonb_typeof(e->'practice_states') = 'array'
+    AND jsonb_array_length(e->'practice_states') > 0
+  LIMIT 1;
   IF err IS NOT NULL THEN
     payload := public.list_physician_opportunities(500, 0, NULL, err, NULL);
     ok := EXISTS (
@@ -222,9 +227,9 @@ BEGIN
   PERFORM pg_temp.reset_auth();
 
   -- 6. Hiring horizon filter
-  PERFORM pg_temp.set_jwt(u_phys);
   SELECT hiring_horizon INTO err
   FROM public.employer_practice_recruiting_opportunities WHERE id = opp_ready;
+  PERFORM pg_temp.set_jwt(u_phys);
   payload := public.list_physician_opportunities(500, 0, NULL, NULL, err);
   ok := (
     SELECT bool_and((e->>'hiring_horizon') = err)
