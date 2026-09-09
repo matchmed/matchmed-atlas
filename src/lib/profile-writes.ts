@@ -21,6 +21,7 @@ const ALLOWED_PROFILE_FIELDS = [
   'terms_accepted',
   'industry_partnership_acknowledged',
   'data_sharing',
+  'open_to_practice_connections',
   'onboarding_complete',
   'signup_date',
 ] as const

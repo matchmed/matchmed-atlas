@@ -25,6 +25,7 @@ import EmployerPhysicianReadySections from '@/components/EmployerPhysicianReadyS
 import PublicPracticeLocations from '@/components/PublicPracticeLocations'
 import PracticeVerifiedBadge from '@/components/PracticeVerifiedBadge'
 import EmployerRecruitingContact from '@/components/EmployerRecruitingContact'
+import ConnectPracticeCta from '@/components/ConnectPracticeCta'
 import RosterProvenanceNotes from '@/components/RosterProvenanceNotes'
 import {
   publicGetEmployerPracticeOverlay,
@@ -411,25 +412,28 @@ export default function PracticeDetailAuthorized() {
             }}
           />
         </div>
-        <button
-          onClick={toggleFavorite}
-          disabled={favLoading || !profileId}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            padding: '9px 18px',
-            background: isFavorited ? '#f0faf4' : '#1C4A45',
-            border: `1.5px solid ${isFavorited ? '#1A6B3A' : '#1C4A45'}`,
-            borderRadius: 10,
-            fontSize: 14,
-            fontWeight: 600,
-            color: isFavorited ? '#1A6B3A' : 'white',
-            cursor: (favLoading || !profileId) ? 'not-allowed' : 'pointer',
-            opacity: (favLoading || !profileId) ? 0.6 : 1,
-            transition: 'all 0.15s',
-          }}
-        >
-          {isFavorited ? '★ Saved' : '☆ Add to Favorites'}
-        </button>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'flex-end', alignItems: 'flex-start' }}>
+          <ConnectPracticeCta practiceId={practice.id} source="practice_detail" />
+          <button
+            onClick={toggleFavorite}
+            disabled={favLoading || !profileId}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '9px 18px',
+              background: isFavorited ? '#f0faf4' : '#1C4A45',
+              border: `1.5px solid ${isFavorited ? '#1A6B3A' : '#1C4A45'}`,
+              borderRadius: 10,
+              fontSize: 14,
+              fontWeight: 600,
+              color: isFavorited ? '#1A6B3A' : 'white',
+              cursor: (favLoading || !profileId) ? 'not-allowed' : 'pointer',
+              opacity: (favLoading || !profileId) ? 0.6 : 1,
+              transition: 'all 0.15s',
+            }}
+          >
+            {isFavorited ? '★ Saved' : '☆ Add to Favorites'}
+          </button>
+        </div>
       </div>
 
       {/* Header */}

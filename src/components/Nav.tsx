@@ -30,6 +30,11 @@ const primaryTabs = [
     label: 'Jobs',
     icon: <JobsIcon />,
   },
+  {
+    href: '/connect',
+    label: 'Connect',
+    icon: <PhysiciansIcon />,
+  },
 ]
 
 const secondaryLinks = [
