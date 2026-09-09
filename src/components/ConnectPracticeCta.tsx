@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import Link from 'next/link'
 import posthog from 'posthog-js'
 import {
   connectAccept,
@@ -14,6 +13,7 @@ import {
   type ConnectRelationshipSummary,
 } from '@/lib/connect'
 
+/** Match PracticeDetailAuthorized favorite / primary action buttons. */
 const btnBase = {
   display: 'inline-flex',
   alignItems: 'center',
@@ -28,8 +28,9 @@ const btnBase = {
 } as const
 
 /**
- * Reusable physician-side Connect control for practice detail and future Opportunity CTAs.
- * Pass opportunityId later from Opportunity surfaces without duplicating relationship logic.
+ * Physician-side Connect control for practice detail (and future Opportunity CTAs).
+ * Hidden when the practice is not Connect-eligible and there is no active relationship.
+ * Never explains claiming / verification / eligibility mechanics to physicians.
  */
 export default function ConnectPracticeCta({
   practiceId,
@@ -98,17 +99,28 @@ export default function ConnectPracticeCta({
 
   if (loading) {
     return (
-      <span style={{ fontSize: 13, color: '#888' }}>Checking Connect…</span>
+      <span style={{ fontSize: 13, color: '#888', alignSelf: 'center' }}>
+        Checking Connect…
+      </span>
     )
   }
 
+  // Ineligible practices: hide entirely (no claiming / eligibility copy).
+  // Keep rendering when an active relationship exists even if eligibility later drops.
   if (!eligible && !active) {
+    if (error) {
+      return (
+        <p style={{ fontSize: 12, color: '#dc2626', margin: 0, maxWidth: 220 }}>
+          {error}
+        </p>
+      )
+    }
     return null
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end', alignItems: 'center' }}>
         {!active && eligible && (
           <button
             type="button"
@@ -142,7 +154,7 @@ export default function ConnectPracticeCta({
                 cursor: 'default',
               }}
             >
-              Request pending
+              Request sent
             </span>
             <button
               type="button"
@@ -162,6 +174,17 @@ export default function ConnectPracticeCta({
 
         {active?.status === 'pending' && active.initiator_side === 'practice' && (
           <>
+            <span
+              style={{
+                ...btnBase,
+                background: '#fff8eb',
+                color: '#92400e',
+                borderColor: '#f0d9a8',
+                cursor: 'default',
+              }}
+            >
+              Respond to request
+            </span>
             <button
               type="button"
               disabled={acting}
@@ -173,7 +196,7 @@ export default function ConnectPracticeCta({
                 opacity: acting ? 0.6 : 1,
               }}
             >
-              Accept Connect
+              Accept
             </button>
             <button
               type="button"
@@ -220,9 +243,6 @@ export default function ConnectPracticeCta({
           </>
         )}
       </div>
-      <Link href="/connect" style={{ fontSize: 12, color: '#1C4A45', textDecoration: 'none' }}>
-        View Connect inbox
-      </Link>
       {error && (
         <p style={{ fontSize: 12, color: '#dc2626', margin: 0, textAlign: 'right', maxWidth: 280 }}>
           {error}

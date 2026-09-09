@@ -412,13 +412,21 @@ export default function PracticeDetailAuthorized() {
             }}
           />
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'flex-end', alignItems: 'flex-start' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 10,
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+          }}
+        >
           <ConnectPracticeCta practiceId={practice.id} source="practice_detail" />
           <button
             onClick={toggleFavorite}
             disabled={favLoading || !profileId}
             style={{
-              display: 'flex', alignItems: 'center', gap: 8,
+              display: 'inline-flex', alignItems: 'center', gap: 8,
               padding: '9px 18px',
               background: isFavorited ? '#f0faf4' : '#1C4A45',
               border: `1.5px solid ${isFavorited ? '#1A6B3A' : '#1C4A45'}`,
