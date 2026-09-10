@@ -214,8 +214,8 @@ export default function HomePageClient() {
                 </div>
               </div>
               <div className="navigate-atlas-partners-mark">
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#888', lineHeight: 1.3 }}>Sample Partner</div>
-                <div style={{ fontSize: 11, color: '#999', lineHeight: 1.4, marginTop: 4 }}>Illustrative partnership concept</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#888', lineHeight: 1.3 }}>Industry Partners</div>
+                <div style={{ fontSize: 11, color: '#999', lineHeight: 1.4, marginTop: 4 }}>View current partners →</div>
               </div>
             </div>
           </Link>
