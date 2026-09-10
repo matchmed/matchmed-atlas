@@ -259,14 +259,16 @@ BEGIN
   payload := public.get_atlas_sponsor_page('not_a_real_sponsor_slug_zzz');
   ok := payload IS NULL;
   PERFORM pg_temp.record(14, 'unknown slug returns null', 'null', ok, coalesce(payload::text, 'null'));
+  PERFORM pg_temp.reset_auth();
 
+  -- Deactivate as elevated role (physician JWT cannot write sponsor profiles under RLS).
   UPDATE public.sponsor_vendor_profiles SET is_active = false WHERE vendor_id = vendor_bl;
+  PERFORM pg_temp.set_jwt(u_phys);
   payload := public.get_atlas_sponsor_page('bausch_plus_lomb');
   ok := payload IS NULL;
   PERFORM pg_temp.record(15, 'inactive sponsor slug returns null page', 'null', ok, coalesce(payload::text, 'null'));
-  UPDATE public.sponsor_vendor_profiles SET is_active = true WHERE vendor_id = vendor_bl;
   PERFORM pg_temp.reset_auth();
-
+  UPDATE public.sponsor_vendor_profiles SET is_active = true WHERE vendor_id = vendor_bl;
   -- 16. Direct physician INSERT into sponsor content denied
   PERFORM pg_temp.set_jwt(u_phys);
   BEGIN
