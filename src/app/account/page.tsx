@@ -4,6 +4,10 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { upsertProfileByUserId } from '@/lib/profile-writes'
+import {
+  CONSENT_ACCOUNT_CHECKBOX_COPY,
+  CONSENT_ACCOUNT_HEADING,
+} from '@/lib/consent-model'
 import posthog from 'posthog-js'
 
 const US_STATES = ['AK','AL','AR','AZ','CA','CO','CT','DC','DE','FL','GA','HI','IA','ID','IL','IN','KS','KY','LA','MA','MD','ME','MI','MN','MO','MS','MT','NC','ND','NE','NH','NJ','NM','NV','NY','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VA','VT','WA','WI','WV','WY']
@@ -164,7 +168,6 @@ export default function AccountPage() {
     procedures_performed: [] as string[],
     procedures_desired: [] as string[],
     data_sharing: false,
-    open_to_practice_connections: false,
   })
 
   useEffect(() => {
@@ -196,7 +199,6 @@ export default function AccountPage() {
           procedures_performed: profile.procedures_performed || [],
           procedures_desired: profile.procedures_desired || [],
           data_sharing: profile.data_sharing || false,
-          open_to_practice_connections: profile.open_to_practice_connections === true,
         })
         if (profile.first_name) {
           setInitials(`${profile.first_name[0]}${profile.last_name?.[0] || ''}`.toUpperCase())
@@ -404,7 +406,7 @@ export default function AccountPage() {
 
       {/* Preferences section */}
       <div style={{ background: '#FFFFFF', border: '1px solid #DDD8D0', borderRadius: 12, padding: 24, marginBottom: 24 }}>
-        <h2 style={{ fontSize: 15, fontWeight: 600, color: '#111', marginBottom: 16 }}>Introductions & Opportunities</h2>
+        <h2 style={{ fontSize: 15, fontWeight: 600, color: '#111', marginBottom: 16 }}>{CONSENT_ACCOUNT_HEADING}</h2>
         <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
           <input
             type="checkbox"
@@ -413,22 +415,7 @@ export default function AccountPage() {
             style={{ marginTop: 2, accentColor: '#1C4A45' }}
           />
           <span style={{ fontSize: 13, color: '#374151', lineHeight: 1.5 }}>
-            I agree to be contactable by ophthalmology practices and industry partners. This is what keeps Atlas free for physicians. I can opt out at any time.
-          </span>
-        </label>
-      </div>
-
-      <div style={{ background: '#FFFFFF', border: '1px solid #DDD8D0', borderRadius: 12, padding: 24, marginBottom: 24 }}>
-        <h2 style={{ fontSize: 15, fontWeight: 600, color: '#111', marginBottom: 16 }}>Practice Connect</h2>
-        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
-          <input
-            type="checkbox"
-            checked={form.open_to_practice_connections}
-            onChange={e => setForm(f => ({ ...f, open_to_practice_connections: e.target.checked }))}
-            style={{ marginTop: 2, accentColor: '#1C4A45' }}
-          />
-          <span style={{ fontSize: 13, color: '#374151', lineHeight: 1.5 }}>
-            Allow practices to find me anonymously and send Connect requests. Your name and contact details stay hidden until you accept.
+            {CONSENT_ACCOUNT_CHECKBOX_COPY}
           </span>
         </label>
       </div>

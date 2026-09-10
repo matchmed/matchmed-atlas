@@ -5,7 +5,7 @@ export type ProfileWriteResult =
   | { ok: false; reason: string }
 
 /** Columns onboarding and Account may write. Everything else is stripped. */
-const ALLOWED_PROFILE_FIELDS = [
+export const ALLOWED_PROFILE_FIELDS = [
   'first_name',
   'last_name',
   'npi',
@@ -21,7 +21,6 @@ const ALLOWED_PROFILE_FIELDS = [
   'terms_accepted',
   'industry_partnership_acknowledged',
   'data_sharing',
-  'open_to_practice_connections',
   'onboarding_complete',
   'signup_date',
 ] as const
@@ -29,6 +28,11 @@ const ALLOWED_PROFILE_FIELDS = [
 type AllowedProfileField = (typeof ALLOWED_PROFILE_FIELDS)[number]
 
 export type ProfileUpsertFields = Partial<Record<AllowedProfileField, unknown>>
+
+/** True when a column is writable via onboarding/Account helpers. */
+export function isAllowedProfileWriteField(field: string): boolean {
+  return (ALLOWED_PROFILE_FIELDS as readonly string[]).includes(field)
+}
 
 const BLOCKED_PROFILE_FIELDS = new Set([
   'id',

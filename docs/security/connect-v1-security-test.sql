@@ -1,5 +1,5 @@
 -- MAT-14 Connect V1 security matrix (transactional; rolls back).
--- Prerequisites: apply 20260909010000_connect_v1.sql + 20260909020000_connect_v1_lifecycle.sql
+-- Prerequisites: Connect V1 + lifecycle + 20260909110000_connect_data_sharing_consent.sql
 --
 --   npx supabase db query --linked -f docs/security/connect-v1-security-test.sql
 --
@@ -147,14 +147,14 @@ BEGIN
   INSERT INTO public.profiles (
     user_id, email, first_name, last_name, phone, npi,
     training_status, clinical_focus, preferred_state, start_year,
-    onboarding_complete, open_to_practice_connections
+    onboarding_complete, data_sharing, open_to_practice_connections
   ) VALUES
     (u_physician, 'connect.phys.a@example.test', 'Alice', 'Alpha', '555-0100', '1111111111',
      'Fellow', ARRAY['Glaucoma (medical and/or surgical)'], ARRAY['GA'], '2027',
-     true, true),
+     true, true, false),
     (u_physician2, 'connect.phys.b@example.test', 'Bob', 'Beta', '555-0101', '2222222222',
      'Resident', ARRAY['Corneal Disease'], ARRAY['FL'], '2028',
-     true, false);
+     true, false, true);
 
   SELECT id INTO profile_a FROM public.profiles WHERE user_id = u_physician;
   SELECT id INTO profile_b FROM public.profiles WHERE user_id = u_physician2;
@@ -363,7 +363,7 @@ BEGIN
     SELECT 1 FROM jsonb_array_elements(payload) e
     WHERE (e->>'physician_profile_id') = profile_b::text
   );
-  PERFORM pg_temp.record(19, 'discovery respects open_to_practice_connections', 'open only', ok, payload::text);
+  PERFORM pg_temp.record(19, 'discovery uses data_sharing despite opposite legacy values', 'open only', ok, payload::text);
 
   IF jsonb_array_length(payload) > 0 THEN
     keys := ARRAY(SELECT jsonb_object_keys(payload->0));
@@ -428,6 +428,69 @@ BEGIN
   PERFORM pg_temp.record(24, 'duplicate active blocked', 'error', ok, err);
 
   PERFORM pg_temp.reset_auth();
+
+  -- Compatibility JSON keys must also reflect the authoritative consent.
+  SELECT public._connect_anonymous_physician_json(p)->>'open_to_practice_connections'
+    INTO err FROM public.profiles p WHERE id = profile_a;
+  SELECT public._connect_unlocked_physician_json(p)->'open_to_practice_connections'
+    INTO payload FROM public.profiles p WHERE id = profile_a;
+  PERFORM pg_temp.record(25, 'JSON helpers use shared consent', 'true',
+    err = 'true' AND payload = 'true'::jsonb);
+
+  -- A different practice can initiate despite the legacy column being false.
+  PERFORM pg_temp.set_jwt(u_editor_other);
+  payload := public.connect_initiate_by_practice(practice_b, profile_a, NULL);
+  rel2 := (payload->>'id')::uuid;
+  PERFORM pg_temp.record(26, 'practice initiation uses data_sharing', 'pending', payload->>'status' = 'pending');
+  PERFORM public.connect_cancel(rel2);
+
+  -- Withdrawal must block new discovery/requests even if legacy consent is true.
+  PERFORM pg_temp.reset_auth();
+  UPDATE public.profiles SET data_sharing = false, open_to_practice_connections = true WHERE id = profile_a;
+  PERFORM pg_temp.set_jwt(u_editor_other);
+  payload := public.connect_list_anonymous_physicians(practice_b);
+  PERFORM pg_temp.record(27, 'shared consent withdrawal removes discovery', 'absent',
+    NOT EXISTS (SELECT 1 FROM jsonb_array_elements(payload) e WHERE e->>'physician_profile_id' = profile_a::text));
+  BEGIN
+    PERFORM public.connect_initiate_by_practice(practice_b, profile_a, NULL);
+    ok := false;
+  EXCEPTION WHEN OTHERS THEN
+    ok := SQLERRM ILIKE '%not open%';
+  END;
+  PERFORM pg_temp.record(28, 'shared consent withdrawal blocks new request', 'not open', ok);
+  PERFORM pg_temp.reset_auth();
+
+  -- Physician may still initiate while discovery/practice-initiate are off.
+  PERFORM pg_temp.set_jwt(u_physician);
+  BEGIN
+    payload := public.connect_initiate_by_physician(practice_b, NULL);
+    ok := payload->>'status' = 'pending';
+    rel2 := (payload->>'id')::uuid;
+  EXCEPTION WHEN OTHERS THEN
+    ok := false;
+    err := SQLERRM;
+  END;
+  PERFORM pg_temp.record(29, 'physician initiate allowed when data_sharing false', 'pending', ok, err);
+  IF ok THEN
+    PERFORM public.connect_cancel(rel2);
+  END IF;
+  PERFORM pg_temp.reset_auth();
+
+  -- Opt-out must not auto-cancel existing accepted relationships.
+  PERFORM pg_temp.reset_auth();
+  UPDATE public.profiles SET data_sharing = true WHERE id = profile_a;
+  PERFORM pg_temp.set_jwt(u_editor_other);
+  payload := public.connect_initiate_by_practice(practice_b, profile_a, NULL);
+  rel2 := (payload->>'id')::uuid;
+  PERFORM pg_temp.set_jwt(u_physician);
+  PERFORM public.connect_accept(rel2);
+  PERFORM pg_temp.reset_auth();
+  UPDATE public.profiles SET data_sharing = false WHERE id = profile_a;
+  SELECT status INTO err FROM public.connect_relationships WHERE id = rel2;
+  PERFORM pg_temp.record(30, 'opt-out leaves accepted Connect intact', 'accepted', err = 'accepted');
+  PERFORM pg_temp.set_jwt(u_physician);
+  PERFORM public.connect_disconnect(rel2);
+  PERFORM pg_temp.reset_auth();
 END;
 $matrix$;
 
@@ -440,5 +503,7 @@ SELECT
   count(*) FILTER (WHERE NOT pass) AS failed,
   count(*) AS total
 FROM connect_sec_results;
+
+DO $$ BEGIN IF EXISTS (SELECT 1 FROM connect_sec_results WHERE NOT pass) THEN RAISE EXCEPTION 'Connect security tests failed'; END IF; END $$;
 
 ROLLBACK;

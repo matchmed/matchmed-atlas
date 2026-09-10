@@ -35,7 +35,6 @@ export type ConnectAnonymousPhysician = {
   preferred_state: string[] | null
   start_year: string | number | null
   practice_setting_preference: string[] | string | null
-  open_to_practice_connections?: boolean
 }
 
 export type ConnectUnlockedPhysician = ConnectAnonymousPhysician & {

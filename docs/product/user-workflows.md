@@ -162,7 +162,7 @@ The separate methodology page instead tells practice representatives to email a 
 
 “Save changes” updates the profile and shows success without checking the update result. Email/password users can change a password after reauthentication; Google-only users are directed to Google.
 
-The “Introductions & Opportunities” checkbox updates `data_sharing` only when the user saves the full form. Unchecking is the only in-product withdrawal mechanism shown.
+The “Professional Opportunities & Connections” checkbox updates `data_sharing` only when the user saves the full form. Unchecking is the only in-product withdrawal mechanism shown.
 
 - **Owner confirmation required:** Confirm whether consent withdrawal must take effect immediately, whether past recipients must be notified, and how withdrawal evidence is retained.
 - **Owner confirmation required:** Decide whether practice-setting preferences should be editable after onboarding.

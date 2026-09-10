@@ -4,6 +4,12 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { upsertProfileByUserId, type ProfileUpsertFields } from '@/lib/profile-writes'
+import {
+  CONSENT_INDEPENDENCE_NOTE,
+  CONSENT_ONBOARDING_CHECKBOX_COPY,
+  CONSENT_ONBOARDING_HEADING,
+  onboardingConsentCompletionFields,
+} from '@/lib/consent-model'
 import { LEGAL_PRIVACY_URL, LEGAL_TERMS_URL } from '@/lib/legal-urls'
 import { safeNextPath } from '@/lib/safe-next-path'
 import Logo from '@/components/Logo'
@@ -260,8 +266,7 @@ export default function OnboardingPage() {
     }
     if (options.complete) {
       payload.signup_date = new Date().toISOString()
-      payload.industry_partnership_acknowledged = true
-      payload.data_sharing = true
+      Object.assign(payload, onboardingConsentCompletionFields())
     }
     return upsertProfileByUserId(supabase, payload)
   }
@@ -383,7 +388,7 @@ export default function OnboardingPage() {
       return
     }
     if (!form.industry_partnership_acknowledged) {
-      setError('Please acknowledge Atlas industry partnerships to continue.')
+      setError('Please agree to professional opportunities and connections to continue.')
       return
     }
     setLoading(true)
@@ -592,7 +597,7 @@ export default function OnboardingPage() {
               </div>
 
               <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 20, marginBottom: 24 }}>
-                <p style={{ fontSize: 13, fontWeight: 600, color: '#111', marginBottom: 10 }}>Industry partnerships *</p>
+                <p style={{ fontSize: 13, fontWeight: 600, color: '#111', marginBottom: 10 }}>{CONSENT_ONBOARDING_HEADING} *</p>
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
                   <input
                     type="checkbox"
@@ -601,11 +606,11 @@ export default function OnboardingPage() {
                     style={{ marginTop: 2, accentColor: '#1C4A45' }}
                   />
                   <span style={{ fontSize: 13, color: '#374151', lineHeight: 1.5 }}>
-                    I understand that Atlas is supported in part by industry partners and agree to receive relevant educational, training, research, event, career, and professional opportunities from Atlas and its partners. I can opt out at any time.
+                    {CONSENT_ONBOARDING_CHECKBOX_COPY}
                   </span>
                 </label>
                 <p style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.5, margin: '8px 0 0 26px' }}>
-                  Industry partners do not influence Atlas practice scores, rankings, search results, or how practice information is presented.
+                  {CONSENT_INDEPENDENCE_NOTE}
                 </p>
               </div>
 

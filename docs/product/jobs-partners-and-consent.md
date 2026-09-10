@@ -1,5 +1,15 @@
 # Jobs, partners, and consent
 
+## Connect consent — updated 2026-09-10
+
+Owner decision: `profiles.data_sharing` is the shared consent for industry/professional opportunities, anonymous employer discovery, and practice-initiated Connect requests. Account has one consent checkbox; onboarding uses combined professional-opportunities copy and writes `data_sharing=true` on completion. Physician-initiated requests and mutual acceptance before contact disclosure are unchanged. Opt-out does not cancel existing Connect relationships.
+
+Migration `20260909110000_connect_data_sharing_consent.sql` switches the Connect RPCs and JSON helpers to this field without changing profile values or RLS. The old column remains unused by Connect; the legacy JSON key `open_to_practice_connections` returns `data_sharing` for existing clients. Do not use the legacy column to determine consent.
+
+Apply the migration before deploying the Account/onboarding change. Verify production function definitions against the prior Connect migration before application; stop if they differ. Run the transactional Connect security test, including opposite values for old/new fields. No automatic synchronization or backfill is performed.
+
+The historical sections below predate Connect and do not describe its consent enforcement.
+
 ## Status
 
 This document records the current implementation boundary among job listings, partner claims, direct contact information, and the `data_sharing` preference. It is not legal approval of the current behavior or copy. All commercial, consent, privacy, and lead-routing decisions without repository evidence are marked **Owner confirmation required**.
