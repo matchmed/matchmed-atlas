@@ -211,7 +211,28 @@ export default function SponsorVendorPageClient({
             )}
           </div>
         </div>
-        <p className="sponsor-disclosure">{page.disclosure_text}</p>
+        <div className="sponsor-disclosure">
+          {page.disclosure_text.split(/\n\n+/).map((block, idx) => {
+            const lines = block.split('\n').map((l) => l.trim()).filter(Boolean)
+            if (lines.length === 0) return null
+            const [first, ...rest] = lines
+            const isDemoHeading = /^demonstration page$/i.test(first)
+            return (
+              <div key={idx} className={idx === 0 ? 'sponsor-disclosure-block' : 'sponsor-disclosure-block sponsor-disclosure-block-follow'}>
+                {isDemoHeading ? (
+                  <>
+                    <div className="sponsor-demo-label">{first}</div>
+                    {rest.length > 0 && (
+                      <p className="sponsor-disclosure-text">{rest.join(' ')}</p>
+                    )}
+                  </>
+                ) : (
+                  <p className="sponsor-disclosure-text">{lines.join(' ')}</p>
+                )}
+              </div>
+            )
+          })}
+        </div>
         {reportedIn && (
           <p className="sponsor-practice-context">
             Referring link category context: {reportedIn}. This label is display-only from the
