@@ -54,6 +54,8 @@ describe('groupSponsorSections', () => {
         status_label: null,
         cta_label: null,
         sort_order: 1,
+        image_url: null,
+        image_alt: null,
       },
       {
         section_type: 'connect',
@@ -64,6 +66,8 @@ describe('groupSponsorSections', () => {
         status_label: null,
         cta_label: 'Talk to a peer surgeon',
         sort_order: 1,
+        image_url: null,
+        image_alt: null,
       },
     ]
     const grouped = groupSponsorSections(items)

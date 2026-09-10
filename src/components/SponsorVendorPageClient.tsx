@@ -58,20 +58,41 @@ function ContentCard({
 }) {
   const when = formatEventDate(item.event_date)
   const cta = item.cta_label?.trim() || (item.url ? 'Open' : null)
+  const showImage = Boolean(item.image_url)
   return (
-    <article className="sponsor-content-card bg-canvas">
-      <div className="sponsor-content-card-top">
-        <h3 className="sponsor-content-card-title">{item.title}</h3>
-        {(item.status_label || when) && (
-          <div className="sponsor-content-card-meta">
-            {item.status_label && <span>{item.status_label}</span>}
-            {item.status_label && when && <span aria-hidden>·</span>}
-            {when && <span>{when}</span>}
-          </div>
-        )}
+    <article className={`sponsor-content-card bg-canvas${showImage ? ' sponsor-content-card-has-image' : ''}`}>
+      {showImage && (
+        <div className="sponsor-content-card-media">
+          {/* eslint-disable-next-line @next/next/no-img-element -- first-party remote sponsor assets */}
+          <img
+            src={item.image_url!}
+            alt={item.image_alt?.trim() || item.title}
+            loading="lazy"
+            decoding="async"
+            className="sponsor-content-card-image"
+            onError={(e) => {
+              const el = e.currentTarget
+              el.style.display = 'none'
+              const wrap = el.parentElement
+              if (wrap) wrap.style.display = 'none'
+            }}
+          />
+        </div>
+      )}
+      <div className="sponsor-content-card-body">
+        <div className="sponsor-content-card-top">
+          <h3 className="sponsor-content-card-title">{item.title}</h3>
+          {(item.status_label || when) && (
+            <div className="sponsor-content-card-meta">
+              {item.status_label && <span>{item.status_label}</span>}
+              {item.status_label && when && <span aria-hidden>·</span>}
+              {when && <span>{when}</span>}
+            </div>
+          )}
+        </div>
+        {item.description && <p className="sponsor-content-card-desc">{item.description}</p>}
+        {item.url && cta && <OutboundCta href={item.url} label={cta} section={section} />}
       </div>
-      {item.description && <p className="sponsor-content-card-desc">{item.description}</p>}
-      {item.url && cta && <OutboundCta href={item.url} label={cta} section={section} />}
     </article>
   )
 }
@@ -177,14 +198,16 @@ export default function SponsorVendorPageClient({
 
       <header className="sponsor-header bg-canvas">
         <div className="sponsor-header-main">
-          {page.logo_url ? (
-            // eslint-disable-next-line @next/next/no-img-element -- external sponsor logo URLs
-            <img src={page.logo_url} alt="" className="sponsor-logo" />
-          ) : (
-            <div className="sponsor-logo-fallback" aria-hidden>
-              {page.display_label.slice(0, 1)}
-            </div>
-          )}
+          <div className="sponsor-logo-tile">
+            {page.logo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element -- external sponsor logo URLs
+              <img src={page.logo_url} alt={page.display_label} className="sponsor-logo" />
+            ) : (
+              <div className="sponsor-logo-fallback" aria-hidden>
+                {page.display_label.slice(0, 1)}
+              </div>
+            )}
+          </div>
           <div style={{ minWidth: 0 }}>
             <div
               style={{

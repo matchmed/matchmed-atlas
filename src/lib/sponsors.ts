@@ -68,6 +68,8 @@ function asSponsorPage(data: unknown): SponsorPage | null {
       status_label: (s.status_label as string | null) ?? null,
       cta_label: (s.cta_label as string | null) ?? null,
       sort_order: typeof s.sort_order === 'number' ? s.sort_order : 100,
+      image_url: typeof s.image_url === 'string' && s.image_url.trim() ? s.image_url : null,
+      image_alt: typeof s.image_alt === 'string' && s.image_alt.trim() ? s.image_alt : null,
     })
   }
 

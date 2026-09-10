@@ -133,11 +133,29 @@ export default async function PartnersPage() {
               href={sponsorPageHref(s.slug)}
               className="partners-directory-card bg-canvas"
             >
-              <div className="partners-directory-card-title">{s.display_label}</div>
-              {s.short_description && (
-                <div className="partners-directory-card-desc">{s.short_description}</div>
-              )}
-              <div className="partners-directory-card-cta">View partner page →</div>
+              <div className="partners-directory-logo-tile">
+                {s.logo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- first-party sponsor logos
+                  <img
+                    src={s.logo_url}
+                    alt={s.display_label}
+                    className="partners-directory-logo"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : (
+                  <span className="partners-directory-logo-fallback" aria-hidden>
+                    {s.display_label.slice(0, 1)}
+                  </span>
+                )}
+              </div>
+              <div className="partners-directory-card-copy">
+                <div className="partners-directory-card-title">{s.display_label}</div>
+                {s.short_description && (
+                  <div className="partners-directory-card-desc">{s.short_description}</div>
+                )}
+                <div className="partners-directory-card-cta">View partner page →</div>
+              </div>
             </Link>
           ))}
         </div>

@@ -68,6 +68,8 @@ export type SponsorContentItem = {
   status_label: string | null
   cta_label: string | null
   sort_order: number
+  image_url: string | null
+  image_alt: string | null
 }
 
 /** Group content items under the five primary sections (empty sections still listed by UI). */
