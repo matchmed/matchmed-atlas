@@ -128,7 +128,7 @@ export default function HomePageClient() {
   ]
 
   const quickLinks = [
-    { href: '/practices', label: 'Browse Practices', desc: 'Search 6,800+ ophthalmology practices with retention scores and career history', icon: <PracticesIcon size={20} /> },
+    { href: '/practices', label: 'Browse Practices', desc: 'Search 6,800+ ophthalmology practices with Retention Index and career history', icon: <PracticesIcon size={20} /> },
     { href: '/physicians', label: 'Physician Directory', desc: 'Explore 22,000+ ophthalmologist career records from CMS data', icon: <PhysiciansIcon size={20} /> },
     { href: '/opportunities', label: 'Opportunities', desc: 'Browse practice-reported recruiting opportunities by specialty, state, and hiring horizon', icon: <JobsIcon size={20} /> },
     { href: '/favorites', label: 'My Favorites', desc: 'Practices you have saved for later review', icon: <FavoritesIcon size={20} /> },
@@ -144,7 +144,7 @@ export default function HomePageClient() {
           Ophthalmology Workforce Intelligence
         </h1>
         <p style={{ fontSize: 15, color: '#666', lineHeight: 1.6, maxWidth: 600 }}>
-          Every score on Atlas is derived from publicly available CMS Medicare data (no surveys, no self-reporting, no recruiter claims).
+          Every Retention Index on Atlas is derived from publicly available CMS Medicare data (no surveys, no self-reporting, no recruiter claims).
           Longitudinal physician-practice career data covering 2019 to present.
         </p>
       </div>
@@ -193,8 +193,8 @@ export default function HomePageClient() {
               <ScoringIcon size={20} />
             </div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', marginBottom: 4 }}>How Scores Work</div>
-              <div style={{ fontSize: 12, color: '#888', lineHeight: 1.5 }}>Understand the data behind Retention Scores and Experience Levels</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', marginBottom: 4 }}>How the Retention Index works</div>
+              <div style={{ fontSize: 12, color: '#888', lineHeight: 1.5 }}>Understand Retention Index methodology and median years since medical school</div>
             </div>
           </Link>
 

@@ -114,7 +114,7 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
               </Link>
             </div>
             <div className="locked-metric-card is-locked">
-              <div className="locked-metric-label">Experience Level</div>
+              <div className="locked-metric-label">Median years since medical school</div>
               <div className="locked-metric-skeleton" aria-hidden="true" />
             </div>
             <div className="locked-metric-card is-public">
@@ -136,11 +136,11 @@ export default async function PracticeDetailPublic({ id }: { id: string }) {
             <div className="locked-tenure-block">
               <div className="locked-section-subhead">Tenure outcomes among all physicians observed since 2019</div>
               <div className="locked-tenure-bars">
-                {(['0–1', '2–3', '4–5', '6–7', '8+ observed yrs'] as const).map((label, i) => (
+                {(['0–1 yrs', '2–3 yrs', '4–5 yrs', '6–7 yrs', '8+ yrs'] as const).map((label, i) => (
                   <div key={label} className="locked-tenure-row">
                     <span
                       className="locked-tenure-label"
-                      title={label === '8+ observed yrs'
+                      title={label === '8+ yrs'
                         ? 'Affiliations are observed beginning in 2019. Physicians already affiliated at the start of the data window may have longer actual tenure.'
                         : undefined}
                     >{label}</span>

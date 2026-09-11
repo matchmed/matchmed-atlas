@@ -334,7 +334,7 @@ function buildReportHtml(
 
 <div class="page">
   <h2 class="section-title">Quadrant Framework</h2>
-  <p class="section-sub">Practices classified by retention score and roster size relative to market medians</p>
+  <p class="section-sub">Practices classified by Retention Index and roster size relative to market medians</p>
   <div class="quadrant-grid">${quadrantHtml}</div>
 </div>
 
@@ -359,11 +359,11 @@ function buildReportHtml(
 
 <div class="page methodology">
   <h2 class="section-title">Methodology</h2>
-  <p>This report is generated using Atlas by MatchMed, an ophthalmology workforce intelligence platform. All practice retention scores, roster data, and physician career histories are derived exclusively from publicly available CMS Medicare Part B Provider Data. No proprietary, self-reported, or third-party data is used.</p>
-  <h3>Retention Score</h3>
-  <p>Measures a practice's historical ability to retain physicians, calculated from the complete longitudinal Medicare roster of every physician who has appeared at the practice since 2019. Higher scores indicate lower short-tenure attrition and stronger tenure depth.</p>
+  <p>This report is generated using Atlas by MatchMed, an ophthalmology workforce intelligence platform. All practice Retention Index values, roster data, and physician career histories are derived exclusively from publicly available CMS Medicare Part B Provider Data. No proprietary, self-reported, or third-party data is used.</p>
+  <h3>Retention Index</h3>
+  <p>A standardized measure derived from observed physician retention patterns in CMS data. Calculated from the complete longitudinal Medicare roster of every physician who has appeared at the practice since 2019. Higher values reflect greater observed physician retention. It summarizes historical workforce stability and does not explain why individual physicians joined or left.</p>
   <h3>Quadrant Framework</h3>
-  <p>Practices are plotted against market medians for retention score and current roster size. Quadrant 1 (high retention, large roster) represents the most stable and established targets. Quadrant 4 (lower retention, small roster) may indicate higher turnover risk or early-stage practices.</p>
+  <p>Practices are plotted against market medians for Retention Index and current roster size. Quadrant 1 (higher Retention Index, larger roster) and Quadrant 4 (lower Retention Index, smaller roster) describe relative position in the market sample and may warrant additional diligence — not automatic inclusion or exclusion.</p>
   <h3>Pipeline Analysis</h3>
   <p>Fellowship and residency pipeline data identifies graduating trainees affiliated with programs in the target geography, providing a forward-looking view of physician supply.</p>
   <p style="margin-top: 32px; font-size: 9pt; color: #8A8680;">© ${new Date().getFullYear()} MatchMed, LLC · Confidential — prepared exclusively for ${escapeHtml(form.clientName)}</p>
@@ -565,7 +565,7 @@ export default function ReportBuilderPage() {
             <label style={labelStyle}>Regional practice table (markdown)</label>
             <textarea
               style={textareaStyle}
-              placeholder={'| Practice | City | Retention Score | Roster |\n|----------|------|-----------------|--------|\n| ... | ... | ... | ... |'}
+              placeholder={'| Practice | City | Retention Index | Roster |\n|----------|------|-----------------|--------|\n| ... | ... | ... | ... |'}
               value={form.regionalTable}
               onChange={e => updateForm('regionalTable', e.target.value)}
             />

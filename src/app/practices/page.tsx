@@ -153,7 +153,7 @@ function PracticeCard({
         <div className="practice-card-score-value">
           {practice.retention_score !== null ? sl.text : '—'}
         </div>
-        <div className="practice-card-score-label">score</div>
+        <div className="practice-card-score-label">index</div>
       </div>
     </button>
   )
@@ -1128,7 +1128,7 @@ function PracticesPageContent() {
           color: '#842029',
           fontSize: 13,
         }}>
-          Could not load physician-ready practices: {physicianReadyError}
+          Could not load verified practices: {physicianReadyError}
         </div>
       )}
 
@@ -1159,8 +1159,8 @@ function PracticesPageContent() {
                     Practice {sortKey === 'practice_name' ? (sortDir === 1 ? '↑' : '↓') : '↕'}
                   </th>
                   <th style={thStyle('retention_score')} onClick={() => handleSort('retention_score')}>
-                    <span className="data-table-label-full">Retention score</span>
-                    <span className="data-table-label-short">Retention</span>
+                    <span className="data-table-label-full">Retention Index</span>
+                    <span className="data-table-label-short">Index</span>
                     {' '}{sortKey === 'retention_score' ? (sortDir === 1 ? '↑' : '↓') : '↕'}
                   </th>
                   <th style={thStyle('latest_roster_size')} onClick={() => handleSort('latest_roster_size')}>
@@ -1253,7 +1253,7 @@ function PracticesPageContent() {
             {([
               { color: '#1C4A45', size: 9, label: 'Practice' },
               { color: '#1C4A45', size: 14, label: 'Cluster' },
-              { color: '#aaa', size: 9, label: 'No score' },
+              { color: '#aaa', size: 9, label: 'No index' },
             ] as const).map(item => (
               <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, color: '#555' }}>
                 <div style={{ width: item.size, height: item.size, borderRadius: '50%', background: item.color, flexShrink: 0 }} />

@@ -174,7 +174,7 @@ export default function FavoritesPage() {
                 {hasScore && (
                   <div style={{ background: scoreBg(f.retention_score), borderRadius: 8, padding: '6px 12px', textAlign: 'center', flexShrink: 0 }}>
                     <div style={{ fontSize: 16, fontWeight: 700, color: scoreColor(f.retention_score) }}>{f.retention_score!.toFixed(1)}</div>
-                    <div style={{ fontSize: 10, color: '#888', marginTop: 1 }}>score</div>
+                    <div style={{ fontSize: 10, color: '#888', marginTop: 1 }}>index</div>
                   </div>
                 )}
 

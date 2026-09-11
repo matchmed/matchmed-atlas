@@ -4,7 +4,7 @@ export default function ScoringMethodologyPage() {
   return (
     <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', maxWidth: 720, margin: '0 auto', padding: '48px 0 80px', color: '#1a1a1a' }}>
       <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#1C4A45', marginBottom: 12 }}>Atlas by MatchMed</div>
-      <h1 className="font-serif" style={{ fontSize: 28, fontWeight: 700, margin: '0 0 8px', lineHeight: 1.2 }}>About the scores</h1>
+      <h1 className="font-serif" style={{ fontSize: 28, fontWeight: 700, margin: '0 0 8px', lineHeight: 1.2 }}>About the Retention Index</h1>
       <p style={{ fontSize: 15, color: '#666', margin: '0 0 40px', lineHeight: 1.6 }}>Every number on Atlas is derived from publicly available government data. No surveys, no self-reporting, no recruiter claims. Here's exactly what we measure and how.</p>
 
       {/* NEW: the defense, stated first */}
@@ -14,34 +14,33 @@ export default function ScoringMethodologyPage() {
           Atlas measures <strong>physician movement</strong>, not practice quality. For any practice, we show a single verifiable thing: of the physicians who have appeared on its Medicare roster since 2019, how long each one stayed.
         </p>
         <p style={{ fontSize: 14, color: '#333', lineHeight: 1.7, margin: 0 }}>
-          That is arithmetic on public record. Atlas does not know, and does not claim to know, <em>why</em> any physician joined or left. The scores are designed to help a physician decide <strong>what to ask</strong> before signing a contract — not to reach a conclusion on their behalf.
+          That is arithmetic on public record. Atlas does not know, and does not claim to know, <em>why</em> any physician joined or left. The Retention Index and related measures are designed to help a physician decide <strong>what to ask</strong> before signing a contract — not to reach a conclusion on their behalf.
         </p>
       </div>
 
       <SectionLabel>Data source</SectionLabel>
       <div style={{ background: '#f5f5f5', borderRadius: 8, padding: '16px 18px', marginBottom: 24 }}>
         <p style={{ fontSize: 13, color: '#444', lineHeight: 1.6, margin: 0 }}>
-          <strong>Medicare Part B Provider Data, <a href="https://data.cms.gov/" target="_blank" rel="noopener" style={{ color: '#1C4A45' }}>Centers for Medicare &amp; Medicaid Services (CMS)</a>.</strong> This dataset captures physician-practice affiliations across annual snapshots. Atlas scores are calculated from 2019 onwards, using the complete longitudinal record of every physician who has appeared on a practice's Medicare roster. No proprietary, self-reported, or third-party data is used. Practices cannot edit, remove, or influence what appears in this data.
+          <strong>Medicare Part B Provider Data, <a href="https://data.cms.gov/" target="_blank" rel="noopener" style={{ color: '#1C4A45' }}>Centers for Medicare &amp; Medicaid Services (CMS)</a>.</strong> This dataset captures physician-practice affiliations across annual snapshots. The Retention Index is calculated from 2019 onwards, using the complete longitudinal record of every physician who has appeared on a practice's Medicare roster. No proprietary, self-reported, or third-party data is used. Practices cannot edit, remove, or influence what appears in this data.
           <br /><br />
           <span style={{ fontSize: 12, color: '#888' }}>Atlas is not affiliated with, endorsed by, or sponsored by the Centers for Medicare &amp; Medicaid Services or any other federal agency.</span>
         </p>
       </div>
 
-      {/* NEW: what the score protects against, surfaced early */}
-      <SectionLabel>What the score is built to protect against</SectionLabel>
-      <p style={{ fontSize: 14, lineHeight: 1.7, color: '#444', marginBottom: 12 }}>A raw departure count would be misleading. Before any score is calculated, Atlas accounts for the ordinary, benign reasons physicians move on, so that a practice is not marked down for normal career events:</p>
+      <SectionLabel>How ordinary career events are treated</SectionLabel>
+      <p style={{ fontSize: 14, lineHeight: 1.7, color: '#444', marginBottom: 12 }}>A raw departure count would be misleading. Before the Retention Index is calculated, Atlas accounts for ordinary career events so normal transitions are not over-weighted:</p>
       <ul style={{ fontSize: 13.5, lineHeight: 1.7, color: '#444', margin: '0 0 24px', paddingLeft: 20 }}>
         <li style={{ marginBottom: 8 }}><strong>Retirements are down-weighted.</strong> A long-tenured physician leaving near the end of a career carries minimal weight. It is not treated as attrition.</li>
-        <li style={{ marginBottom: 8 }}><strong>Fellowship and training roles are excluded.</strong> A fellow who appears on a roster for a year or two and moves on does not affect a practice's score in any way.</li>
-        <li style={{ marginBottom: 0 }}><strong>Single departures carry little signal.</strong> Any one physician may leave for entirely personal reasons. The score responds to <em>patterns</em> across many physicians, not to any individual exit.</li>
+        <li style={{ marginBottom: 8 }}><strong>Fellowship and training roles are excluded.</strong> A fellow who appears on a roster for a year or two and moves on does not affect a practice&apos;s Retention Index.</li>
+        <li style={{ marginBottom: 0 }}><strong>Single departures carry little signal.</strong> Any one physician may leave for entirely personal reasons. The Retention Index responds to <em>patterns</em> across many physicians, not to any individual exit.</li>
       </ul>
 
       <SectionLabel>The core idea</SectionLabel>
-      <p style={{ fontSize: 14, lineHeight: 1.7, color: '#444', marginBottom: 16 }}>Every physician who joins a practice either stays or leaves. A long stay is, on balance, a signal of a working relationship. A departure is the end of one. How long a physician stayed before leaving carries information worth weighing — a very short stay and a stay that ends right around the partnership stage are different signals, and Atlas weights them differently.</p>
-      <p style={{ fontSize: 14, lineHeight: 1.7, color: '#444', marginBottom: 24 }}>Atlas does not assign a reason to any departure. It records how long physicians stayed and surfaces the patterns, so a physician evaluating an opportunity knows where to ask harder questions.</p>
+      <p style={{ fontSize: 14, lineHeight: 1.7, color: '#444', marginBottom: 16 }}>Every physician who joins a practice either stays or leaves. How long they stayed is an observed historical pattern. A longer observed stay and a shorter observed stay are different signals in the data, and Atlas weights them differently.</p>
+      <p style={{ fontSize: 14, lineHeight: 1.7, color: '#444', marginBottom: 24 }}>Atlas does not assign a reason to any departure. It records how long physicians stayed and surfaces the patterns so a physician evaluating an opportunity knows where additional diligence may be useful.</p>
 
-      <SectionLabel>The scores</SectionLabel>
-      <p style={{ fontSize: 14, lineHeight: 1.7, color: '#444', marginBottom: 16 }}>Each score is scaled 0–100. Higher reflects stronger physician retention.</p>
+      <SectionLabel>The measures</SectionLabel>
+      <p style={{ fontSize: 14, lineHeight: 1.7, color: '#444', marginBottom: 16 }}>The Retention Index is scaled 0–100. Higher values reflect greater observed physician retention.</p>
 
       <ScoreCard title="Attrition Resistance" weight="Primary component">
         <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 12 }}>Measures the weighted departure load of physicians who have left the practice. Rather than a simple exit count, each departure is weighted by how long the physician stayed. Shorter stays carry more weight, because they are more likely to reflect something worth investigating.</p>
@@ -79,7 +78,7 @@ export default function ScoringMethodologyPage() {
       <ScoreCard title="Tenure Strength" weight="Secondary component">
         <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 12 }}>Measures how long physicians currently at the practice have stayed. Calculated from the active roster only. Physicians who have already left no longer contribute to this metric.</p>
         <div style={{ fontSize: 12, color: '#1C4A45', background: '#E8F0EF', borderLeft: '3px solid #1C4A45', padding: '8px 12px', borderRadius: '0 6px 6px 0', lineHeight: 1.5 }}>
-          Departed physicians should not continue to prop up a practice's score after they leave. Tenure Strength reflects the current workforce: the physicians who would actually be your colleagues if you join.
+          Departed physicians are not used to describe current roster tenure. Tenure Strength reflects the current workforce only.
         </div>
       </ScoreCard>
 
@@ -93,22 +92,24 @@ export default function ScoringMethodologyPage() {
         </div>
       </ScoreCard>
 
-      <ScoreCard title="Experience Level" weight="Context only" weightColor="#888" weightBg="#f5f5f5">
-        <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 12 }}>Measures the collective seniority of the current roster. Derived from median years since medical school graduation. Displayed as context alongside the Retention Score but not included in the composite.</p>
+      <ScoreCard title="Median years since medical school" weight="Context only" weightColor="#888" weightBg="#f5f5f5">
+        <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 12 }}>Shows the median number of years since medical school graduation among physicians on the current roster. This is contextual information only and is not included in the Retention Index.</p>
         <div style={{ fontSize: 12, color: '#1C4A45', background: '#E8F0EF', borderLeft: '3px solid #1C4A45', padding: '8px 12px', borderRadius: '0 6px 6px 0', lineHeight: 1.5 }}>
-          Experience level reflects practice maturity. Senior-heavy rosters can carry succession or transition considerations that would be incorrectly rewarded if folded into a retention composite, so this is shown as context only.
+          A more senior roster may be relevant when considering succession or future workforce transition. This measure is shown as context only and is not part of the Retention Index.
         </div>
       </ScoreCard>
 
-      <ScoreCard title="Retention Score" weight="Composite">
-        <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 12 }}>A weighted composite of Attrition Resistance and Tenure Strength, adjusted by cluster signals.</p>
+      <ScoreCard title="Retention Index" weight="Composite">
+        <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 12 }}>
+          The Retention Index is a standardized measure derived from CMS-observed physician retention patterns. It summarizes historical workforce stability across the physicians Atlas observes at a practice. It is a weighted composite of Attrition Resistance and Tenure Strength, adjusted by cluster signals.
+        </p>
         <div style={{ background: '#f5f5f5', borderRadius: 8, padding: '16px 20px', fontFamily: 'monospace', fontSize: 13, color: '#1a1a1a', marginBottom: 12, lineHeight: 1.8 }}>
-          Retention Score =<br />
+          Retention Index =<br />
           &nbsp;&nbsp;[(<span style={{ color: '#1C4A45', fontWeight: 600 }}>Attrition Resistance</span> × primary weight)<br />
           &nbsp;&nbsp;+ (<span style={{ color: '#1C4A45', fontWeight: 600 }}>Tenure Strength</span> × secondary weight)]<br />
           &nbsp;&nbsp;× <span style={{ color: '#1C4A45', fontWeight: 600 }}>Cluster Modifier</span> (if applicable)
         </div>
-        <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, margin: 0 }}>Specific component weights are proprietary.</p>
+        <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, margin: 0 }}>Specific component weights are proprietary. The Retention Index is not a rating of practice quality and does not establish why any individual physician joined or left. It is intended as one input into broader practice diligence.</p>
       </ScoreCard>
 
       <SectionLabel>Insights &amp; Observations</SectionLabel>
@@ -136,7 +137,7 @@ export default function ScoringMethodologyPage() {
 
       <p style={{ fontSize: 14, lineHeight: 1.7, color: '#444', marginBottom: 12 }}>Each insight follows this logic:</p>
       <ol style={{ fontSize: 13.5, lineHeight: 1.7, color: '#444', margin: '0 0 16px', paddingLeft: 20 }}>
-        <li style={{ marginBottom: 4 }}>Extract facts from CMS data (tenure distribution, roster size, churn rate)</li>
+        <li style={{ marginBottom: 4 }}>Extract facts from CMS data (tenure distribution, roster size, shorter-observed-tenure rate)</li>
         <li style={{ marginBottom: 4 }}>Identify patterns (for example top-heavy tenure or significant roster reduction)</li>
         <li style={{ marginBottom: 4 }}>Describe the observation factually</li>
         <li>List assumptions that could affect interpretation</li>
@@ -145,10 +146,10 @@ export default function ScoringMethodologyPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
         {[
           {
-            title: 'Concentrated long-tenure workforce',
-            observation: 'Longer-tenure cohorts exceed newer cohorts with a high retention score.',
-            describes: 'Concentrated experience and historical stability.',
-            assumption: 'Long tenure may correlate with stability.',
+            title: 'Longer observed CMS tenure cohorts',
+            observation: 'Longer-tenure cohorts exceed newer cohorts with a high Retention Index.',
+            describes: 'More physicians observed across longer CMS tenure bands.',
+            assumption: 'Longer observed tenure may correlate with historical stability.',
             alt: 'Could reflect limited growth, geographic constraints, or market conditions.',
           },
           {
@@ -159,10 +160,10 @@ export default function ScoringMethodologyPage() {
             alt: 'Could be natural transition, acquisition, consolidation, or retirement.',
           },
           {
-            title: 'High churn rate',
-            observation: 'More than 40% of all-time physicians exited within 4 years.',
-            describes: 'Elevated short-tenure exit rate.',
-            assumption: 'High exit rate may reflect a challenging environment.',
+            title: 'Higher shorter-observed-tenure rate',
+            observation: 'More than 40% of all-time physicians exited within 4 observed years.',
+            describes: 'Elevated rate of shorter observed tenures in the CMS window.',
+            assumption: 'Higher observed turnover may prompt additional questions about historical workforce patterns.',
             alt: 'Could be early-career rotation, competitive market, or voluntary transitions.',
           },
           {
@@ -189,18 +190,18 @@ export default function ScoringMethodologyPage() {
         </p>
       </div>
 
-      <SectionLabel>What the score is not</SectionLabel>
+      <SectionLabel>What the Retention Index is not</SectionLabel>
       <div style={{ background: '#fff8f0', border: '0.5px solid #f0d0a0', borderRadius: 10, padding: '18px 22px', marginBottom: 24 }}>
         <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, margin: 0 }}>
-          The Retention Score is <strong>not</strong> a measure of clinical quality, patient outcomes, compensation, or workplace culture, and it is not a judgment of any practice or any physician. It answers one question: <em>based on how physicians have historically moved through this practice, how well has it retained the people who joined it?</em>
+          The Retention Index is <strong>not</strong> a rating of practice quality, clinical quality, patient outcomes, compensation, or workplace culture, and it is not a judgment of any practice or any physician. It summarizes historical workforce stability and does not establish why any physician joined or left. It is intended as one input into broader practice diligence.
           <br /><br />
-          A lower score is not an accusation. It is a prompt to ask better questions. Use Atlas as one input in your due diligence, alongside site visits, peer conversations, and contract review with an attorney.
+          A lower index is not a reason to exclude a practice automatically. It is a prompt to ask better questions. Use Atlas alongside site visits, peer conversations, and contract review with an attorney.
         </p>
       </div>
 
       <SectionLabel>For practices: data and corrections</SectionLabel>
       <div style={{ background: '#f9f9f9', border: '0.5px solid #e0e0e0', borderRadius: 10, padding: '20px 24px', marginBottom: 48 }}>
-        <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 10 }}>Atlas scores are derived from CMS Medicare Part B data, which may occasionally contain inaccuracies. If you represent a practice and believe your data or score reflects an error, we want to correct it. Flagged practices are reviewed against the underlying CMS record, and confirmed data errors are corrected in the next update cycle.</p>
+        <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 10 }}>The Retention Index is derived from CMS Medicare Part B data, which may occasionally contain inaccuracies. If you represent a practice and believe your data or index value reflects an error, we want to correct it. Flagged practices are reviewed against the underlying CMS record, and confirmed data errors are corrected in the next update cycle.</p>
         <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, margin: 0 }}>
           Email <a href="mailto:admin@matchmed.app" style={{ color: '#1C4A45' }}>admin@matchmed.app</a> with subject line <strong>Data Inquiry – [Practice Name]</strong>. We aim to respond within five business days.
         </p>
@@ -208,9 +209,9 @@ export default function ScoringMethodologyPage() {
 
       <div style={{ padding: 24, border: '0.5px solid #e8e8e8', borderRadius: 10, background: '#f9f9f9' }}>
         <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: '#999', marginBottom: 12 }}>Legal &amp; Methodological Disclaimers</div>
-        <p style={{ fontSize: 12, color: '#888', lineHeight: 1.7, margin: '0 0 10px' }}>All scores are derived from CMS Medicare Part B public datasets. MatchMed makes no representations regarding the completeness, accuracy, or timeliness of underlying CMS data.</p>
-        <p style={{ fontSize: 12, color: '#888', lineHeight: 1.7, margin: '0 0 10px' }}>Scores are statistical estimates derived from observed physician movement, not factual declarations about any practice. They do not establish causation or assign a reason for any physician's departure.</p>
-        <p style={{ fontSize: 12, color: '#888', lineHeight: 1.7, margin: 0 }}>MatchMed, LLC is not liable for any employment, contracting, or other decisions made in reliance on Atlas scores. Use is subject to our <Link href="/terms-and-conditions" style={{ color: '#1C4A45' }}>Terms of Service</Link> and <Link href="/privacy-policy" style={{ color: '#1C4A45' }}>Privacy Policy</Link>.</p>
+        <p style={{ fontSize: 12, color: '#888', lineHeight: 1.7, margin: '0 0 10px' }}>All Retention Index values are derived from CMS Medicare Part B public datasets. MatchMed makes no representations regarding the completeness, accuracy, or timeliness of underlying CMS data.</p>
+        <p style={{ fontSize: 12, color: '#888', lineHeight: 1.7, margin: '0 0 10px' }}>The Retention Index and related measures are statistical estimates derived from observed physician movement, not factual declarations about any practice. They do not establish causation or assign a reason for any physician's departure.</p>
+        <p style={{ fontSize: 12, color: '#888', lineHeight: 1.7, margin: 0 }}>MatchMed, LLC is not liable for any employment, contracting, or other decisions made in reliance on Atlas Retention Index values. Use is subject to our <Link href="/terms-and-conditions" style={{ color: '#1C4A45' }}>Terms of Service</Link> and <Link href="/privacy-policy" style={{ color: '#1C4A45' }}>Privacy Policy</Link>.</p>
       </div>
     </div>
   )

@@ -23,7 +23,7 @@ export function getInitials(name: string): string {
 }
 
 // ── Score helpers ──────────────────────────────────────────
-// Numeric Retention Scores use a single Atlas teal treatment.
+// Numeric Retention Index values use a single Atlas teal treatment.
 // Muted gray is reserved for unavailable scores, not performance.
 export const RETENTION_SCORE_INK = '#1C4A45'
 export const RETENTION_SCORE_FILL = '#E8F0EF'

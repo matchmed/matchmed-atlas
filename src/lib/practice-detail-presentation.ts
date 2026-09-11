@@ -1,7 +1,20 @@
 /** Inclusive CMS calendar-year span stored as tenure_years (last − first + 1), capped in UI at 8+. */
 
-export const EXPERIENCE_LEVEL_CAPTION =
-  'Current roster seniority based on median years since medical school. Higher values indicate a more senior roster. Not part of the Retention Score.'
+/** Physician-facing tooltips for descriptive retention-history metrics. */
+export const PHYSICIANS_OBSERVED_TOOLTIP =
+  'Unique physicians observed on this practice’s CMS roster since 2019, including current and former physicians.'
+
+export const VETERANS_TOOLTIP =
+  'Physicians observed on the practice’s CMS roster across 8 or more calendar years.'
+
+export const MEDIAN_YRS_SINCE_MED_SCHOOL_TOOLTIP =
+  'Median among physicians on the current roster. Context only and not included in the Retention Index.'
+
+export const RETENTION_INDEX_SUMMARY =
+  'Summarizes observed physician retention patterns from CMS history.'
+
+export const RETENTION_INDEX_HIGHER_VALUES =
+  'Higher values reflect greater observed physician retention.'
 
 export const SHORTER_OBSERVED_TENURE_LABEL = 'Shorter observed tenures'
 export const SHORTER_OBSERVED_TENURE_NOTE = 'Departures within 4 observed years'

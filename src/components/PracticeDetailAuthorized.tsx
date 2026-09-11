@@ -31,7 +31,11 @@ import {
 } from '@/lib/public-search'
 import { assertionsByDoctorId, formatRosterReviewedLabel } from '@/lib/employer-overlay'
 import {
-  EXPERIENCE_LEVEL_CAPTION,
+  MEDIAN_YRS_SINCE_MED_SCHOOL_TOOLTIP,
+  PHYSICIANS_OBSERVED_TOOLTIP,
+  RETENTION_INDEX_HIGHER_VALUES,
+  RETENTION_INDEX_SUMMARY,
+  VETERANS_TOOLTIP,
   observedCmsYearsLabel,
   observedYearRangeLabel,
   ownershipLabel,
@@ -76,9 +80,25 @@ interface Affiliation {
 }
 
 
-const TENURE_TOP_BUCKET = '8+ observed yrs'
+const TENURE_TOP_BUCKET = '8+ yrs'
 const TENURE_TOP_BUCKET_TOOLTIP =
   'Affiliations are observed beginning in 2019. Physicians already affiliated at the start of the data window may have longer actual tenure.'
+
+function MetricInfoTip({ text, ariaLabel }: { text: string; ariaLabel: string }) {
+  return (
+    <span
+      className="practice-history-metric-info"
+      title={text}
+      aria-label={ariaLabel}
+      style={{ cursor: 'help' }}
+    >
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+        <circle cx="12" cy="12" r="10" />
+        <path strokeLinecap="round" d="M12 16v-4M12 8h.01" />
+      </svg>
+    </span>
+  )
+}
 
 export default function PracticeDetailAuthorized() {
   const { id } = useParams<{ id: string }>()
@@ -254,26 +274,28 @@ export default function PracticeDetailAuthorized() {
     zip: loc.zip,
   }))
 
-  const BUCKET_ORDER = [TENURE_TOP_BUCKET, '6–7 observed yrs', '4–5 observed yrs', '2–3 observed yrs', '0–1 observed yrs'] as const
+  const BUCKET_ORDER = [TENURE_TOP_BUCKET, '6–7 yrs', '4–5 yrs', '2–3 yrs', '0–1 yrs'] as const
   const buckets = {
     [TENURE_TOP_BUCKET]: practice.tenure_8_plus || 0,
-    '6–7 observed yrs': practice.tenure_6_7 || 0,
-    '4–5 observed yrs': practice.tenure_4_5 || 0,
-    '2–3 observed yrs': practice.tenure_2_3 || 0,
-    '0–1 observed yrs': practice.tenure_0_1 || 0,
+    '6–7 yrs': practice.tenure_6_7 || 0,
+    '4–5 yrs': practice.tenure_4_5 || 0,
+    '2–3 yrs': practice.tenure_2_3 || 0,
+    '0–1 yrs': practice.tenure_0_1 || 0,
   }
   const maxVal = Math.max(...Object.values(buckets), 1)
   const barColors = {
     [TENURE_TOP_BUCKET]: '#1A6B3A',
-    '6–7 observed yrs': '#4CAF50',
-    '4–5 observed yrs': '#1C4A45',
-    '2–3 observed yrs': '#6a9e98',
-    '0–1 observed yrs': '#d0d0d0',
+    '6–7 yrs': '#4CAF50',
+    '4–5 yrs': '#1C4A45',
+    '2–3 yrs': '#6a9e98',
+    '0–1 yrs': '#d0d0d0',
   }
+  const medianYrsSinceMedSchool = practice.med_yrs_grad
+  const veteranCount = practice.veteran_count || 0
 
   // ── OBSERVATIONS (boolean pattern flags) ──────────────────────────────────
   const observations = {
-    topHeavy: (buckets[TENURE_TOP_BUCKET] + buckets['6–7 observed yrs']) > (buckets['0–1 observed yrs'] + buckets['2–3 observed yrs']),
+    topHeavy: (buckets[TENURE_TOP_BUCKET] + buckets['6–7 yrs']) > (buckets['0–1 yrs'] + buckets['2–3 yrs']),
     significantReduction: rosterSize === 1 && alltime > 3,
     highChurnRate: churnRate > 0.4,
   }
@@ -304,7 +326,7 @@ export default function PracticeDetailAuthorized() {
     }
   } else if ((score || 0) >= 85 && observations.topHeavy) {
     insight = {
-      text: `${buckets[TENURE_TOP_BUCKET]} of ${alltime} all-time physicians reached 8+ years. Concentrated long-tenure workforce.`,
+      text: `${buckets[TENURE_TOP_BUCKET]} of ${alltime} physicians were observed across 8+ CMS years.`,
       assumptions: [
         'Long tenure may correlate with historical stability.',
         'Could also reflect limited growth, geographic constraints, or market conditions.',
@@ -313,9 +335,9 @@ export default function PracticeDetailAuthorized() {
     }
   } else if ((score || 0) >= 70) {
     insight = {
-      text: `Retention score ${score!.toFixed(1)}. ${churn} shorter observed tenure${churn !== 1 ? 's' : ''} out of ${alltime} all-time physicians.`,
+      text: `Retention Index ${score!.toFixed(1)}. ${churn} shorter observed tenure${churn !== 1 ? 's' : ''} out of ${alltime} all-time physicians.`,
       assumptions: [
-        'Retention score summarizes observed stay patterns, not practice quality.',
+        'Retention Index summarizes observed stay patterns, not practice quality.',
         'Shorter-observed-tenure counts depend on CMS affiliation completeness and lag.',
       ],
       confidence: 'high',
@@ -324,17 +346,17 @@ export default function PracticeDetailAuthorized() {
     insight = {
       text: `${churn} of ${alltime} physicians left within 4 observed years — ${Math.round(churnRate * 100)}% shorter observed tenure rate. This describes the observed window, not why anyone left.`,
       assumptions: [
-        'High exit rate may reflect a challenging environment.',
+        'Higher observed turnover may prompt additional questions about historical workforce patterns.',
         'Could also reflect early-career rotation, competitive market, or voluntary transitions.',
       ],
       confidence: 'high',
     }
   } else if (agingRoster) {
     insight = {
-      text: `Median graduation ${practice.med_yrs_grad} years ago. Aging roster pattern.`,
+      text: `Median graduation ${practice.med_yrs_grad} years ago among the current roster.`,
       assumptions: [
         'Median years since graduation describes roster age, not future outcomes.',
-        'Senior physicians may remain active without an imminent transition.',
+        'A more senior roster may be relevant when considering succession or future workforce transition.',
       ],
       confidence: 'high',
     }
@@ -557,33 +579,41 @@ export default function PracticeDetailAuthorized() {
       )}
 
       <section className="practice-history-section" aria-labelledby="physician-history-heading">
-        <h2 id="physician-history-heading" className="practice-history-heading">Physician retention history</h2>
+        <h2 id="physician-history-heading" className="practice-history-heading">
+          Physician retention history
+        </h2>
         <p className="practice-history-lede">CMS-observed physician history since 2019.</p>
 
         <div className="practice-history-metric-grid">
-          <div
-            className="practice-history-metric-card is-retention"
-            style={{ background: scoreBg(score), borderColor: 'rgba(0,0,0,0.07)' }}
-          >
-            <div className="practice-history-metric-label">Retention Score</div>
-            <div className="practice-history-metric-value" style={{ color: scoreColor(score) }}>
-              {hasScore ? `${score!.toFixed(1)} / 100` : '—'}
-            </div>
-            <Link href="/scoring-methodology" className="practice-history-metric-link">
-              How this is calculated
-            </Link>
-          </div>
           <div className="practice-history-metric-card">
-            <div className="practice-history-metric-label">Current roster</div>
+            <div className="practice-history-metric-label">Current physicians</div>
             <div className="practice-history-metric-value">{rosterSize}</div>
           </div>
           <div className="practice-history-metric-card">
-            <div className="practice-history-metric-label">Physicians observed</div>
+            <div className="practice-history-metric-label">
+              Physicians observed
+              <MetricInfoTip text={PHYSICIANS_OBSERVED_TOOLTIP} ariaLabel="About physicians observed" />
+            </div>
             <div className="practice-history-metric-value">{alltime}</div>
           </div>
           <div className="practice-history-metric-card">
-            <div className="practice-history-metric-label">8+ CMS years observed</div>
-            <div className="practice-history-metric-value">{practice.veteran_count || 0}</div>
+            <div className="practice-history-metric-label">
+              Veterans
+              <MetricInfoTip text={VETERANS_TOOLTIP} ariaLabel="About Veterans" />
+            </div>
+            <div className="practice-history-metric-value">{veteranCount}</div>
+          </div>
+          <div className="practice-history-metric-card">
+            <div className="practice-history-metric-label">
+              Median years since medical school
+              <MetricInfoTip
+                text={MEDIAN_YRS_SINCE_MED_SCHOOL_TOOLTIP}
+                ariaLabel="About median years since medical school"
+              />
+            </div>
+            <div className="practice-history-metric-value">
+              {medianYrsSinceMedSchool != null ? medianYrsSinceMedSchool : '—'}
+            </div>
           </div>
         </div>
 
@@ -616,15 +646,24 @@ export default function PracticeDetailAuthorized() {
           })}
         </div>
 
-        {practice.experience_level !== null && (
-          <div className="practice-experience-row">
-            <div>
-              <div className="practice-history-metric-label">Experience Level</div>
-              <div className="practice-experience-value">{practice.experience_level.toFixed(1)}</div>
+        <div
+          className="practice-retention-index"
+          style={{ background: scoreBg(score), borderColor: 'rgba(0,0,0,0.07)' }}
+        >
+          <div>
+            <div className="practice-history-metric-label">Retention Index</div>
+            <div className="practice-retention-index-value" style={{ color: scoreColor(score) }}>
+              {hasScore ? `${score!.toFixed(1)} / 100` : '—'}
             </div>
-            <p className="practice-experience-caption">{EXPERIENCE_LEVEL_CAPTION}</p>
+            <Link href="/scoring-methodology" className="practice-history-metric-link">
+              How this is calculated
+            </Link>
           </div>
-        )}
+          <div className="practice-retention-index-copy">
+            <p>{RETENTION_INDEX_SUMMARY}</p>
+            <p>{RETENTION_INDEX_HIGHER_VALUES}</p>
+          </div>
+        </div>
 
         <details className="practice-interpretation">
           <summary>
