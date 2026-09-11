@@ -860,26 +860,6 @@ a { color: inherit; text-decoration: none; }
   }
 }
 
-.practice-current-summary {
-  margin: -8px 0 20px;
-  display: grid;
-  gap: 4px;
-}
-
-.practice-current-summary-primary {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: #1a1a1a;
-  line-height: 1.4;
-}
-
-.practice-current-summary-meta {
-  margin: 0;
-  font-size: 14px;
-  color: #333;
-}
-
 .practice-history-section {
   margin-bottom: 28px;
 }

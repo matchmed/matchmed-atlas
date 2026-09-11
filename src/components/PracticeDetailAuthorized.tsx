@@ -38,9 +38,7 @@ import {
   VETERANS_TOOLTIP,
   observedCmsYearsLabel,
   observedYearRangeLabel,
-  ownershipLabel,
 } from '@/lib/practice-detail-presentation'
-import { formatOpportunityCompensation, opportunityHorizonLabel } from '@/lib/opportunity-labels'
 
 /** Session-scoped guard against Strict Mode / remount duplicate practice_viewed events. */
 const viewedPracticeIds = new Set<string>()
@@ -401,18 +399,6 @@ export default function PracticeDetailAuthorized({
   }
 
   const claimedReady = Boolean(employerOverlay?.visible && employerOverlay.physician_ready)
-  const primaryOpportunity = employerOverlay?.recruiting_outlook?.opportunities?.[0]
-  const ownership = claimedReady ? employerOverlay?.ownership : null
-  const hiringLine = primaryOpportunity
-    ? `${opportunityHorizonLabel(primaryOpportunity.hiring_horizon)}: ${primaryOpportunity.clinical_focus}`
-    : null
-  const hiringComp = primaryOpportunity
-    ? formatOpportunityCompensation(
-        primaryOpportunity.base_compensation_min_usd,
-        primaryOpportunity.base_compensation_max_usd,
-        primaryOpportunity.base_compensation_max_is_open_ended,
-      )
-    : null
 
   function renderPhysicianCard(a: Affiliation) {
     const n = a.doctors?.physician_name || '—'
@@ -611,27 +597,12 @@ export default function PracticeDetailAuthorized({
         </div>
       </div>
 
-      {claimedReady && (ownership || hiringLine) && (
-        <section className="practice-current-summary" aria-label="Current practice and recruiting summary">
-          {ownership && (
-            <p className="practice-current-summary-primary">
-              {ownershipLabel(ownership.structure, ownership.other_text)}
-            </p>
-          )}
-          {hiringLine && <p className="practice-current-summary-primary">{hiringLine}</p>}
-          {hiringComp && <p className="practice-current-summary-meta">{hiringComp}</p>}
-          <p className="public-profile-muted">
-            {employerOverlay?.attribution_label ?? 'Practice-reported'}
-          </p>
-        </section>
-      )}
-
       {claimedReady && (
         <EmployerPhysicianReadySections
           overlay={employerOverlay}
           practiceId={practice.id}
           showConnect={!isEmployerPreview}
-          part="opportunities"
+          part="current"
         />
       )}
 

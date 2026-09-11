@@ -57,7 +57,7 @@ export default function EmployerPhysicianReadySections({
     <div className="employer-physician-ready-sections">
       {showOwnership && ownership && (
         <section className="public-profile-section">
-          <h2 className="public-profile-section-label">Practice ownership</h2>
+          <h2 className="public-profile-section-label">Ownership Structure</h2>
           <div className="public-profile-card">
             <p className="public-profile-text">
               {ownershipLabel(ownership.structure, ownership.other_text)}
