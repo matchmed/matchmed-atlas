@@ -1,9 +1,9 @@
 const TOOLTIP =
-  'MatchMed verified that an authorized representative of this practice can manage employer-provided information. This does not endorse the practice, verify Atlas scores, or confirm every employer statement.'
+  'Atlas has verified an authorized practice representative. Practice-reported information is labeled separately.'
 
 export default function PracticeVerifiedBadge() {
   return (
-    <span className="practice-verified-badge" title={TOOLTIP} aria-label="Practice account verified">
+    <span className="practice-verified-badge" title={TOOLTIP} aria-label="Verified profile">
       <svg
         className="practice-verified-badge-icon"
         viewBox="0 0 24 24"
@@ -25,7 +25,7 @@ export default function PracticeVerifiedBadge() {
           d="M7.6 12.2l2.8 2.8 6-6"
         />
       </svg>
-      <span className="practice-verified-badge-label">Verified</span>
+      <span className="practice-verified-badge-label">Verified profile</span>
     </span>
   )
 }

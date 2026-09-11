@@ -6,31 +6,25 @@ import {
   opportunityHorizonLabel,
   OPPORTUNITY_REASON_LABELS,
 } from '@/lib/opportunity-labels'
+import { ownershipLabel } from '@/lib/practice-detail-presentation'
 import { sponsorPageHref } from '@/lib/sponsor-labels'
 import { fetchActiveSponsorSlugs } from '@/lib/sponsors'
 import type { EmployerPracticeOverlay } from '@/lib/public-search'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
-const OWNERSHIP_LABELS: Record<string, string> = {
-  solo: 'Solo practice',
-  physician_owned_group_practice: 'Physician-owned group practice',
-  pe_mso_owned: 'PE/MSO-owned',
-  hmo: 'HMO',
-  nonacademic_hospital_health_system: 'Non-academic hospital / health system',
-  academic_institution: 'Academic institution',
-  other: 'Other',
-}
-
 export default function EmployerPhysicianReadySections({
   overlay,
   practiceId,
   showConnect = false,
+  part = 'all',
 }: {
   overlay: EmployerPracticeOverlay | null | undefined
   practiceId?: string
   /** Authorized practice detail can show Connect per opportunity. */
   showConnect?: boolean
+  /** Split claimed-page sections without duplicating opportunity logic. */
+  part?: 'all' | 'current' | 'opportunities' | 'supporting' | 'technology'
 }) {
   const [sponsorSlugs, setSponsorSlugs] = useState<Set<string>>(new Set())
 
@@ -54,18 +48,19 @@ export default function EmployerPhysicianReadySections({
   )
   const fit = overlay.profile?.physician_fit_description
   const future = overlay.profile?.future_practice_description
+  const showOwnership = part === 'all' || part === 'current'
+  const showOpportunities = part === 'all' || part === 'current' || part === 'opportunities'
+  const showTechnology = part === 'all' || part === 'technology'
+  const showFit = part === 'all' || part === 'supporting'
 
   return (
     <div className="employer-physician-ready-sections">
-      {ownership && (
+      {showOwnership && ownership && (
         <section className="public-profile-section">
           <h2 className="public-profile-section-label">Practice ownership</h2>
           <div className="public-profile-card">
             <p className="public-profile-text">
-              {OWNERSHIP_LABELS[ownership.structure] ?? ownership.structure}
-              {ownership.structure === 'other' && ownership.other_text
-                ? ` — ${ownership.other_text}`
-                : ''}
+              {ownershipLabel(ownership.structure, ownership.other_text)}
             </p>
             <p className="public-profile-muted" style={{ marginTop: 8 }}>
               {attribution}
@@ -74,7 +69,7 @@ export default function EmployerPhysicianReadySections({
         </section>
       )}
 
-      {outlook && outlook.opportunities.length > 0 && (
+      {showOpportunities && outlook && outlook.opportunities.length > 0 && (
         <section className="public-profile-section">
           <h2 className="public-profile-section-label">Opportunities</h2>
           <div className="public-profile-card">
@@ -155,17 +150,15 @@ export default function EmployerPhysicianReadySections({
         </section>
       )}
 
-      {infrastructure.length > 0 && (
-        <section className="public-profile-section">
+      {showTechnology && infrastructure.length > 0 && (
+        <section className="public-profile-section practice-tech-section">
           <h2 className="public-profile-section-label">Clinical + practice technology</h2>
-          <div className="public-profile-card">
-            <div style={{ display: 'grid', gap: 12 }}>
+          <div className="public-profile-card practice-tech-card">
+            <div className="practice-tech-list">
               {infrastructure.map((cat) => (
-                <div key={cat.category_slug}>
-                  <p className="public-profile-text" style={{ fontWeight: 600 }}>
-                    {cat.category_label}
-                  </p>
-                  <p className="public-profile-muted">
+                <div key={cat.category_slug} className="practice-tech-category">
+                  <p className="practice-tech-category-label">{cat.category_label}</p>
+                  <p className="practice-tech-vendors">
                     {cat.vendors.map((v, idx) => {
                       const label = v.vendor_label || v.other_vendor_name
                       if (!label) return null
@@ -193,14 +186,14 @@ export default function EmployerPhysicianReadySections({
                 </div>
               ))}
             </div>
-            <p className="public-profile-muted" style={{ marginTop: 12 }}>
+            <p className="public-profile-muted" style={{ marginTop: 8 }}>
               {attribution}
             </p>
           </div>
         </section>
       )}
 
-      {(fit || future) && (
+      {showFit && (fit || future) && (
         <section className="public-profile-section">
           <h2 className="public-profile-section-label">About recruiting fit</h2>
           <div className="public-profile-card">

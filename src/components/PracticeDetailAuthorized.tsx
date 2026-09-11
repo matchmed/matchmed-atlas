@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { invalidateFavoritesCache } from '@/lib/favorites-cache'
@@ -12,7 +13,7 @@ import {
   normalizePracticeLocation,
   type PracticeLocation,
 } from '@/lib/practice-locations'
-import { nameToColor, getInitials, scoreColor, scoreBg } from '@/lib/utils'
+import { nameToColor, getInitials, scoreColor } from '@/lib/utils'
 import { resolvePracticePublicName } from '@/lib/practice-display-name'
 import PracticeErrorReportModal from '@/components/PracticeErrorReportModal'
 import PracticeLocationsDisclaimer from '@/components/PracticeLocationsDisclaimer'
@@ -29,6 +30,15 @@ import {
   type EmployerPracticeOverlay,
 } from '@/lib/public-search'
 import { assertionsByDoctorId, formatRosterReviewedLabel } from '@/lib/employer-overlay'
+import {
+  EXPERIENCE_LEVEL_CAPTION,
+  SHORTER_OBSERVED_TENURE_LABEL,
+  SHORTER_OBSERVED_TENURE_NOTE,
+  observedCmsYearsLabel,
+  observedYearRangeLabel,
+  ownershipLabel,
+} from '@/lib/practice-detail-presentation'
+import { formatOpportunityCompensation, opportunityHorizonLabel } from '@/lib/opportunity-labels'
 
 /** Session-scoped guard against Strict Mode / remount duplicate practice_viewed events. */
 const viewedPracticeIds = new Set<string>()
@@ -246,20 +256,26 @@ export default function PracticeDetailAuthorized() {
     zip: loc.zip,
   }))
 
-  const BUCKET_ORDER = [TENURE_TOP_BUCKET, '6-7 yrs', '4-5 yrs', '2-3 yrs', '0-1 yrs'] as const
+  const BUCKET_ORDER = [TENURE_TOP_BUCKET, '6–7 observed yrs', '4–5 observed yrs', '2–3 observed yrs', '0–1 observed yrs'] as const
   const buckets = {
     [TENURE_TOP_BUCKET]: practice.tenure_8_plus || 0,
-    '6-7 yrs': practice.tenure_6_7 || 0,
-    '4-5 yrs': practice.tenure_4_5 || 0,
-    '2-3 yrs': practice.tenure_2_3 || 0,
-    '0-1 yrs': practice.tenure_0_1 || 0,
+    '6–7 observed yrs': practice.tenure_6_7 || 0,
+    '4–5 observed yrs': practice.tenure_4_5 || 0,
+    '2–3 observed yrs': practice.tenure_2_3 || 0,
+    '0–1 observed yrs': practice.tenure_0_1 || 0,
   }
   const maxVal = Math.max(...Object.values(buckets), 1)
-  const barColors = { [TENURE_TOP_BUCKET]: '#1A6B3A', '6-7 yrs': '#4CAF50', '4-5 yrs': '#1C4A45', '2-3 yrs': '#6a9e98', '0-1 yrs': '#d0d0d0' }
+  const barColors = {
+    [TENURE_TOP_BUCKET]: '#1A6B3A',
+    '6–7 observed yrs': '#4CAF50',
+    '4–5 observed yrs': '#1C4A45',
+    '2–3 observed yrs': '#6a9e98',
+    '0–1 observed yrs': '#d0d0d0',
+  }
 
   // ── OBSERVATIONS (boolean pattern flags) ──────────────────────────────────
   const observations = {
-    topHeavy: (buckets[TENURE_TOP_BUCKET] + buckets['6-7 yrs']) > (buckets['0-1 yrs'] + buckets['2-3 yrs']),
+    topHeavy: (buckets[TENURE_TOP_BUCKET] + buckets['6–7 observed yrs']) > (buckets['0–1 observed yrs'] + buckets['2–3 observed yrs']),
     significantReduction: rosterSize === 1 && alltime > 3,
     highChurnRate: churnRate > 0.4,
   }
@@ -299,16 +315,16 @@ export default function PracticeDetailAuthorized() {
     }
   } else if ((score || 0) >= 70) {
     insight = {
-      text: `Retention score ${score!.toFixed(1)}. ${churn} short-tenure exit${churn !== 1 ? 's' : ''} out of ${alltime} all-time physicians.`,
+      text: `Retention score ${score!.toFixed(1)}. ${churn} shorter observed tenure${churn !== 1 ? 's' : ''} out of ${alltime} all-time physicians.`,
       assumptions: [
         'Retention score summarizes observed stay patterns, not practice quality.',
-        'Short-exit counts depend on CMS affiliation completeness and lag.',
+        'Shorter-observed-tenure counts depend on CMS affiliation completeness and lag.',
       ],
       confidence: 'high',
     }
   } else if (observations.highChurnRate) {
     insight = {
-      text: `${churn} of ${alltime} physicians exited within 4 years — ${Math.round(churnRate * 100)}% short-tenure exit rate. Elevated short-tenure exit rate observed.`,
+      text: `${churn} of ${alltime} physicians left within 4 observed years — ${Math.round(churnRate * 100)}% shorter observed tenure rate. This describes the observed window, not why anyone left.`,
       assumptions: [
         'High exit rate may reflect a challenging environment.',
         'Could also reflect early-career rotation, competitive market, or voluntary transitions.',
@@ -335,21 +351,25 @@ export default function PracticeDetailAuthorized() {
     }
   }
 
-  const metricCards = [
-    { label: 'Retention score', value: hasScore ? score!.toFixed(1) : '—', color: scoreColor(score), bg: scoreBg(score), sub: null },
-    { label: 'Experience Level', value: practice.experience_level !== null ? practice.experience_level.toFixed(1) : '—', color: '#1a1a1a', bg: '#ffffff', sub: null },
-    { label: 'Current roster', value: String(rosterSize), color: '#1a1a1a', bg: '#ffffff', sub: null },
-    { label: 'All-time physicians', value: String(alltime), color: '#1a1a1a', bg: '#ffffff', sub: null },
-    { label: 'Short exits', value: String(churn), color: observations.highChurnRate ? '#C0392B' : '#1a1a1a', bg: observations.highChurnRate ? '#fdf2f2' : '#ffffff', sub: null },
-    { label: 'Veterans (8+ yrs)', value: String(practice.veteran_count || 0), color: (practice.veteran_count || 0) > 0 ? '#1A6B3A' : '#888', bg: (practice.veteran_count || 0) > 0 ? '#f0faf4' : '#ffffff', sub: null },
-    { label: 'Median yrs since MD', value: `${practice.med_yrs_grad || 0} yrs`, color: '#1a1a1a', bg: '#ffffff', sub: null },
-  ]
+  const claimedReady = Boolean(employerOverlay?.visible && employerOverlay.physician_ready)
+  const primaryOpportunity = employerOverlay?.recruiting_outlook?.opportunities?.[0]
+  const ownership = claimedReady ? employerOverlay?.ownership : null
+  const hiringLine = primaryOpportunity
+    ? `${opportunityHorizonLabel(primaryOpportunity.hiring_horizon)}: ${primaryOpportunity.clinical_focus}`
+    : null
+  const hiringComp = primaryOpportunity
+    ? formatOpportunityCompensation(
+        primaryOpportunity.base_compensation_min_usd,
+        primaryOpportunity.base_compensation_max_usd,
+        primaryOpportunity.base_compensation_max_is_open_ended,
+      )
+    : null
 
   function renderPhysicianCard(a: Affiliation) {
     const n = a.doctors?.physician_name || '—'
     const isOn = (a.status || '').toLowerCase() === 'on roster'
-    const tenure = a.tenure_years || 0
-    const tenureLabel = tenure >= 8 ? '8+ yrs' : tenure === 1 ? '1 yr' : `${tenure} yrs`
+    const rangeLabel = observedYearRangeLabel(a.first_seen_year_at_org, a.last_seen_year_at_org)
+    const tenureLabel = observedCmsYearsLabel(a.tenure_years)
     const [fg2, bg2] = nameToColor(n)
     const doctorId = a.doctors?.id
     const employerAssertion = doctorId ? employerAssertionMap.get(doctorId) : undefined
@@ -371,7 +391,7 @@ export default function PracticeDetailAuthorized() {
             </div>
           )}
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 6 }}>
-            <span style={{ fontSize: 12, color: '#888' }}>{a.first_seen_year_at_org} - {a.last_seen_year_at_org}</span>
+            {rangeLabel && <span style={{ fontSize: 12, color: '#888' }}>{rangeLabel}</span>}
             <span style={{ fontSize: 12, color: '#555', fontWeight: 500 }}>{tenureLabel}</span>
             {a.grad_yr && <span style={{ fontSize: 12, color: '#aaa' }}>Med school grad: {a.grad_yr}</span>}
           </div>
@@ -505,70 +525,55 @@ export default function PracticeDetailAuthorized() {
                 </div>
               )
             )}
-            {displayPhone && <a href={`tel:${displayPhone}`} style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none' }}>{displayPhone}</a>}
-            {displayWebsite && <a href={displayWebsite.startsWith('http') ? displayWebsite : `https://${displayWebsite}`} target="_blank" rel="noopener" style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 320 }}>{displayWebsite}</a>}
-            {hasEmployerOverlay && (
-              <EmployerRecruitingContact
-                contactName={employerOverlay?.profile?.recruiting_contact_name}
-                email={employerOverlay?.profile?.recruiting_email}
-                phone={employerOverlay?.profile?.recruiting_phone}
-                careersUrl={employerOverlay?.profile?.careers_url}
-                linkClassName=""
-                linkStyle={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none' }}
-              />
+            {claimedReady && practice.city_st && (
+              <div style={{ fontSize: 13, color: '#666' }}>{practice.city_st}</div>
             )}
+            {!claimedReady && displayPhone && <a href={`tel:${displayPhone}`} style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none' }}>{displayPhone}</a>}
+            {!claimedReady && displayWebsite && <a href={displayWebsite.startsWith('http') ? displayWebsite : `https://${displayWebsite}`} target="_blank" rel="noopener" style={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 320 }}>{displayWebsite}</a>}
           </div>
         </div>
       </div>
 
-      {hasEmployerOverlay ? (
-        <PublicPracticeLocations
-          locations={publicLocations}
-          employerLocations={employerOverlay?.locations}
+      {claimedReady && (ownership || hiringLine) && (
+        <section className="practice-current-summary" aria-label="Current practice and recruiting summary">
+          {ownership && (
+            <p className="practice-current-summary-primary">
+              {ownershipLabel(ownership.structure, ownership.other_text)}
+            </p>
+          )}
+          {hiringLine && <p className="practice-current-summary-primary">{hiringLine}</p>}
+          {hiringComp && <p className="practice-current-summary-meta">{hiringComp}</p>}
+          <p className="public-profile-muted">
+            {employerOverlay?.attribution_label ?? 'Practice-reported'}
+          </p>
+        </section>
+      )}
+
+      {claimedReady && (
+        <EmployerPhysicianReadySections
+          overlay={employerOverlay}
+          practiceId={practice.id}
+          showConnect
+          part="opportunities"
         />
-      ) : null}
+      )}
 
-      {/* Metrics grid */}
-      <div className="practice-metric-grid">
-        {metricCards.map(c => {
-          const isRetention = c.label === 'Retention score'
-          return (
-            <div key={c.label} style={{ background: c.bg, borderRadius: 10, padding: '14px 12px', border: '0.5px solid rgba(0,0,0,0.07)' }}>
-              <div style={{ fontSize: 11, color: '#888', marginBottom: 5, fontWeight: 500, letterSpacing: '.02em' }}>{c.label}</div>
-              <div
-                style={{
-                  fontSize: 22,
-                  fontWeight: 700,
-                  color: c.color,
-                  lineHeight: 1.1,
-                  marginBottom: !isRetention && c.sub ? 6 : 0,
-                  display: isRetention ? 'flex' : undefined,
-                  alignItems: isRetention ? 'baseline' : undefined,
-                  flexWrap: isRetention ? 'nowrap' : undefined,
-                  whiteSpace: isRetention ? 'nowrap' : undefined,
-                }}
-              >
-                <span>{c.value}</span>
-                {isRetention && hasScore && (
-                  <span className="locked-metric-score-scale"> / 100</span>
-                )}
-              </div>
-              {isRetention && (
-                <p className="locked-metric-score-note" style={{ marginBottom: c.sub ? 6 : 0 }}>
-                  Higher scores reflect greater observed physician retention.
-                </p>
-              )}
-              {c.sub && <div>{c.sub}</div>}
-            </div>
-          )
-        })}
-      </div>
+      <section className="practice-history-section" aria-labelledby="physician-history-heading">
+        <h2 id="physician-history-heading" className="practice-history-heading">Physician retention history</h2>
+        <ul className="practice-history-facts">
+          <li>{alltime} physicians observed since 2019</li>
+          <li>{rosterSize} on the current roster</li>
+          <li>{practice.veteran_count || 0} with 8+ CMS years observed</li>
+          <li>
+            {churn} {SHORTER_OBSERVED_TENURE_LABEL.toLowerCase()}
+            <span className="practice-history-note"> · {SHORTER_OBSERVED_TENURE_NOTE}</span>
+          </li>
+        </ul>
 
-      {/* Tenure bars */}
-      <div className="practice-tenure-chart" style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}>Tenure outcomes among all physicians observed since 2019</div>
+      <div className="practice-tenure-chart" style={{ marginBottom: 16 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}>Observed CMS years among all physicians since 2019</div>
         <p style={{ fontSize: 12, color: '#888', lineHeight: 1.45, margin: '0 0 12px' }}>
-          Includes {alltime} physicians observed since 2019, both current and former.
+          Counts inclusive calendar years on the CMS roster, not continuous elapsed employment. Includes {alltime} physicians observed since 2019, both current and former.
         </p>
         {BUCKET_ORDER.map(b => {
           const pct = Math.round((buckets[b] / maxVal) * 100)
@@ -577,7 +582,8 @@ export default function PracticeDetailAuthorized() {
             <div key={b} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7 }}>
               <span
                 title={isTopBucket ? TENURE_TOP_BUCKET_TOOLTIP : undefined}
-                style={{ fontSize: 11, color: '#888', width: 96, textAlign: 'right', flexShrink: 0, cursor: isTopBucket ? 'help' : undefined }}
+                className="practice-tenure-bucket"
+                style={{ cursor: isTopBucket ? 'help' : undefined }}
               >
                 {b}
               </span>
@@ -590,7 +596,22 @@ export default function PracticeDetailAuthorized() {
         })}
       </div>
 
-      {/* Insight */}
+        <p className="practice-score-line">
+          Retention Score:{' '}
+          <span style={{ color: scoreColor(score), fontWeight: 700 }}>
+            {hasScore ? `${score!.toFixed(1)} / 100` : '—'}
+          </span>
+          {' · '}
+          <Link href="/scoring-methodology">How this is calculated</Link>
+        </p>
+        <p className="practice-score-note">Higher scores reflect greater observed physician retention. Claiming a profile does not change this score.</p>
+        {practice.experience_level !== null && (
+          <p className="practice-score-line">
+            Experience Level: <strong>{practice.experience_level.toFixed(1)}</strong>
+            <span className="practice-score-note"> {EXPERIENCE_LEVEL_CAPTION}</span>
+          </p>
+        )}
+
       <div style={{ borderLeft: `3px solid ${hasScore ? '#1C4A45' : '#ccc'}`, padding: '12px 16px', background: hasScore ? '#E8F0EF' : '#f9f9f9', borderRadius: '0 8px 8px 0', marginBottom: 24 }}>
         <p style={{ fontSize: 13, color: hasScore ? '#333' : '#888', lineHeight: 1.6, margin: 0, marginBottom: insight.assumptions.length ? 8 : 0 }}>
           {insight.text}
@@ -608,6 +629,7 @@ export default function PracticeDetailAuthorized() {
           </details>
         )}
       </div>
+      </section>
 
       {/* Physicians */}
       <div>
@@ -648,6 +670,49 @@ export default function PracticeDetailAuthorized() {
           <EmployerPhysicianReadySections
             overlay={employerOverlay}
             practiceId={practice.id}
+            part="supporting"
+          />
+          {(employerOverlay.profile?.recruiting_contact_name
+            || employerOverlay.profile?.recruiting_email
+            || employerOverlay.profile?.recruiting_phone
+            || employerOverlay.profile?.careers_url
+            || displayPhone
+            || displayWebsite) && (
+            <section className="public-profile-section">
+              <h2 className="public-profile-section-label">Recruiting contact</h2>
+              <div className="public-profile-card">
+                <EmployerRecruitingContact
+                  contactName={employerOverlay.profile?.recruiting_contact_name}
+                  email={employerOverlay.profile?.recruiting_email}
+                  phone={employerOverlay.profile?.recruiting_phone}
+                  careersUrl={employerOverlay.profile?.careers_url}
+                  linkStyle={{ fontSize: 13, color: '#1C4A45', textDecoration: 'none' }}
+                />
+                {(displayPhone || displayWebsite) && (
+                  <p className="public-profile-muted" style={{ marginTop: 10 }}>
+                    {displayPhone && <a href={`tel:${displayPhone}`} style={{ color: '#1C4A45' }}>{displayPhone}</a>}
+                    {displayPhone && displayWebsite ? ' · ' : null}
+                    {displayWebsite && (
+                      <a href={displayWebsite.startsWith('http') ? displayWebsite : `https://${displayWebsite}`} target="_blank" rel="noopener" style={{ color: '#1C4A45' }}>
+                        Website
+                      </a>
+                    )}
+                  </p>
+                )}
+                <p className="public-profile-muted" style={{ marginTop: 8 }}>
+                  Contact details are shown as published by the practice. Connect remains a separate request.
+                </p>
+              </div>
+            </section>
+          )}
+          <PublicPracticeLocations
+            locations={publicLocations}
+            employerLocations={employerOverlay.locations}
+          />
+          <EmployerPhysicianReadySections
+            overlay={employerOverlay}
+            practiceId={practice.id}
+            part="technology"
           />
         </div>
       )}

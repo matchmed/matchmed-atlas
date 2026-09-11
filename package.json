@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:unit": "node --experimental-strip-types --test src/lib/practice-display-name.test.ts src/lib/sponsor-labels.test.ts src/lib/consent-model.test.ts src/app/api/generate-report/route.test.mjs"
+    "test:unit": "node --experimental-strip-types --test src/lib/practice-display-name.test.ts src/lib/practice-detail-presentation.test.ts src/lib/sponsor-labels.test.ts src/lib/consent-model.test.ts src/app/api/generate-report/route.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

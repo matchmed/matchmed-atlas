@@ -1,6 +1,7 @@
 'use client'
 
 import { useId, useState } from 'react'
+import { locationSetsMatch } from '@/lib/practice-detail-presentation'
 import {
   formatPublicCityState,
   formatPublicZip,
@@ -130,6 +131,7 @@ export default function PublicPracticeLocations({
   employerLocations?: EmployerOverlayLocation[]
 }) {
   const hasEmployerLocations = employerLocations.length > 0
+  const locationsMatch = locationSetsMatch(locations, employerLocations)
 
   if (!hasEmployerLocations) {
     return (
@@ -148,7 +150,13 @@ export default function PublicPracticeLocations({
       aria-labelledby="current-locations-heading"
     >
       <EmployerLocationsBlock employerLocations={employerLocations} />
-      <CmsLocationsBlock locations={locations} secondary />
+      {locationsMatch ? (
+        <p className="public-profile-muted" style={{ marginTop: 8 }}>
+          Matches latest CMS-observed billing location{locations.length === 1 ? '' : 's'}
+        </p>
+      ) : (
+        <CmsLocationsBlock locations={locations} secondary />
+      )}
     </section>
   )
 }
