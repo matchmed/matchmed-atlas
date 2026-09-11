@@ -29,18 +29,14 @@ describe('consent-model', () => {
     assert.doesNotMatch(CONSENT_ACCOUNT_HEADING, /Introductions/i)
   })
 
-  it('onboarding completion writes data_sharing and industry ack, not open_to_practice_connections', () => {
+  it('onboarding completion writes only data_sharing and industry ack', () => {
     const fields = onboardingConsentCompletionFields()
     assert.deepEqual(fields, {
       industry_partnership_acknowledged: true,
       data_sharing: true,
     })
-    assert.equal(
-      Object.prototype.hasOwnProperty.call(fields, 'open_to_practice_connections'),
-      false,
-    )
+    assert.equal(Object.keys(fields).sort().join(','), 'data_sharing,industry_partnership_acknowledged')
     assert.equal(isAllowedProfileWriteField('data_sharing'), true)
     assert.equal(isAllowedProfileWriteField('industry_partnership_acknowledged'), true)
-    assert.equal(isAllowedProfileWriteField('open_to_practice_connections'), false)
   })
 })

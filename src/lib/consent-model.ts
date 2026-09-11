@@ -1,10 +1,11 @@
 /**
- * Canonical physician consent model (MAT-14 consolidation).
+ * Canonical physician consent model.
  *
  * - industry_partnership_acknowledged: required onboarding acknowledgement (separate)
  * - data_sharing: single user-controlled flag for industry opportunities + anonymous
  *   practice discovery + practice-initiated Connect
- * - open_to_practice_connections: retired from application logic (column may remain)
+ *
+ * Physician-initiated Connect remains allowed when data_sharing is false.
  */
 
 export const CONSENT_ONBOARDING_HEADING = 'Professional opportunities & connections'

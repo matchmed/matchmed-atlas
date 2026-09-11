@@ -197,7 +197,7 @@ BEGIN
     SELECT 1
     FROM unnest(ARRAY[
       'email','phone','npi','first_name','last_name','user_id','profile_id',
-      'clinical_focus_preference','preferred_geography','open_to_practice_connections'
+      'clinical_focus_preference','preferred_geography'
     ]) AS k(key)
     WHERE payload::text ILIKE '%' || k.key || '%'
       AND payload::text ~ ('"' || k.key || '"\s*:')

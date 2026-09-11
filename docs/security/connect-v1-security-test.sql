@@ -1,5 +1,5 @@
 -- MAT-14 Connect V1 security matrix (transactional; rolls back).
--- Prerequisites: Connect V1 + lifecycle + 20260909110000_connect_data_sharing_consent.sql
+-- Prerequisites: Connect V1 + lifecycle + data_sharing consent + drop open_to_practice_connections
 --
 --   npx supabase db query --linked -f docs/security/connect-v1-security-test.sql
 --
@@ -147,14 +147,14 @@ BEGIN
   INSERT INTO public.profiles (
     user_id, email, first_name, last_name, phone, npi,
     training_status, clinical_focus, preferred_state, start_year,
-    onboarding_complete, data_sharing, open_to_practice_connections
+    onboarding_complete, data_sharing
   ) VALUES
     (u_physician, 'connect.phys.a@example.test', 'Alice', 'Alpha', '555-0100', '1111111111',
      'Fellow', ARRAY['Glaucoma (medical and/or surgical)'], ARRAY['GA'], '2027',
-     true, true, false),
+     true, true),
     (u_physician2, 'connect.phys.b@example.test', 'Bob', 'Beta', '555-0101', '2222222222',
      'Resident', ARRAY['Corneal Disease'], ARRAY['FL'], '2028',
-     true, false, true);
+     true, false);
 
   SELECT id INTO profile_a FROM public.profiles WHERE user_id = u_physician;
   SELECT id INTO profile_b FROM public.profiles WHERE user_id = u_physician2;
@@ -363,7 +363,7 @@ BEGIN
     SELECT 1 FROM jsonb_array_elements(payload) e
     WHERE (e->>'physician_profile_id') = profile_b::text
   );
-  PERFORM pg_temp.record(19, 'discovery uses data_sharing despite opposite legacy values', 'open only', ok, payload::text);
+  PERFORM pg_temp.record(19, 'discovery uses data_sharing', 'open only', ok, payload::text);
 
   IF jsonb_array_length(payload) > 0 THEN
     keys := ARRAY(SELECT jsonb_object_keys(payload->0));
@@ -429,24 +429,28 @@ BEGIN
 
   PERFORM pg_temp.reset_auth();
 
-  -- Compatibility JSON keys must also reflect the authoritative consent.
-  SELECT public._connect_anonymous_physician_json(p)->>'open_to_practice_connections'
-    INTO err FROM public.profiles p WHERE id = profile_a;
-  SELECT public._connect_unlocked_physician_json(p)->'open_to_practice_connections'
+  -- Retired consent key must not appear in physician JSON payloads.
+  SELECT public._connect_anonymous_physician_json(p)
     INTO payload FROM public.profiles p WHERE id = profile_a;
-  PERFORM pg_temp.record(25, 'JSON helpers use shared consent', 'true',
-    err = 'true' AND payload = 'true'::jsonb);
+  ok := NOT (payload ? 'open_to_practice_connections')
+    AND NOT (payload ? 'data_sharing');
+  SELECT public._connect_unlocked_physician_json(p)
+    INTO payload FROM public.profiles p WHERE id = profile_a;
+  ok := ok
+    AND NOT (payload ? 'open_to_practice_connections')
+    AND NOT (payload ? 'data_sharing');
+  PERFORM pg_temp.record(25, 'physician JSON omits retired consent keys', 'absent', ok);
 
-  -- A different practice can initiate despite the legacy column being false.
+  -- Practice initiation uses data_sharing.
   PERFORM pg_temp.set_jwt(u_editor_other);
   payload := public.connect_initiate_by_practice(practice_b, profile_a, NULL);
   rel2 := (payload->>'id')::uuid;
   PERFORM pg_temp.record(26, 'practice initiation uses data_sharing', 'pending', payload->>'status' = 'pending');
   PERFORM public.connect_cancel(rel2);
 
-  -- Withdrawal must block new discovery/requests even if legacy consent is true.
+  -- Withdrawal must block new discovery/requests.
   PERFORM pg_temp.reset_auth();
-  UPDATE public.profiles SET data_sharing = false, open_to_practice_connections = true WHERE id = profile_a;
+  UPDATE public.profiles SET data_sharing = false WHERE id = profile_a;
   PERFORM pg_temp.set_jwt(u_editor_other);
   payload := public.connect_list_anonymous_physicians(practice_b);
   PERFORM pg_temp.record(27, 'shared consent withdrawal removes discovery', 'absent',
