@@ -1,7 +1,7 @@
 /** Inclusive CMS calendar-year span stored as tenure_years (last − first + 1), capped in UI at 8+. */
 
 export const EXPERIENCE_LEVEL_CAPTION =
-  'Collective seniority of the current roster, derived from median years since medical school graduation. Context only — not part of the Retention Score. A higher value means a more senior current roster.'
+  'Current roster seniority based on median years since medical school. Higher values indicate a more senior roster. Not part of the Retention Score.'
 
 export const SHORTER_OBSERVED_TENURE_LABEL = 'Shorter observed tenures'
 export const SHORTER_OBSERVED_TENURE_NOTE = 'Departures within 4 observed years'

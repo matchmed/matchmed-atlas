@@ -13,7 +13,7 @@ import {
   normalizePracticeLocation,
   type PracticeLocation,
 } from '@/lib/practice-locations'
-import { nameToColor, getInitials, scoreColor } from '@/lib/utils'
+import { nameToColor, getInitials, scoreColor, scoreBg } from '@/lib/utils'
 import { resolvePracticePublicName } from '@/lib/practice-display-name'
 import PracticeErrorReportModal from '@/components/PracticeErrorReportModal'
 import PracticeLocationsDisclaimer from '@/components/PracticeLocationsDisclaimer'
@@ -32,8 +32,6 @@ import {
 import { assertionsByDoctorId, formatRosterReviewedLabel } from '@/lib/employer-overlay'
 import {
   EXPERIENCE_LEVEL_CAPTION,
-  SHORTER_OBSERVED_TENURE_LABEL,
-  SHORTER_OBSERVED_TENURE_NOTE,
   observedCmsYearsLabel,
   observedYearRangeLabel,
   ownershipLabel,
@@ -560,82 +558,96 @@ export default function PracticeDetailAuthorized() {
 
       <section className="practice-history-section" aria-labelledby="physician-history-heading">
         <h2 id="physician-history-heading" className="practice-history-heading">Physician retention history</h2>
-        <ul className="practice-history-facts">
-          <li>{alltime} physicians observed since 2019</li>
-          <li>{rosterSize} on the current roster</li>
-          <li>{practice.veteran_count || 0} with 8+ CMS years observed</li>
-          <li>
-            {churn} {SHORTER_OBSERVED_TENURE_LABEL.toLowerCase()}
-            <span className="practice-history-note"> · {SHORTER_OBSERVED_TENURE_NOTE}</span>
-          </li>
-        </ul>
+        <p className="practice-history-lede">CMS-observed physician history since 2019.</p>
 
-      <div className="practice-tenure-chart" style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#999', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}>Observed CMS years among all physicians since 2019</div>
-        <p style={{ fontSize: 12, color: '#888', lineHeight: 1.45, margin: '0 0 12px' }}>
-          Counts inclusive calendar years on the CMS roster, not continuous elapsed employment. Includes {alltime} physicians observed since 2019, both current and former.
-        </p>
-        {BUCKET_ORDER.map(b => {
-          const pct = Math.round((buckets[b] / maxVal) * 100)
-          const isTopBucket = b === TENURE_TOP_BUCKET
-          return (
-            <div key={b} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7 }}>
-              <span
-                title={isTopBucket ? TENURE_TOP_BUCKET_TOOLTIP : undefined}
-                className="practice-tenure-bucket"
-                style={{ cursor: isTopBucket ? 'help' : undefined }}
-              >
-                {b}
-              </span>
-              <div style={{ flex: 1, background: '#ebebeb', borderRadius: 4, height: 20, overflow: 'hidden' }}>
-                <div style={{ width: `${pct}%`, background: barColors[b], height: '100%', borderRadius: 4 }} />
-              </div>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#555', width: 22 }}>{buckets[b]}</span>
+        <div className="practice-history-metric-grid">
+          <div
+            className="practice-history-metric-card is-retention"
+            style={{ background: scoreBg(score), borderColor: 'rgba(0,0,0,0.07)' }}
+          >
+            <div className="practice-history-metric-label">Retention Score</div>
+            <div className="practice-history-metric-value" style={{ color: scoreColor(score) }}>
+              {hasScore ? `${score!.toFixed(1)} / 100` : '—'}
             </div>
-          )
-        })}
-      </div>
+            <Link href="/scoring-methodology" className="practice-history-metric-link">
+              How this is calculated
+            </Link>
+          </div>
+          <div className="practice-history-metric-card">
+            <div className="practice-history-metric-label">Current roster</div>
+            <div className="practice-history-metric-value">{rosterSize}</div>
+          </div>
+          <div className="practice-history-metric-card">
+            <div className="practice-history-metric-label">Physicians observed</div>
+            <div className="practice-history-metric-value">{alltime}</div>
+          </div>
+          <div className="practice-history-metric-card">
+            <div className="practice-history-metric-label">8+ CMS years observed</div>
+            <div className="practice-history-metric-value">{practice.veteran_count || 0}</div>
+          </div>
+        </div>
 
-        <p className="practice-score-line">
-          Retention Score:{' '}
-          <span style={{ color: scoreColor(score), fontWeight: 700 }}>
-            {hasScore ? `${score!.toFixed(1)} / 100` : '—'}
-          </span>
-          {' · '}
-          <Link href="/scoring-methodology">How this is calculated</Link>
-        </p>
-        <p className="practice-score-note">Higher scores reflect greater observed physician retention. Claiming a profile does not change this score.</p>
-        {practice.experience_level !== null && (
-          <p className="practice-score-line">
-            Experience Level: <strong>{practice.experience_level.toFixed(1)}</strong>
-            <span className="practice-score-note"> {EXPERIENCE_LEVEL_CAPTION}</span>
+        <div className="practice-tenure-chart">
+          <div className="practice-tenure-chart-label">Observed CMS years among all physicians since 2019</div>
+          <p className="practice-tenure-chart-note">
+            Inclusive calendar years observed on the CMS roster; not continuous elapsed employment.
           </p>
+          {BUCKET_ORDER.map(b => {
+            const pct = Math.round((buckets[b] / maxVal) * 100)
+            const isTopBucket = b === TENURE_TOP_BUCKET
+            return (
+              <div key={b} className="practice-tenure-row">
+                <span
+                  title={isTopBucket ? TENURE_TOP_BUCKET_TOOLTIP : undefined}
+                  className="practice-tenure-bucket"
+                  style={{ cursor: isTopBucket ? 'help' : undefined }}
+                >
+                  {b}
+                </span>
+                <div className="practice-tenure-track">
+                  <div
+                    className="practice-tenure-fill"
+                    style={{ width: `${pct}%`, background: barColors[b] }}
+                  />
+                </div>
+                <span className="practice-tenure-count">{buckets[b]}</span>
+              </div>
+            )
+          })}
+        </div>
+
+        {practice.experience_level !== null && (
+          <div className="practice-experience-row">
+            <div>
+              <div className="practice-history-metric-label">Experience Level</div>
+              <div className="practice-experience-value">{practice.experience_level.toFixed(1)}</div>
+            </div>
+            <p className="practice-experience-caption">{EXPERIENCE_LEVEL_CAPTION}</p>
+          </div>
         )}
 
-      <div style={{ borderLeft: `3px solid ${hasScore ? '#1C4A45' : '#ccc'}`, padding: '12px 16px', background: hasScore ? '#E8F0EF' : '#f9f9f9', borderRadius: '0 8px 8px 0', marginBottom: 24 }}>
-        <p style={{ fontSize: 13, color: hasScore ? '#333' : '#888', lineHeight: 1.6, margin: 0, marginBottom: insight.assumptions.length ? 8 : 0 }}>
-          {insight.text}
-        </p>
-        {insight.assumptions.length > 0 && (
-          <details style={{ marginTop: 4 }}>
-            <summary style={{ fontSize: 12, color: '#1C4A45', cursor: 'pointer', userSelect: 'none', listStyle: 'none' }}>
-              Assumptions ({insight.assumptions.length})
-            </summary>
-            <ul style={{ margin: '8px 0 0', paddingLeft: 18, fontSize: 12, color: '#555', lineHeight: 1.55 }}>
+        <details className="practice-interpretation">
+          <summary>
+            Interpretation &amp; assumptions
+            {insight.assumptions.length > 0 ? ` (${insight.assumptions.length})` : ''}
+          </summary>
+          <p className="practice-interpretation-text">{insight.text}</p>
+          {insight.assumptions.length > 0 && (
+            <ul className="practice-interpretation-list">
               {insight.assumptions.map(a => (
-                <li key={a} style={{ marginBottom: 4 }}>{a}</li>
+                <li key={a}>{a}</li>
               ))}
             </ul>
-          </details>
-        )}
-      </div>
+          )}
+        </details>
+
+        <p className="practice-history-footer">
+          Physician rosters reflect the latest CMS data and may lag recent departures or additions.
+        </p>
       </section>
 
       {/* Physicians */}
       <div>
-        <p style={{ fontSize: 11, color: '#999', lineHeight: 1.5, margin: '0 0 12px' }}>
-          Physician rosters reflect the latest CMS data and may lag recent departures or additions.
-        </p>
         {onRoster.length > 0 && (
           <>
             <div style={{ fontSize: 11, fontWeight: 600, color: '#1A6B3A', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
