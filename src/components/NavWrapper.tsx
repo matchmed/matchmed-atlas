@@ -8,7 +8,11 @@ import Logo from '@/components/Logo'
 import Nav from '@/components/Nav'
 import { createClient } from '@/lib/supabase'
 import { isAuthPage } from '@/lib/auth-paths'
-import { isPublicDiscoveryPath, isPublicProfileDetailPath } from '@/lib/public-routes'
+import {
+  isEmployerPreviewPath,
+  isPublicDiscoveryPath,
+  isPublicProfileDetailPath,
+} from '@/lib/public-routes'
 
 function PublicChrome({ profileShell = false }: { profileShell?: boolean }) {
   return (
@@ -67,18 +71,29 @@ export default function NavWrapper({ children }: { children: React.ReactNode }) 
     }
   }, [pathname])
 
+  const employerPreview = isEmployerPreviewPath(pathname)
   const showPublicChrome =
-    authChecked && !hasUser && !onAuthPage && isPublicDiscoveryPath(pathname)
+    authChecked && !hasUser && !onAuthPage && isPublicDiscoveryPath(pathname) && !employerPreview
   const publicProfileShell = showPublicChrome && isPublicProfileDetailPath(pathname)
-  const showAppNav = !onAuthPage && (!authChecked || hasUser || !isPublicDiscoveryPath(pathname))
+  const showAppNav =
+    !onAuthPage &&
+    !employerPreview &&
+    (!authChecked || hasUser || !isPublicDiscoveryPath(pathname))
 
   // While checking auth on public discovery, avoid flashing the full product nav.
   const hideNavWhileChecking =
-    !authChecked && !onAuthPage && isPublicDiscoveryPath(pathname)
+    !authChecked && !onAuthPage && isPublicDiscoveryPath(pathname) && !employerPreview
 
   return (
     <>
       <PublicRoutePrivacy />
+      {employerPreview && (
+        <header className="public-chrome public-profile-shell">
+          <Link href="/" className="public-chrome-brand" aria-label="MatchMed Atlas home">
+            <Logo size="sm" />
+          </Link>
+        </header>
+      )}
       {showPublicChrome && <PublicChrome profileShell={publicProfileShell} />}
       {!hideNavWhileChecking && showAppNav && !showPublicChrome && <Nav />}
       {onAuthPage ? (
@@ -86,8 +101,8 @@ export default function NavWrapper({ children }: { children: React.ReactNode }) 
       ) : (
         <main
           className={
-            showPublicChrome
-              ? `public-main-content${publicProfileShell ? ' public-profile-shell' : ''}`
+            showPublicChrome || employerPreview
+              ? `public-main-content${publicProfileShell || employerPreview ? ' public-profile-shell' : ''}`
               : 'nav-main-content'
           }
         >

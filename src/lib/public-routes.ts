@@ -6,10 +6,16 @@ const UUID =
   '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
 
 const PRACTICE_DETAIL = new RegExp(`^/practices/${UUID}$`, 'i')
+const PRACTICE_EMPLOYER_PREVIEW = new RegExp(`^/practices/${UUID}/employer-preview$`, 'i')
 const PHYSICIAN_DETAIL = new RegExp(`^/physicians/${UUID}$`, 'i')
 
 export function isPublicPracticeDetailPath(pathname: string): boolean {
   return PRACTICE_DETAIL.test(pathname)
+}
+
+/** Token-gated employer preview of the physician-facing practice page. */
+export function isEmployerPreviewPath(pathname: string): boolean {
+  return PRACTICE_EMPLOYER_PREVIEW.test(pathname)
 }
 
 export function isPublicPhysicianDetailPath(pathname: string): boolean {
@@ -44,6 +50,7 @@ export function isAnonymousAllowlistedPath(pathname: string): boolean {
   }
   if (pathname.startsWith('/auth/')) return true
   if (isPublicPracticeDetailPath(pathname)) return true
+  if (isEmployerPreviewPath(pathname)) return true
   if (isPublicPhysicianDetailPath(pathname)) return true
   return false
 }

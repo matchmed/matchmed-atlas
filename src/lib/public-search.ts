@@ -346,18 +346,12 @@ export async function fetchApprovedPracticeDisplayNames(
   return found
 }
 
-export async function publicGetEmployerPracticeOverlay(
-  supabase: AnySupabase,
-  practiceId: string,
-): Promise<{ data: EmployerPracticeOverlay | null; error: string | null }> {
-  const { data, error } = await supabase.rpc('public_get_employer_practice_overlay', {
-    p_practice_id: practiceId,
-  })
-  if (error) return { data: null, error: error.message }
-  if (data == null) return { data: null, error: null }
+/** Normalize overlay jsonb from public_get / employer_fetch preview RPCs. */
+export function normalizeEmployerPracticeOverlay(data: unknown): EmployerPracticeOverlay | null {
+  if (data == null) return null
   const obj = asObject(data)
-  if (!obj) return { data: { visible: false }, error: null }
-  if (obj.visible === false) return { data: { visible: false }, error: null }
+  if (!obj) return { visible: false }
+  if (obj.visible === false) return { visible: false }
 
   const locations = asArray(obj.locations)
     .map(row => {
@@ -389,89 +383,97 @@ export async function publicGetEmployerPracticeOverlay(
     .filter((row): row is EmployerOverlayRosterAssertion => row !== null)
 
   return {
-    data: {
-      visible: true,
-      physician_ready: obj.physician_ready === true,
-      attribution_label: str(obj.attribution_label) ?? undefined,
-      profile: parseEmployerOverlayProfile(obj.profile),
-      ownership: (() => {
-        const o = asObject(obj.ownership)
-        if (!o || !str(o.structure)) return null
-        return { structure: str(o.structure)!, other_text: str(o.other_text) }
-      })(),
-      recruiting_outlook: (() => {
-        const outlook = asObject(obj.recruiting_outlook)
-        if (!outlook || !str(outlook.status)) return null
-        const opportunities = asArray(outlook.opportunities)
-          .map((row): EmployerOverlayOpportunity | null => {
-            const r = asObject(row)
-            if (!r || !str(r.clinical_focus)) return null
-            return {
-              id: str(r.id),
-              clinical_focus: str(r.clinical_focus)!,
-              hiring_horizon: str(r.hiring_horizon) ?? '',
-              hiring_notes: str(r.hiring_notes),
-              actively_recruiting_now: r.actively_recruiting_now === true,
-              base_compensation_min_usd: Number(r.base_compensation_min_usd) || 0,
-              base_compensation_max_usd:
-                r.base_compensation_max_usd == null ? null : Number(r.base_compensation_max_usd),
-              base_compensation_max_is_open_ended: r.base_compensation_max_is_open_ended === true,
-              productivity_structure_available: r.productivity_structure_available === true,
-              signing_bonus_available: r.signing_bonus_available === true,
-              relocation_assistance_available: r.relocation_assistance_available === true,
-              reasons: asArray(r.reasons)
-                .map((reasonRow) => {
-                  const rr = asObject(reasonRow)
-                  if (!rr || !str(rr.reason)) return null
-                  return { reason: str(rr.reason)!, other_text: str(rr.other_text) }
-                })
-                .filter((x): x is { reason: string; other_text: string | null } => Boolean(x)),
-              last_confirmed_at: str(r.last_confirmed_at),
-            }
-          })
-          .filter((row): row is EmployerOverlayOpportunity => row !== null)
-        return {
-          status: str(outlook.status) as 'open_to_conversations' | 'actively_recruiting',
-          opportunities,
-        }
-      })(),
-      infrastructure: asArray(obj.infrastructure)
-        .map((row) => {
+    visible: true,
+    physician_ready: obj.physician_ready === true,
+    attribution_label: str(obj.attribution_label) ?? undefined,
+    profile: parseEmployerOverlayProfile(obj.profile),
+    ownership: (() => {
+      const o = asObject(obj.ownership)
+      if (!o || !str(o.structure)) return null
+      return { structure: str(o.structure)!, other_text: str(o.other_text) }
+    })(),
+    recruiting_outlook: (() => {
+      const outlook = asObject(obj.recruiting_outlook)
+      if (!outlook || !str(outlook.status)) return null
+      const opportunities = asArray(outlook.opportunities)
+        .map((row): EmployerOverlayOpportunity | null => {
           const r = asObject(row)
-          if (!r || !str(r.category_slug)) return null
+          if (!r || !str(r.clinical_focus)) return null
           return {
-            category_slug: str(r.category_slug)!,
-            category_label: str(r.category_label) ?? '',
-            review_state: str(r.review_state) ?? '',
-            vendors: asArray(r.vendors)
-              .map((vRow) => {
-                const v = asObject(vRow)
-                if (!v) return null
-                return {
-                  vendor_slug: str(v.vendor_slug),
-                  vendor_label: str(v.vendor_label),
-                  is_other: v.is_other === true,
-                  other_vendor_name: str(v.other_vendor_name),
-                }
+            id: str(r.id),
+            clinical_focus: str(r.clinical_focus)!,
+            hiring_horizon: str(r.hiring_horizon) ?? '',
+            hiring_notes: str(r.hiring_notes),
+            actively_recruiting_now: r.actively_recruiting_now === true,
+            base_compensation_min_usd: Number(r.base_compensation_min_usd) || 0,
+            base_compensation_max_usd:
+              r.base_compensation_max_usd == null ? null : Number(r.base_compensation_max_usd),
+            base_compensation_max_is_open_ended: r.base_compensation_max_is_open_ended === true,
+            productivity_structure_available: r.productivity_structure_available === true,
+            signing_bonus_available: r.signing_bonus_available === true,
+            relocation_assistance_available: r.relocation_assistance_available === true,
+            reasons: asArray(r.reasons)
+              .map((reasonRow) => {
+                const rr = asObject(reasonRow)
+                if (!rr || !str(rr.reason)) return null
+                return { reason: str(rr.reason)!, other_text: str(rr.other_text) }
               })
-              .filter(
-                (
-                  x,
-                ): x is {
-                  vendor_slug: string | null
-                  vendor_label: string | null
-                  is_other: boolean
-                  other_vendor_name: string | null
-                } => Boolean(x),
-              ),
-          } satisfies EmployerOverlayInfrastructureCategory
+              .filter((x): x is { reason: string; other_text: string | null } => Boolean(x)),
+            last_confirmed_at: str(r.last_confirmed_at),
+          }
         })
-        .filter((row): row is EmployerOverlayInfrastructureCategory => row !== null),
-      locations,
-      roster_assertions,
-    },
-    error: null,
+        .filter((row): row is EmployerOverlayOpportunity => row !== null)
+      return {
+        status: str(outlook.status) as 'open_to_conversations' | 'actively_recruiting',
+        opportunities,
+      }
+    })(),
+    infrastructure: asArray(obj.infrastructure)
+      .map((row) => {
+        const r = asObject(row)
+        if (!r || !str(r.category_slug)) return null
+        return {
+          category_slug: str(r.category_slug)!,
+          category_label: str(r.category_label) ?? '',
+          review_state: str(r.review_state) ?? '',
+          vendors: asArray(r.vendors)
+            .map((vRow) => {
+              const v = asObject(vRow)
+              if (!v) return null
+              return {
+                vendor_slug: str(v.vendor_slug),
+                vendor_label: str(v.vendor_label),
+                is_other: v.is_other === true,
+                other_vendor_name: str(v.other_vendor_name),
+              }
+            })
+            .filter(
+              (
+                x,
+              ): x is {
+                vendor_slug: string | null
+                vendor_label: string | null
+                is_other: boolean
+                other_vendor_name: string | null
+              } => Boolean(x),
+            ),
+        } satisfies EmployerOverlayInfrastructureCategory
+      })
+      .filter((row): row is EmployerOverlayInfrastructureCategory => row !== null),
+    locations,
+    roster_assertions,
   }
+}
+
+export async function publicGetEmployerPracticeOverlay(
+  supabase: AnySupabase,
+  practiceId: string,
+): Promise<{ data: EmployerPracticeOverlay | null; error: string | null }> {
+  const { data, error } = await supabase.rpc('public_get_employer_practice_overlay', {
+    p_practice_id: practiceId,
+  })
+  if (error) return { data: null, error: error.message }
+  return { data: normalizeEmployerPracticeOverlay(data), error: null }
 }
 
 export async function resolveEmployerLogoUrl(

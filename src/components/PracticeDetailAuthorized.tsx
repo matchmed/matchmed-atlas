@@ -100,23 +100,52 @@ function MetricInfoTip({ text, ariaLabel }: { text: string; ariaLabel: string })
   )
 }
 
-export default function PracticeDetailAuthorized() {
-  const { id } = useParams<{ id: string }>()
+export type PracticeDetailEmployerPreviewProps = {
+  practice: Practice
+  affiliations: Affiliation[]
+  locations: PracticeLocation[]
+  overlay: EmployerPracticeOverlay | null
+  logoUrl: string | null
+  backHref: string
+}
+
+export default function PracticeDetailAuthorized({
+  employerPreview,
+}: {
+  employerPreview?: PracticeDetailEmployerPreviewProps
+} = {}) {
+  const { id: routeId } = useParams<{ id: string }>()
+  const id = employerPreview?.practice.id ?? routeId
   const router = useRouter()
-  const [practice, setPractice] = useState<Practice | null>(null)
-  const [locations, setLocations] = useState<PracticeLocation[]>([])
+  const isEmployerPreview = Boolean(employerPreview)
+  const [practice, setPractice] = useState<Practice | null>(employerPreview?.practice ?? null)
+  const [locations, setLocations] = useState<PracticeLocation[]>(employerPreview?.locations ?? [])
   const [locationsExpanded, setLocationsExpanded] = useState(false)
-  const [affiliations, setAffiliations] = useState<Affiliation[]>([])
-  const [loading, setLoading] = useState(true)
+  const [affiliations, setAffiliations] = useState<Affiliation[]>(employerPreview?.affiliations ?? [])
+  const [loading, setLoading] = useState(!employerPreview)
   const [showFormer, setShowFormer] = useState(true)
   const [isFavorited, setIsFavorited] = useState(false)
   const [favLoading, setFavLoading] = useState(false)
   const [favId, setFavId] = useState<string | null>(null)
   const [profileId, setProfileId] = useState<string | null>(null)
-  const [employerOverlay, setEmployerOverlay] = useState<EmployerPracticeOverlay | null>(null)
-  const [employerLogoUrl, setEmployerLogoUrl] = useState<string | null>(null)
+  const [employerOverlay, setEmployerOverlay] = useState<EmployerPracticeOverlay | null>(
+    employerPreview?.overlay ?? null,
+  )
+  const [employerLogoUrl, setEmployerLogoUrl] = useState<string | null>(
+    employerPreview?.logoUrl ?? null,
+  )
 
   useEffect(() => {
+    if (employerPreview) {
+      if (!viewedPracticeIds.has(`preview:${employerPreview.practice.id}`)) {
+        viewedPracticeIds.add(`preview:${employerPreview.practice.id}`)
+        posthog.capture('employer_preview_opened', {
+          practice_id: employerPreview.practice.id,
+        })
+      }
+      return
+    }
+
     async function load() {
       const supabase = createClient()
       setLoading(true)
@@ -158,7 +187,7 @@ export default function PracticeDetailAuthorized() {
       } else {
         setLocations([])
       }
-      if (affilRes.data) setAffiliations(affilRes.data as any)
+      if (affilRes.data) setAffiliations(affilRes.data as unknown as Affiliation[])
       else setAffiliations([])
 
       if (overlayRes.data?.visible) {
@@ -202,7 +231,7 @@ export default function PracticeDetailAuthorized() {
       setLoading(false)
     }
     load()
-  }, [id])
+  }, [id, employerPreview])
 
   async function toggleFavorite() {
     if (!profileId) return
@@ -393,8 +422,9 @@ export default function PracticeDetailAuthorized() {
     const [fg2, bg2] = nameToColor(n)
     const doctorId = a.doctors?.id
     const employerAssertion = doctorId ? employerAssertionMap.get(doctorId) : undefined
+    const canOpenPhysician = Boolean(doctorId) && !isEmployerPreview
     return (
-      <div key={a.id} onClick={() => doctorId && router.push(`/physicians/${doctorId}`)} style={{ background: '#ffffff', border: '1px solid #DDD8D0', borderRadius: 10, padding: '14px 16px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 14, cursor: doctorId ? 'pointer' : 'default' }}>
+      <div key={a.id} onClick={() => canOpenPhysician && router.push(`/physicians/${doctorId}`)} style={{ background: '#ffffff', border: '1px solid #DDD8D0', borderRadius: 10, padding: '14px 16px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 14, cursor: canOpenPhysician ? 'pointer' : 'default' }}>
         <div style={{ width: 40, height: 40, borderRadius: '50%', background: bg2, color: fg2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
           {getInitials(n)}
         </div>
@@ -423,7 +453,33 @@ export default function PracticeDetailAuthorized() {
   return (
     <div style={{ maxWidth: 800, margin: '0 auto' }}>
 
+      {isEmployerPreview && employerPreview && (
+        <div
+          style={{
+            marginBottom: 20,
+            padding: '14px 16px',
+            borderRadius: 12,
+            border: '1px solid #d7e7e4',
+            background: '#f4f8f7',
+          }}
+        >
+          <div style={{ fontSize: 12, fontWeight: 600, color: '#1C4A45', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+            Physician view
+          </div>
+          <p style={{ margin: '6px 0 0', fontSize: 14, color: '#3f3f46', lineHeight: 1.45 }}>
+            This is how your practice currently appears to physicians on Atlas.
+          </p>
+          <a
+            href={employerPreview.backHref}
+            style={{ display: 'inline-block', marginTop: 10, fontSize: 13, color: '#1C4A45', fontWeight: 600 }}
+          >
+            ← Back to employer profile
+          </a>
+        </div>
+      )}
+
       {/* Back + Favorite */}
+      {!isEmployerPreview && (
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
           <button onClick={() => router.back()} style={{ fontSize: 13, color: '#1C4A45', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>← Back to practices</button>
@@ -471,6 +527,7 @@ export default function PracticeDetailAuthorized() {
           </button>
         </div>
       </div>
+      )}
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20, flexWrap: 'wrap', marginBottom: 32 }}>
@@ -573,7 +630,7 @@ export default function PracticeDetailAuthorized() {
         <EmployerPhysicianReadySections
           overlay={employerOverlay}
           practiceId={practice.id}
-          showConnect
+          showConnect={!isEmployerPreview}
           part="opportunities"
         />
       )}

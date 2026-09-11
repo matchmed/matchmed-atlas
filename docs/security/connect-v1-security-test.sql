@@ -182,6 +182,17 @@ BEGIN
     (org_a, practice_a, 'operates', 'active', now(), u_editor),
     (org_b, practice_b, 'operates', 'active', now(), u_editor_other);
 
+  -- Physician-Ready required for Connect eligibility (test fixture via privileged write flag)
+  PERFORM set_config('app.employer_profile_privileged_write', '1', true);
+  INSERT INTO public.employer_practice_profiles (practice_id, physician_ready_at, physician_ready_by)
+  VALUES
+    (practice_a, now(), u_editor),
+    (practice_b, now(), u_editor_other)
+  ON CONFLICT (practice_id) DO UPDATE
+  SET physician_ready_at = EXCLUDED.physician_ready_at,
+      physician_ready_by = EXCLUDED.physician_ready_by;
+  PERFORM set_config('app.employer_profile_privileged_write', '', true);
+
   -- 1. Anon denied initiate
   PERFORM pg_temp.reset_auth();
   BEGIN
@@ -495,6 +506,55 @@ BEGIN
   PERFORM pg_temp.set_jwt(u_physician);
   PERFORM public.connect_disconnect(rel2);
   PERFORM pg_temp.reset_auth();
+
+  -- 31. Incomplete practice cannot initiate Connect
+  PERFORM set_config('app.employer_profile_privileged_write', '1', true);
+  UPDATE public.employer_practice_profiles
+  SET physician_ready_at = NULL, physician_ready_by = NULL
+  WHERE practice_id = practice_a;
+  PERFORM set_config('app.employer_profile_privileged_write', '', true);
+
+  PERFORM pg_temp.set_jwt(u_editor);
+  BEGIN
+    PERFORM public.connect_initiate_by_practice(practice_a, profile_a, NULL);
+    ok := false;
+    err := 'no exception';
+  EXCEPTION WHEN OTHERS THEN
+    ok := SQLERRM ILIKE '%physician-ready%';
+    err := SQLERRM;
+  END;
+  PERFORM pg_temp.record(31, 'incomplete practice initiate blocked', 'physician-ready error', ok, err);
+
+  -- 32. Incomplete practice cannot discover physicians
+  BEGIN
+    PERFORM public.connect_list_anonymous_physicians(practice_a, NULL, NULL, NULL, NULL, 10, 0);
+    ok := false;
+    err := 'no exception';
+  EXCEPTION WHEN OTHERS THEN
+    ok := SQLERRM ILIKE '%not eligible%' OR SQLERRM ILIKE '%physician-ready%';
+    err := SQLERRM;
+  END;
+  PERFORM pg_temp.record(32, 'incomplete practice discovery blocked', 'not eligible', ok, err);
+
+  -- 33. Physician cannot initiate toward incomplete practice
+  PERFORM pg_temp.set_jwt(u_physician);
+  BEGIN
+    PERFORM public.connect_initiate_by_physician(practice_a, NULL);
+    ok := false;
+    err := 'no exception';
+  EXCEPTION WHEN OTHERS THEN
+    ok := SQLERRM ILIKE '%not eligible%';
+    err := SQLERRM;
+  END;
+  PERFORM pg_temp.record(33, 'physician initiate toward incomplete practice blocked', 'not eligible', ok, err);
+
+  -- Restore ready for any later cleanup
+  PERFORM set_config('app.employer_profile_privileged_write', '1', true);
+  UPDATE public.employer_practice_profiles
+  SET physician_ready_at = now(), physician_ready_by = u_editor
+  WHERE practice_id = practice_a;
+  PERFORM set_config('app.employer_profile_privileged_write', '', true);
+  PERFORM pg_temp.reset_auth();
 END;
 $matrix$;
 
@@ -508,6 +568,17 @@ SELECT
   count(*) AS total
 FROM connect_sec_results;
 
-DO $$ BEGIN IF EXISTS (SELECT 1 FROM connect_sec_results WHERE NOT pass) THEN RAISE EXCEPTION 'Connect security tests failed'; END IF; END $$;
+DO $$
+DECLARE
+  v_failed text;
+BEGIN
+  SELECT string_agg(case_no::text || ':' || description || ' [' || detail || ']', '; ' ORDER BY case_no)
+  INTO v_failed
+  FROM connect_sec_results
+  WHERE NOT pass;
+  IF v_failed IS NOT NULL THEN
+    RAISE EXCEPTION 'Connect security tests failed: %', v_failed;
+  END IF;
+END $$;
 
 ROLLBACK;
