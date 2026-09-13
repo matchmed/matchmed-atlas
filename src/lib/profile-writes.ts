@@ -21,6 +21,9 @@ export const ALLOWED_PROFILE_FIELDS = [
   'terms_accepted',
   'industry_partnership_acknowledged',
   'data_sharing',
+  'notify_career_emails',
+  'notify_regional_emails',
+  'notify_connect_emails',
   'onboarding_complete',
   'signup_date',
 ] as const

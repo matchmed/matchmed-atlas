@@ -4,6 +4,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { isAuthPage } from '@/lib/auth-paths'
 import { isPublicDiscoveryPath } from '@/lib/public-routes'
+import { getUnreadNotificationCount } from '@/lib/notifications'
 import { useState, useEffect, useRef } from 'react'
 import Logo from './Logo'
 import { PracticesIcon, PhysiciansIcon, FavoritesIcon, JobsIcon } from './nav-icons'
@@ -57,6 +58,7 @@ export default function Nav() {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [initials, setInitials] = useState('?')
+  const [unreadCount, setUnreadCount] = useState(0)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const identifiedUserIdRef = useRef<string | null>(null)
 
@@ -90,6 +92,10 @@ export default function Nav() {
         ) {
           posthog.startSessionRecording()
         }
+        const { count } = await getUnreadNotificationCount()
+        setUnreadCount(count)
+      } else {
+        setUnreadCount(0)
       }
     }
     getUser()
@@ -138,6 +144,56 @@ export default function Nav() {
           </div>
 
           <div className="nav-top-spacer" />
+
+          {userEmail && (
+            <Link
+              href="/notifications"
+              aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
+              style={{
+                position: 'relative',
+                marginLeft: 8,
+                flexShrink: 0,
+                width: 34,
+                height: 34,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: isActive(pathname, '/notifications') ? '#1C4A45' : '#5C5852',
+                textDecoration: 'none',
+              }}
+            >
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 00-4-5.7V5a2 2 0 10-4 0v.3A6 6 0 006 11v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 11-6 0m6 0H9"
+                />
+              </svg>
+              {unreadCount > 0 && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: 2,
+                    right: 2,
+                    minWidth: 16,
+                    height: 16,
+                    borderRadius: 99,
+                    background: '#9B1C1C',
+                    color: '#fff',
+                    fontSize: 10,
+                    fontWeight: 700,
+                    lineHeight: '16px',
+                    textAlign: 'center',
+                    padding: '0 4px',
+                  }}
+                >
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </Link>
+          )}
 
           <div ref={dropdownRef} style={{ position: 'relative', marginLeft: 12, flexShrink: 0 }}>
             <button

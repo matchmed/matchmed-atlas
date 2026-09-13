@@ -1,10 +1,17 @@
 /**
- * Same-origin post-auth return paths for the public discovery funnel.
- * Only canonical practice/physician profile paths are accepted.
+ * Same-origin post-auth return paths for the public discovery funnel
+ * and notification deep links.
  */
 
 const PROFILE_PATH =
   /^\/(practices|physicians)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+const ALLOWED_APP_PATHS = new Set([
+  '/opportunities',
+  '/connect',
+  '/notifications',
+  '/account',
+])
 
 const AUTH_LOOP_PREFIXES = [
   '/login',
@@ -47,8 +54,10 @@ export function safeNextPath(raw: string | null | undefined): string | null {
     if (pathOnly === prefix || pathOnly.startsWith(prefix)) return null
   }
 
-  if (!PROFILE_PATH.test(pathOnly)) return null
-  return pathOnly
+  if (PROFILE_PATH.test(pathOnly) || ALLOWED_APP_PATHS.has(pathOnly)) {
+    return pathOnly
+  }
+  return null
 }
 
 export function withNextParam(basePath: string, next: string | null | undefined): string {

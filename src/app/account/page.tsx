@@ -168,6 +168,14 @@ export default function AccountPage() {
     procedures_performed: [] as string[],
     procedures_desired: [] as string[],
     data_sharing: false,
+    notify_career_emails: true,
+    notify_regional_emails: true,
+    notify_connect_emails: true,
+  })
+  const [savedNotifyPrefs, setSavedNotifyPrefs] = useState({
+    notify_career_emails: true,
+    notify_regional_emails: true,
+    notify_connect_emails: true,
   })
 
   useEffect(() => {
@@ -199,6 +207,14 @@ export default function AccountPage() {
           procedures_performed: profile.procedures_performed || [],
           procedures_desired: profile.procedures_desired || [],
           data_sharing: profile.data_sharing || false,
+          notify_career_emails: profile.notify_career_emails !== false,
+          notify_regional_emails: profile.notify_regional_emails !== false,
+          notify_connect_emails: profile.notify_connect_emails !== false,
+        })
+        setSavedNotifyPrefs({
+          notify_career_emails: profile.notify_career_emails !== false,
+          notify_regional_emails: profile.notify_regional_emails !== false,
+          notify_connect_emails: profile.notify_connect_emails !== false,
         })
         if (profile.first_name) {
           setInitials(`${profile.first_name[0]}${profile.last_name?.[0] || ''}`.toUpperCase())
@@ -223,6 +239,8 @@ export default function AccountPage() {
       return
     }
 
+    const previousPrefs = savedNotifyPrefs
+
     const result = await upsertProfileByUserId(supabase, { ...form })
 
     if (!result.ok) {
@@ -230,6 +248,23 @@ export default function AccountPage() {
       setSaveError('Could not save your profile. Please try again.')
       setSaving(false)
       return
+    }
+
+    if (
+      previousPrefs.notify_career_emails !== form.notify_career_emails ||
+      previousPrefs.notify_regional_emails !== form.notify_regional_emails ||
+      previousPrefs.notify_connect_emails !== form.notify_connect_emails
+    ) {
+      posthog.capture('notification_preferences_changed', {
+        notify_career_emails: form.notify_career_emails,
+        notify_regional_emails: form.notify_regional_emails,
+        notify_connect_emails: form.notify_connect_emails,
+      })
+      setSavedNotifyPrefs({
+        notify_career_emails: form.notify_career_emails,
+        notify_regional_emails: form.notify_regional_emails,
+        notify_connect_emails: form.notify_connect_emails,
+      })
     }
 
     posthog.capture('account_profile_saved', {
@@ -405,7 +440,7 @@ export default function AccountPage() {
       </div>
 
       {/* Preferences section */}
-      <div style={{ background: '#FFFFFF', border: '1px solid #DDD8D0', borderRadius: 12, padding: 24, marginBottom: 24 }}>
+      <div style={{ background: '#FFFFFF', border: '1px solid #DDD8D0', borderRadius: 12, padding: 24, marginBottom: 16 }}>
         <h2 style={{ fontSize: 15, fontWeight: 600, color: '#111', marginBottom: 16 }}>{CONSENT_ACCOUNT_HEADING}</h2>
         <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
           <input
@@ -418,6 +453,31 @@ export default function AccountPage() {
             {CONSENT_ACCOUNT_CHECKBOX_COPY}
           </span>
         </label>
+      </div>
+
+      <div style={{ background: '#FFFFFF', border: '1px solid #DDD8D0', borderRadius: 12, padding: 24, marginBottom: 24 }}>
+        <h2 style={{ fontSize: 15, fontWeight: 600, color: '#111', marginBottom: 8 }}>Email notifications</h2>
+        <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 16, lineHeight: 1.5 }}>
+          In-app notifications stay available even when email is off. Career and regional emails also require professional opportunities consent above.
+        </p>
+        {([
+          ['notify_career_emails', 'Career and opportunity emails'] as const,
+          ['notify_regional_emails', 'Regional physician-ready growth emails'] as const,
+          ['notify_connect_emails', 'Connect request and acceptance emails'] as const,
+        ]).map(([key, label]) => (
+          <label
+            key={key}
+            style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 12 }}
+          >
+            <input
+              type="checkbox"
+              checked={form[key]}
+              onChange={e => setForm(f => ({ ...f, [key]: e.target.checked }))}
+              style={{ marginTop: 2, accentColor: '#1C4A45' }}
+            />
+            <span style={{ fontSize: 13, color: '#374151', lineHeight: 1.5 }}>{label}</span>
+          </label>
+        ))}
       </div>
 
       {/* Password section */}

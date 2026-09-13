@@ -59,6 +59,16 @@ export default function ConnectInboxPage() {
     void load()
   }, [load])
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('src') !== 'notification_email') return
+    posthog.capture('notification_email_clicked', { surface: 'connect' })
+    params.delete('src')
+    const next = params.toString()
+    window.history.replaceState({}, '', `${window.location.pathname}${next ? `?${next}` : ''}`)
+  }, [])
+
   const requests = useMemo(
     () =>
       rows.filter((r) => r.status === 'pending' && r.initiator_side === 'practice'),
