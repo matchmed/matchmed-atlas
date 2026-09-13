@@ -18,8 +18,14 @@ describe('employer practice preview (source)', () => {
     assert.match(page, /employer_fetch_practice_preview/)
     assert.match(page, /Retention Index|employerPreview/)
     assert.match(authorized, /Physician view/)
+    assert.match(authorized, /Back to Physician-Ready profile/)
+    assert.doesNotMatch(authorized, /Back to search/)
     assert.match(authorized, /employer_preview_opened/)
     assert.match(authorized, /Retention Index/)
+    assert.match(
+      readFileSync(join(root, 'src/app/practices/[id]/employer-preview/page.tsx'), 'utf8'),
+      /backHref: `\$\{EMPLOYERS_PUBLIC_URL\}\/practices\/\$\{id\}`/,
+    )
   })
 
   it('migration gates connect_practice_is_eligible on physician_ready_at', () => {

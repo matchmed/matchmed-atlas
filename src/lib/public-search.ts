@@ -56,6 +56,8 @@ export type EmployerRosterAssertionType =
   | 'affiliated_elsewhere_in_org'
   | 'report_still_affiliated'
   | 'confirm_former'
+  | 'report_retired'
+  | 'report_locums_contractor'
   | 'other'
 
 export type EmployerOverlayProfile = {
@@ -88,7 +90,11 @@ export type EmployerOverlayLocation = {
 export type EmployerOverlayRosterAssertion = {
   doctor_id: string
   physician_name: string | null
+  npi: string | null
   assertion: EmployerRosterAssertionType
+  asserted_at: string | null
+  cms_confirmed_at: string | null
+  cms_current_at_practice: boolean
 }
 
 export type EmployerOverlayOwnership = {
@@ -146,7 +152,9 @@ const ASSERTION_LABELS: Record<EmployerRosterAssertionType, string> = {
   incorrect_association: 'Incorrect association',
   affiliated_elsewhere_in_org: 'Elsewhere in organization',
   report_still_affiliated: 'Still affiliated',
-  confirm_former: 'Confirmed former',
+  confirm_former: 'Former',
+  report_retired: 'Retired',
+  report_locums_contractor: 'Locums / Part time / Independent contractor',
   other: 'Practice note',
 }
 
@@ -377,7 +385,11 @@ export function normalizeEmployerPracticeOverlay(data: unknown): EmployerPractic
       return {
         doctor_id: str(r.doctor_id)!,
         physician_name: str(r.physician_name),
+        npi: str(r.npi),
         assertion: str(r.assertion)! as EmployerRosterAssertionType,
+        asserted_at: str(r.asserted_at),
+        cms_confirmed_at: str(r.cms_confirmed_at),
+        cms_current_at_practice: r.cms_current_at_practice === true,
       } satisfies EmployerOverlayRosterAssertion
     })
     .filter((row): row is EmployerOverlayRosterAssertion => row !== null)

@@ -39,6 +39,13 @@ import {
   observedCmsYearsLabel,
   observedYearRangeLabel,
 } from '@/lib/practice-detail-presentation'
+import {
+  CURRENT_PHYSICIANS_TOOLTIP,
+  PRACTICE_REPORTED_CURRENT_LABEL,
+  PRACTICE_REPORTED_CURRENT_NOTE,
+  mergeCurrentPhysicians,
+  type MergedCurrentPhysician,
+} from '@/lib/current-roster-merge'
 
 /** Session-scoped guard against Strict Mode / remount duplicate practice_viewed events. */
 const viewedPracticeIds = new Set<string>()
@@ -271,21 +278,25 @@ export default function PracticeDetailAuthorized({
   const initials = getInitials(name)
 
   // ── FACTS (raw data from DB) ──────────────────────────────────────────────
+  const onRoster = affiliations.filter(a => (a.status || '').toLowerCase() === 'on roster')
+  const notRoster = affiliations.filter(a => (a.status || '').toLowerCase() !== 'on roster')
+  const employerAssertionMap = assertionsByDoctorId(employerOverlay?.roster_assertions)
+  const mergedCurrent = mergeCurrentPhysicians(affiliations, employerOverlay?.roster_assertions)
+
   const facts = {
     hasScore: practice.retention_score !== null,
     score: practice.retention_score,
     alltime: practice.total_physicians_all_time || affiliations.length,
     churn: practice.short_tenure_departure_count || 0,
     churnRate: 0,
-    rosterSize: practice.latest_roster_size || 0,
+    // Best-known current roster when Layer 3 overlay is present; else CMS metric.
+    rosterSize: employerOverlay?.visible
+      ? mergedCurrent.length
+      : practice.latest_roster_size || onRoster.length,
   }
   facts.churnRate = facts.alltime > 0 ? facts.churn / facts.alltime : 0
 
   const { hasScore, score, alltime, churn, churnRate, rosterSize } = facts
-
-  const onRoster = affiliations.filter(a => (a.status || '').toLowerCase() === 'on roster')
-  const notRoster = affiliations.filter(a => (a.status || '').toLowerCase() !== 'on roster')
-  const employerAssertionMap = assertionsByDoctorId(employerOverlay?.roster_assertions)
 
   const displayPhone = employerOverlay?.profile?.primary_phone || practice.phone
   const displayWebsite = employerOverlay?.profile?.website || practice.website
@@ -400,6 +411,74 @@ export default function PracticeDetailAuthorized({
 
   const claimedReady = Boolean(employerOverlay?.visible && employerOverlay.physician_ready)
 
+  function renderMergedCurrentCard(entry: MergedCurrentPhysician) {
+    if (entry.source === 'cms') {
+      const full =
+        affiliations.find((row) => row.id === entry.affiliation.id) ??
+        (entry.affiliation as Affiliation)
+      return renderPhysicianCard(full)
+    }
+    const n = entry.physicianName || '—'
+    const [fg2, bg2] = nameToColor(n)
+    const canOpenPhysician = Boolean(entry.doctorId) && !isEmployerPreview
+    return (
+      <div
+        key={`practice-reported-${entry.doctorId}`}
+        onClick={() => canOpenPhysician && router.push(`/physicians/${entry.doctorId}`)}
+        style={{
+          background: '#ffffff',
+          border: '1px solid #DDD8D0',
+          borderRadius: 10,
+          padding: '14px 16px',
+          marginBottom: 8,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 14,
+          cursor: canOpenPhysician ? 'pointer' : 'default',
+        }}
+      >
+        <div
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            background: bg2,
+            color: fg2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 13,
+            fontWeight: 600,
+            flexShrink: 0,
+          }}
+        >
+          {getInitials(n)}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: '#1a1a1a',
+              marginBottom: 3,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {n}
+          </div>
+          <p className="roster-provenance">
+            <span className="roster-provenance-kicker">Practice reports:</span>{' '}
+            <span className="roster-provenance-value">{PRACTICE_REPORTED_CURRENT_LABEL}</span>
+          </p>
+          <div style={{ fontSize: 12, color: '#888', marginTop: 6 }}>{PRACTICE_REPORTED_CURRENT_NOTE}</div>
+          {entry.npi && <div style={{ fontSize: 12, color: '#aaa', marginTop: 4 }}>NPI: {entry.npi}</div>}
+        </div>
+      </div>
+    )
+  }
+
   function renderPhysicianCard(a: Affiliation) {
     const n = a.doctors?.physician_name || '—'
     const isOn = (a.status || '').toLowerCase() === 'on roster'
@@ -459,7 +538,7 @@ export default function PracticeDetailAuthorized({
             href={employerPreview.backHref}
             style={{ display: 'inline-block', marginTop: 10, fontSize: 13, color: '#1C4A45', fontWeight: 600 }}
           >
-            ← Back to employer profile
+            ← Back to Physician-Ready profile
           </a>
         </div>
       )}
@@ -614,7 +693,10 @@ export default function PracticeDetailAuthorized({
 
         <div className="practice-history-metric-grid">
           <div className="practice-history-metric-card">
-            <div className="practice-history-metric-label">Current physicians</div>
+            <div className="practice-history-metric-label">
+              Current physicians
+              <MetricInfoTip text={CURRENT_PHYSICIANS_TOOLTIP} ariaLabel="About current physicians" />
+            </div>
             <div className="practice-history-metric-value">{rosterSize}</div>
           </div>
           <div className="practice-history-metric-card">
@@ -715,22 +797,22 @@ export default function PracticeDetailAuthorized({
 
       {/* Physicians */}
       <div>
-        {onRoster.length > 0 && (
+        {mergedCurrent.length > 0 && (
           <>
             <div style={{ fontSize: 11, fontWeight: 600, color: '#1A6B3A', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
-              Current Physicians ({onRoster.length})
+              Current Physicians ({mergedCurrent.length})
             </div>
             {rosterReviewedLabel && (
               <p className="roster-reviewed-label" style={{ marginTop: -4, marginBottom: 10 }}>
                 {rosterReviewedLabel}
               </p>
             )}
-            {onRoster.map(renderPhysicianCard)}
+            {mergedCurrent.map(renderMergedCurrentCard)}
           </>
         )}
 
         {notRoster.length > 0 && (
-          <div style={{ marginTop: onRoster.length ? 20 : 0 }}>
+          <div style={{ marginTop: mergedCurrent.length ? 20 : 0 }}>
             <button onClick={() => setShowFormer(o => !o)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 10px' }}>
               <span style={{ fontSize: 11, fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '.06em' }}>Former Physicians ({notRoster.length})</span>
               <span style={{ fontSize: 14, color: '#aaa', transform: showFormer ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
