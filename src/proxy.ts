@@ -17,6 +17,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next({ request })
   }
 
+  // Cron endpoints authenticate via CRON_SECRET bearer; never redirect to /login.
+  if (pathname === '/api/cron/notifications' || pathname.startsWith('/api/cron/notifications/')) {
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
