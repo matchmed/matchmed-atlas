@@ -10,6 +10,7 @@ import {
   markNotificationRead,
   type PhysicianNotification,
 } from '@/lib/notifications'
+import { categoryForNotificationType, categoryLabel } from '@/lib/notifications-contracts'
 import { safeNextPath } from '@/lib/safe-next-path'
 
 function formatWhen(iso: string): string {
@@ -99,7 +100,7 @@ export default function NotificationsPage() {
             Notifications
           </h1>
           <p style={{ fontSize: 13, color: '#8A8680', marginTop: 6 }}>
-            Preference-matched opportunities, regional growth, and Connect updates.
+            Career & opportunity updates, practice updates you follow, and Connect updates.
           </p>
         </div>
         {unread > 0 && (
@@ -142,6 +143,7 @@ export default function NotificationsPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {rows.map((row) => {
           const unreadRow = !row.read_at
+          const category = categoryLabel(categoryForNotificationType(row.notification_type))
           return (
             <button
               key={row.id}
@@ -156,6 +158,9 @@ export default function NotificationsPage() {
                 cursor: 'pointer',
               }}
             >
+              <div style={{ fontSize: 11, color: '#8A8680', marginBottom: 4, letterSpacing: '0.02em' }}>
+                {category}
+              </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 4 }}>
                 <div style={{ fontSize: 14, fontWeight: unreadRow ? 700 : 600, color: '#141210' }}>
                   {row.title}

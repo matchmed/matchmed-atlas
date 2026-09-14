@@ -169,12 +169,12 @@ export default function AccountPage() {
     procedures_desired: [] as string[],
     data_sharing: false,
     notify_career_emails: true,
-    notify_regional_emails: true,
+    notify_followed_practice_emails: true,
     notify_connect_emails: true,
   })
   const [savedNotifyPrefs, setSavedNotifyPrefs] = useState({
     notify_career_emails: true,
-    notify_regional_emails: true,
+    notify_followed_practice_emails: true,
     notify_connect_emails: true,
   })
 
@@ -208,12 +208,12 @@ export default function AccountPage() {
           procedures_desired: profile.procedures_desired || [],
           data_sharing: profile.data_sharing || false,
           notify_career_emails: profile.notify_career_emails !== false,
-          notify_regional_emails: profile.notify_regional_emails !== false,
+          notify_followed_practice_emails: profile.notify_followed_practice_emails !== false,
           notify_connect_emails: profile.notify_connect_emails !== false,
         })
         setSavedNotifyPrefs({
           notify_career_emails: profile.notify_career_emails !== false,
-          notify_regional_emails: profile.notify_regional_emails !== false,
+          notify_followed_practice_emails: profile.notify_followed_practice_emails !== false,
           notify_connect_emails: profile.notify_connect_emails !== false,
         })
         if (profile.first_name) {
@@ -252,17 +252,17 @@ export default function AccountPage() {
 
     if (
       previousPrefs.notify_career_emails !== form.notify_career_emails ||
-      previousPrefs.notify_regional_emails !== form.notify_regional_emails ||
+      previousPrefs.notify_followed_practice_emails !== form.notify_followed_practice_emails ||
       previousPrefs.notify_connect_emails !== form.notify_connect_emails
     ) {
       posthog.capture('notification_preferences_changed', {
         notify_career_emails: form.notify_career_emails,
-        notify_regional_emails: form.notify_regional_emails,
+        notify_followed_practice_emails: form.notify_followed_practice_emails,
         notify_connect_emails: form.notify_connect_emails,
       })
       setSavedNotifyPrefs({
         notify_career_emails: form.notify_career_emails,
-        notify_regional_emails: form.notify_regional_emails,
+        notify_followed_practice_emails: form.notify_followed_practice_emails,
         notify_connect_emails: form.notify_connect_emails,
       })
     }
@@ -458,16 +458,28 @@ export default function AccountPage() {
       <div style={{ background: '#FFFFFF', border: '1px solid #DDD8D0', borderRadius: 12, padding: 24, marginBottom: 24 }}>
         <h2 style={{ fontSize: 15, fontWeight: 600, color: '#111', marginBottom: 8 }}>Email notifications</h2>
         <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 16, lineHeight: 1.5 }}>
-          In-app notifications stay available even when email is off. Career and regional emails also require professional opportunities consent above.
+          In-app notifications stay available even when email is off. Career and practice-follow emails also require professional opportunities consent above.
         </p>
         {([
-          ['notify_career_emails', 'Career and opportunity emails'] as const,
-          ['notify_regional_emails', 'Regional physician-ready growth emails'] as const,
-          ['notify_connect_emails', 'Connect request and acceptance emails'] as const,
-        ]).map(([key, label]) => (
+          [
+            'notify_career_emails',
+            'Career & opportunity updates',
+            'New opportunities and important changes that match your specialty and preferred locations.',
+          ],
+          [
+            'notify_followed_practice_emails',
+            'Practice updates you follow',
+            'Meaningful updates from practices you’ve favorited or connected with.',
+          ],
+          [
+            'notify_connect_emails',
+            'Connect updates',
+            'New Connect requests and accepted connections.',
+          ],
+        ] as const).map(([key, label, description]) => (
           <label
             key={key}
-            style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 12 }}
+            style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 14 }}
           >
             <input
               type="checkbox"
@@ -475,7 +487,10 @@ export default function AccountPage() {
               onChange={e => setForm(f => ({ ...f, [key]: e.target.checked }))}
               style={{ marginTop: 2, accentColor: '#1C4A45' }}
             />
-            <span style={{ fontSize: 13, color: '#374151', lineHeight: 1.5 }}>{label}</span>
+            <span style={{ fontSize: 13, color: '#374151', lineHeight: 1.5 }}>
+              <span style={{ fontWeight: 600, display: 'block' }}>{label}</span>
+              <span style={{ color: '#6b7280' }}>{description}</span>
+            </span>
           </label>
         ))}
       </div>

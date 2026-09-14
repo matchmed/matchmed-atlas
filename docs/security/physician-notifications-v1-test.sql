@@ -90,14 +90,19 @@ BEGIN
     AND EXISTS (
       SELECT 1 FROM information_schema.columns
       WHERE table_schema = 'public' AND table_name = 'profiles'
-        AND column_name = 'notify_regional_emails'
+        AND column_name = 'notify_followed_practice_emails'
     )
     AND EXISTS (
       SELECT 1 FROM information_schema.columns
       WHERE table_schema = 'public' AND table_name = 'profiles'
         AND column_name = 'notify_connect_emails'
+    )
+    AND EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'profiles'
+        AND column_name = 'notify_regional_emails'
     ),
-    'profiles notify columns'
+    'profiles notify columns (regional retained deprecated)'
   );
 
   SELECT EXISTS (
@@ -250,22 +255,45 @@ BEGIN
     INSERT INTO public.physician_region_ready_milestones (physician_profile_id, state, milestone)
     VALUES (v_phys, v_state, 25)
     ON CONFLICT DO NOTHING;
+
+    -- Taxonomy cleanup: process cron is silent bookkeeping only (no proactive rows).
+    SELECT COUNT(*) INTO v_notif_count
+    FROM public.physician_notifications
+    WHERE physician_profile_id = v_phys
+      AND notification_type = 'region_ready_milestone';
+    v_created1 := public.notifications_process_region_milestones();
+    SELECT COUNT(*) INTO v_milestone_count
+    FROM public.physician_notifications
+    WHERE physician_profile_id = v_phys
+      AND notification_type = 'region_ready_milestone';
+    PERFORM pg_temp.record(
+      17,
+      'region process creates no proactive regional notifications',
+      'unchanged',
+      v_milestone_count = v_notif_count,
+      format('before=%s after=%s process=%s', v_notif_count, v_milestone_count, v_created1)
+    );
+
     v_n1 := public._notification_insert(
       v_phys, 'region_ready_milestone', 'digest',
       format('region_ready:%s:25:%s:test', v_state, v_phys),
-      '25 practices are physician-ready in ZZ',
-      '25 practices in ZZ are now physician-ready on Atlas.',
+      'legacy regional row',
+      'Infra insert still accepted; email claim excludes this type.',
       jsonb_build_object('state', v_state, 'milestone', 25, 'baseline', false),
       'opportunities', NULL, '/opportunities'
     );
-    PERFORM pg_temp.record(17, 'live milestone 25 crossing notifies once', 'created', v_n1 IS NOT NULL, coalesce(v_n1::text, 'null'));
-
     v_n2 := public._notification_insert(
       v_phys, 'region_ready_milestone', 'digest',
       format('region_ready:%s:25:%s:test', v_state, v_phys),
       'dup', 'dup', '{}'::jsonb, 'opportunities', NULL, '/opportunities'
     );
-    PERFORM pg_temp.record(18, 'duplicate regional milestone deduped', 'null', v_n2 IS NULL, coalesce(v_n2::text, 'null'));
+    PERFORM pg_temp.record(
+      18,
+      'duplicate regional dedupe key still enforced',
+      'null',
+      v_n1 IS NOT NULL AND v_n2 IS NULL,
+      format('first=%s second=%s', coalesce(v_n1::text, 'null'), coalesce(v_n2::text, 'null'))
+    );
 
     SELECT COUNT(*) INTO v_milestone_count
     FROM public.physician_region_ready_milestones
@@ -279,8 +307,8 @@ BEGIN
     );
   ELSE
     PERFORM pg_temp.record(16, 'historical baseline inserts create no regional notifications', '0', false, 'skipped');
-    PERFORM pg_temp.record(17, 'live milestone 25 crossing notifies once', 'created', false, 'skipped');
-    PERFORM pg_temp.record(18, 'duplicate regional milestone deduped', 'null', false, 'skipped');
+    PERFORM pg_temp.record(17, 'region process creates no proactive regional notifications', 'unchanged', false, 'skipped');
+    PERFORM pg_temp.record(18, 'duplicate regional dedupe key still enforced', 'null', false, 'skipped');
     PERFORM pg_temp.record(19, 'baseline rows preserved for remove/re-add semantics', '>=4', false, 'skipped');
   END IF;
 

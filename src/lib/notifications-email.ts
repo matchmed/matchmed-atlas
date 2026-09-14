@@ -36,7 +36,7 @@ export async function sendResendEmail(input: {
   text: string
 }): Promise<ResendSendResult> {
   const apiKey = process.env.RESEND_API_KEY
-  const from = process.env.RESEND_FROM_EMAIL || 'MatchMed Atlas <notifications@matchmed.app>'
+  const from = process.env.RESEND_FROM_EMAIL || 'Atlas by MatchMed <notifications@matchmed.app>'
 
   if (!apiKey) {
     return { ok: false, error: 'missing_resend_api_key' }
@@ -109,25 +109,36 @@ export type DigestItem = {
   deep_link?: string
 }
 
+const CAREER_TYPES = new Set([
+  'opportunity_matched',
+  'opportunity_changed',
+  'opportunity_closed',
+])
+
+const FOLLOWED_TYPES = new Set([
+  'relationship_opportunity_update',
+  'relationship_practice_ready',
+])
+
 export function buildDigestEmail(items: DigestItem[]): {
   subject: string
   html: string
   text: string
 } {
-  const matched = items.filter((i) => i.notification_type === 'opportunity_matched')
-  const updated = items.filter((i) =>
-    ['opportunity_changed', 'opportunity_closed', 'relationship_opportunity_update', 'relationship_practice_ready'].includes(
-      i.notification_type || '',
-    ),
-  )
-  const regional = items.filter((i) => i.notification_type === 'region_ready_milestone')
+  // Never include deprecated regional milestones in digest email.
+  const eligible = items.filter((i) => i.notification_type !== 'region_ready_milestone')
+  const career = eligible.filter((i) => CAREER_TYPES.has(i.notification_type || ''))
+  const followed = eligible.filter((i) => FOLLOWED_TYPES.has(i.notification_type || ''))
 
+  const matchedCount = career.filter((i) => i.notification_type === 'opportunity_matched').length
   const subject =
-    matched.length > 0
-      ? `${matched.length} new ${matched.length === 1 ? 'opportunity matches' : 'opportunities match'} your preferences`
-      : updated.length > 0
-        ? 'Updates on opportunities you follow'
-        : 'Atlas regional growth update'
+    matchedCount > 0
+      ? `${matchedCount} new ${matchedCount === 1 ? 'opportunity matches' : 'opportunities match'} your preferences`
+      : career.length > 0
+        ? 'Career & opportunity updates on Atlas'
+        : followed.length > 0
+          ? 'Updates from practices you follow'
+          : 'Your Atlas updates'
 
   const sections: string[] = []
   const textSections: string[] = []
@@ -147,14 +158,13 @@ export function buildDigestEmail(items: DigestItem[]): {
     }
   }
 
-  pushSection('New opportunities', matched)
-  pushSection('Opportunity updates', updated)
-  pushSection('Regional Atlas growth', regional)
+  pushSection('Career & opportunity updates', career)
+  pushSection('Practice updates you follow', followed)
 
   const html = `
     <div style="font-family:Georgia,serif;color:#141210;line-height:1.5">
       <p style="font-size:18px;font-weight:700;margin:0 0 8px">Your Atlas digest</p>
-      <p style="margin:0 0 8px;color:#5C5852">A summary of career and regional updates relevant to your preferences.</p>
+      <p style="margin:0 0 8px;color:#5C5852">Career matches and updates from practices you follow.</p>
       ${sections.join('\n')}
       <p style="margin:28px 0 8px"><a href="${escapeHtml(absoluteLink('/notifications', true))}" style="color:#1C4A45">Open notifications</a></p>
       <p style="font-size:12px;color:#8A8680;margin:0">

@@ -22,7 +22,7 @@ export const ALLOWED_PROFILE_FIELDS = [
   'industry_partnership_acknowledged',
   'data_sharing',
   'notify_career_emails',
-  'notify_regional_emails',
+  'notify_followed_practice_emails',
   'notify_connect_emails',
   'onboarding_complete',
   'signup_date',
