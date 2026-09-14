@@ -1,0 +1,32 @@
+# Near-immediate transactional notification flush.
+# Vercel Hobby only allows once-daily cron jobs; Connect emails need frequent flush.
+name: notifications-flush
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  flush:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Flush transactional notifications
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          ATLAS_CRON_URL: https://atlas.matchmed.app/api/cron/notifications
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "CRON_SECRET GitHub secret is missing" >&2
+            exit 1
+          fi
+          code=$(curl -sS -o /tmp/cron_body.json -w "%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -H "Content-Type: application/json" \
+            "$ATLAS_CRON_URL")
+          echo "HTTP $code"
+          head -c 500 /tmp/cron_body.json || true
+          echo
+          test "$code" = "200"
