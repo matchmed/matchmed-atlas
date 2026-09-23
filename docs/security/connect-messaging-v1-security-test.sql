@@ -90,14 +90,14 @@ BEGIN
 
   IF v_rel IS NOT NULL THEN
     BEGIN
-      PERFORM public.connect_send_message(v_rel, '   ');
+      PERFORM public.connect_send_message(v_rel, '   ', 'physician');
       PERFORM pg_temp.record(7, 'blank message rejected', 'exception', false, 'no exception');
     EXCEPTION WHEN others THEN
       PERFORM pg_temp.record(7, 'blank message rejected', 'exception', true, SQLERRM);
     END;
 
     BEGIN
-      PERFORM public.connect_send_message(v_rel, repeat('x', 2001));
+      PERFORM public.connect_send_message(v_rel, repeat('x', 2001), 'physician');
       PERFORM pg_temp.record(8, 'overlong message rejected', 'exception', false, 'no exception');
     EXCEPTION WHEN others THEN
       PERFORM pg_temp.record(8, 'overlong message rejected', 'exception', true, SQLERRM);
@@ -118,7 +118,7 @@ BEGIN
   IF v_rel IS NOT NULL THEN
     BEGIN
       -- Will fail auth without jwt; still validates function exists
-      PERFORM public.connect_send_message(v_rel, 'hello');
+      PERFORM public.connect_send_message(v_rel, 'hello', 'physician');
       PERFORM pg_temp.record(9, 'pending send blocked without auth or status', 'exception', false, 'no exception');
     EXCEPTION WHEN others THEN
       PERFORM pg_temp.record(9, 'pending send blocked without auth or status', 'exception', true, SQLERRM);

@@ -169,6 +169,7 @@ export async function connectDisconnect(
   const supabase = createClient()
   const { data, error } = await supabase.rpc('connect_disconnect', {
     p_relationship_id: relationshipId,
+    p_actor_side: 'physician',
   })
   if (error) return { data: null, error: rpcError(error) }
   return { data: data as ConnectRelationshipSummary, error: null }
@@ -191,6 +192,7 @@ export async function connectListMessages(
   const supabase = createClient()
   const { data, error } = await supabase.rpc('connect_list_messages', {
     p_relationship_id: relationshipId,
+    p_actor_side: 'physician',
     p_limit: opts?.limit ?? 100,
     p_before: opts?.before ?? null,
   })
@@ -214,6 +216,7 @@ export async function connectSendMessage(
   const { data, error } = await supabase.rpc('connect_send_message', {
     p_relationship_id: relationshipId,
     p_body: body,
+    p_actor_side: 'physician',
   })
   if (error) return { data: null, error: rpcError(error) }
   return { data: data as ConnectMessage, error: null }
@@ -228,6 +231,7 @@ export async function connectMarkThreadRead(
   const supabase = createClient()
   const { data, error } = await supabase.rpc('connect_mark_thread_read', {
     p_relationship_id: relationshipId,
+    p_actor_side: 'physician',
   })
   if (error) return { data: null, error: rpcError(error) }
   return {
@@ -242,6 +246,7 @@ export async function connectThreadSeenState(
   const supabase = createClient()
   const { data, error } = await supabase.rpc('connect_thread_seen_state', {
     p_relationship_id: relationshipId,
+    p_actor_side: 'physician',
   })
   if (error) return { data: null, error: rpcError(error) }
   return { data: (data as ConnectThreadSeenState | null) ?? null, error: null }

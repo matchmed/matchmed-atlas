@@ -24,6 +24,11 @@ type InboxFilter = 'all' | 'unread' | 'pending'
 
 const POLL_MS = 5000
 
+/** Physician inbox: physician-side messages are outgoing. Do not use is_mine; that follows the user, not this app. */
+function isPhysicianOutgoing(message: ConnectMessage): boolean {
+  return message.sender_side === 'physician'
+}
+
 /** Atlas production tokens (tailwind.config + globals.css). */
 const TEAL = '#1C4A45'
 const TEAL_LIGHT = '#E8F0EF'
@@ -348,7 +353,7 @@ export default function ConnectInboxPage() {
           ...prev,
           {
             ...data,
-            is_mine: data.is_mine ?? true,
+            is_mine: data.sender_side === 'physician',
           },
         ]
       })
@@ -839,8 +844,9 @@ export default function ConnectInboxPage() {
                   )}
 
                   {messages.map((msg, idx) => {
+                    const outgoing = isPhysicianOutgoing(msg)
                     const isLatestOwn =
-                      msg.is_mine &&
+                      outgoing &&
                       seenState &&
                       seenState.state !== 'none' &&
                       seenState.latest_message_id === msg.id &&
@@ -1032,7 +1038,7 @@ function MessageBubble({
   message: ConnectMessage
   receipt: 'Sent' | 'Seen' | null
 }) {
-  const mine = message.is_mine
+  const mine = isPhysicianOutgoing(message)
   return (
     <div
       style={{
