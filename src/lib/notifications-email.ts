@@ -1,3 +1,6 @@
+// @ts-expect-error TS5097 — node --experimental-strip-types resolves this .ts specifier.
+import { emailBody, emailFooter, emailHeader, emailMutedLine, emailShell, emailTitle, escapeHtml, notificationCard, primaryButton, sectionHeading } from './notifications-email-layout.ts'
+
 export type ResendSendResult =
   | { ok: true; id: string }
   | { ok: false; error: string }
@@ -10,7 +13,7 @@ function appOrigin(): string {
   return raw.replace(/\/$/, '') || 'https://atlas.matchmed.app'
 }
 
-function absoluteLink(path: string, emailClick = false): string {
+export function absoluteEmailLink(path: string, emailClick = false): string {
   if (!path) return appOrigin()
   const base =
     path.startsWith('http://') || path.startsWith('https://')
@@ -19,14 +22,6 @@ function absoluteLink(path: string, emailClick = false): string {
   if (!emailClick) return base
   const join = base.includes('?') ? '&' : '?'
   return `${base}${join}src=notification_email`
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
 }
 
 export async function sendResendEmail(input: {
@@ -81,25 +76,157 @@ export async function sendResendEmail(input: {
   }
 }
 
+function extractPracticeNameFromConnectBody(body: string): string | null {
+  const sent = body.match(/^(.+?) sent you a Connect request\.?$/i)
+  if (sent?.[1]) return sent[1].trim()
+  const accepted = body.match(/^(.+?) accepted your Connect request\.?$/i)
+  if (accepted?.[1]) return accepted[1].trim()
+  const message = body.match(/^(.+?) sent you a new message on Atlas\.?$/i)
+  if (message?.[1]) return message[1].trim()
+  return null
+}
+
+function employersOrigin(): string {
+  const raw =
+    process.env.NEXT_PUBLIC_EMPLOYERS_URL ||
+    process.env.EMPLOYERS_APP_URL ||
+    'https://employers.matchmed.app'
+  return raw.replace(/\/$/, '')
+}
+
+function absoluteEmployersLink(path: string, emailClick = false): string {
+  if (!path) return employersOrigin()
+  const base =
+    path.startsWith('http://') || path.startsWith('https://')
+      ? path
+      : `${employersOrigin()}${path.startsWith('/') ? path : `/${path}`}`
+  if (!emailClick) return base
+  const join = base.includes('?') ? '&' : '?'
+  return `${base}${join}src=notification_email`
+}
+
+function footerBlock(options?: { preferencesUrl?: string; openUrl?: string; openLabel?: string }): string {
+  return emailFooter({
+    preferencesUrl: options?.preferencesUrl || absoluteEmailLink('/account'),
+    openAtlasUrl: options?.openUrl || absoluteEmailLink('/', true),
+  })
+}
+
 export function buildConnectEmail(input: {
   title: string
   body: string
   deepLink: string
+  notificationType?: string
 }): { subject: string; html: string; text: string } {
-  const link = absoluteLink(input.deepLink || '/connect', true)
-  const subject = input.title
-  const text = `${input.body}\n\nOpen Connect: ${link}\n\nManage email preferences: ${absoluteLink('/account')}`
-  const html = `
-    <div style="font-family:Georgia,serif;color:#141210;line-height:1.5">
-      <p style="font-size:18px;font-weight:700;margin:0 0 12px">${escapeHtml(input.title)}</p>
-      <p style="margin:0 0 16px">${escapeHtml(input.body)}</p>
-      <p style="margin:0 0 24px"><a href="${escapeHtml(link)}" style="color:#1C4A45">Open Connect</a></p>
-      <p style="font-size:12px;color:#8A8680;margin:0">
-        <a href="${escapeHtml(absoluteLink('/account'))}" style="color:#8A8680">Manage email preferences</a>
-      </p>
-    </div>
-  `
+  const type = input.notificationType || ''
+  const link = absoluteEmailLink(input.deepLink || '/connect', true)
+  const practiceName = extractPracticeNameFromConnectBody(input.body)
+
+  let headline = 'New Connect request'
+  let ctaLabel = 'View Connect request'
+  let subject = 'New Connect request'
+  let bodyCopy = input.body
+
+  if (type === 'connect_message' || /new message/i.test(input.title)) {
+    headline = 'New message'
+    ctaLabel = 'Open conversation'
+    subject = input.title || (practiceName ? `New message from ${practiceName}` : 'New message on Atlas')
+    bodyCopy = input.body
+  } else if (type === 'connect_accepted' || /accepted/i.test(input.title)) {
+    headline = 'You’re connected'
+    ctaLabel = 'Open conversation'
+    subject = practiceName
+      ? `${practiceName} accepted your Connect request`
+      : 'Your Connect request was accepted'
+    bodyCopy = practiceName
+      ? `${practiceName} accepted your Connect request.`
+      : input.body
+  } else {
+    headline = 'New Connect request'
+    ctaLabel = 'View Connect request'
+    subject = practiceName
+      ? `New Connect request from ${practiceName}`
+      : 'New Connect request'
+    bodyCopy = practiceName
+      ? `${practiceName} would like to connect with you on Atlas.`
+      : input.body
+  }
+
+  const html = emailShell(
+    [
+      emailHeader(),
+      emailTitle(headline),
+      emailBody(bodyCopy),
+      primaryButton(link, ctaLabel),
+      footerBlock(),
+    ].join('\n'),
+  )
+
+  const text = [
+    'Atlas by MatchMed',
+    '',
+    headline,
+    '',
+    bodyCopy,
+    '',
+    `${ctaLabel}: ${link}`,
+    '',
+    `Manage email preferences: ${absoluteEmailLink('/account')}`,
+    `Open Atlas: ${absoluteEmailLink('/', true)}`,
+  ].join('\n')
+
   return { subject, html, text }
+}
+
+/** Employer-side Connect transactional email (Atlas Resend → practice editors). */
+export function buildEmployerConnectEmail(input: {
+  title: string
+  body: string
+  deepLink: string
+  emailKind?: string
+}): { subject: string; html: string; text: string } {
+  const link = absoluteEmployersLink(input.deepLink, true)
+  const kind = input.emailKind || ''
+
+  let headline = input.title
+  let ctaLabel = 'Open conversation'
+  if (kind === 'connect_requested') {
+    headline = 'New Connect request'
+    ctaLabel = 'View Connect request'
+  } else if (kind === 'connect_accepted') {
+    headline = 'You’re connected'
+    ctaLabel = 'Open conversation'
+  } else if (kind === 'connect_message') {
+    headline = 'New message'
+    ctaLabel = 'Open conversation'
+  }
+
+  const html = emailShell(
+    [
+      emailHeader(),
+      emailTitle(headline),
+      emailBody(input.body),
+      primaryButton(link, ctaLabel),
+      footerBlock({
+        preferencesUrl: absoluteEmployersLink('/'),
+        openUrl: absoluteEmployersLink('/', true),
+      }),
+    ].join('\n'),
+  )
+
+  const text = [
+    'Atlas by MatchMed',
+    '',
+    headline,
+    '',
+    input.body,
+    '',
+    `${ctaLabel}: ${link}`,
+    '',
+    `Open Employers: ${absoluteEmployersLink('/', true)}`,
+  ].join('\n')
+
+  return { subject: input.title, html, text }
 }
 
 export type DigestItem = {
@@ -107,6 +234,7 @@ export type DigestItem = {
   title?: string
   body?: string
   deep_link?: string
+  payload?: Record<string, unknown> | null
 }
 
 const CAREER_TYPES = new Set([
@@ -120,6 +248,66 @@ const FOLLOWED_TYPES = new Set([
   'relationship_practice_ready',
 ])
 
+function payloadString(payload: Record<string, unknown> | null | undefined, key: string): string | null {
+  const value = payload?.[key]
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed || null
+}
+
+function digestCtaLabel(type: string | undefined): string {
+  if (type === 'opportunity_matched' || type === 'opportunity_changed') return 'View opportunity'
+  if (type === 'opportunity_closed') return 'View practice'
+  if (type === 'relationship_practice_ready' || type === 'relationship_opportunity_update') {
+    return 'View practice'
+  }
+  return 'Open notifications'
+}
+
+function digestCardHeading(item: DigestItem): string {
+  // Prefer a practice-forward heading when title already names the practice.
+  const title = (item.title || '').trim()
+  if (title) return title
+  return 'Update'
+}
+
+function digestMetaLines(item: DigestItem): string[] {
+  const focus = payloadString(item.payload ?? undefined, 'clinical_focus')
+  const lines: string[] = []
+  if (focus) lines.push(focus)
+  return lines
+}
+
+function digestSubject(career: DigestItem[], followed: DigestItem[]): string {
+  const matched = career.filter((i) => i.notification_type === 'opportunity_matched')
+  if (matched.length === 1) {
+    const focus = payloadString(matched[0].payload ?? undefined, 'clinical_focus')
+    if (focus) return `New ${focus} opportunity matches your preferences`
+    return '1 new opportunity matches your preferences'
+  }
+  if (matched.length > 1) {
+    return `${matched.length} new opportunities match your preferences`
+  }
+  if (career.length > 0) {
+    const changed = career.filter((i) => i.notification_type === 'opportunity_changed').length
+    if (changed > 0 && changed === career.length) {
+      return changed === 1
+        ? 'Opportunity update matching your preferences'
+        : `${changed} opportunity updates matching your preferences`
+    }
+    return 'Career & opportunity updates on Atlas'
+  }
+  if (followed.length === 1) {
+    const title = (followed[0].title || '').trim()
+    if (title) return title
+    return 'Update from a practice you follow'
+  }
+  if (followed.length > 1) {
+    return 'Updates from practices you follow'
+  }
+  return 'Your Atlas updates'
+}
+
 export function buildDigestEmail(items: DigestItem[]): {
   subject: string
   html: string
@@ -130,55 +318,73 @@ export function buildDigestEmail(items: DigestItem[]): {
   const career = eligible.filter((i) => CAREER_TYPES.has(i.notification_type || ''))
   const followed = eligible.filter((i) => FOLLOWED_TYPES.has(i.notification_type || ''))
 
-  const matchedCount = career.filter((i) => i.notification_type === 'opportunity_matched').length
-  const subject =
-    matchedCount > 0
-      ? `${matchedCount} new ${matchedCount === 1 ? 'opportunity matches' : 'opportunities match'} your preferences`
+  const subject = digestSubject(career, followed)
+
+  const intro =
+    career.length > 0 && followed.length > 0
+      ? 'Career matches and meaningful updates from practices you follow.'
       : career.length > 0
-        ? 'Career & opportunity updates on Atlas'
+        ? 'New career opportunities and updates matching your preferences.'
         : followed.length > 0
-          ? 'Updates from practices you follow'
-          : 'Your Atlas updates'
+          ? 'Meaningful updates from practices you’ve favorited or connected with.'
+          : 'Updates from Atlas.'
 
-  const sections: string[] = []
-  const textSections: string[] = []
+  const rows: string[] = [
+    emailHeader(),
+    emailTitle('Your Atlas digest'),
+    emailMutedLine(intro),
+  ]
 
-  function pushSection(heading: string, rows: DigestItem[]) {
-    if (!rows.length) return
-    sections.push(`<h3 style="font-size:15px;margin:20px 0 8px;color:#1C4A45">${escapeHtml(heading)}</h3>`)
+  const textSections: string[] = ['Atlas by MatchMed', '', 'Your Atlas digest', '', intro, '']
+
+  function pushSection(heading: string, sectionItems: DigestItem[]) {
+    if (!sectionItems.length) return
+    rows.push(sectionHeading(heading))
     textSections.push(heading)
-    for (const row of rows) {
-      const title = row.title || 'Update'
-      const body = row.body || ''
-      const link = absoluteLink(row.deep_link || '/notifications', true)
-      sections.push(
-        `<p style="margin:0 0 12px"><strong>${escapeHtml(title)}</strong><br/>${escapeHtml(body)}<br/><a href="${escapeHtml(link)}" style="color:#1C4A45">View</a></p>`,
+    for (const item of sectionItems) {
+      const href = absoluteEmailLink(item.deep_link || '/notifications', true)
+      const cta = digestCtaLabel(item.notification_type)
+      const headingText = digestCardHeading(item)
+      const body = (item.body || '').trim()
+      rows.push(
+        notificationCard({
+          heading: headingText,
+          body: body || undefined,
+          metaLines: digestMetaLines(item),
+          ctaHref: href,
+          ctaLabel: cta,
+        }),
       )
-      textSections.push(`- ${title}: ${body}\n  ${link}`)
+      textSections.push(`- ${headingText}${body ? `: ${body}` : ''}`)
+      textSections.push(`  ${cta}: ${href}`)
     }
   }
 
   pushSection('Career & opportunity updates', career)
   pushSection('Practice updates you follow', followed)
 
-  const html = `
-    <div style="font-family:Georgia,serif;color:#141210;line-height:1.5">
-      <p style="font-size:18px;font-weight:700;margin:0 0 8px">Your Atlas digest</p>
-      <p style="margin:0 0 8px;color:#5C5852">Career matches and updates from practices you follow.</p>
-      ${sections.join('\n')}
-      <p style="margin:28px 0 8px"><a href="${escapeHtml(absoluteLink('/notifications', true))}" style="color:#1C4A45">Open notifications</a></p>
-      <p style="font-size:12px;color:#8A8680;margin:0">
-        <a href="${escapeHtml(absoluteLink('/account'))}" style="color:#8A8680">Manage email preferences</a>
-      </p>
-    </div>
-  `
+  // Secondary path to full inbox (not a competing primary CTA).
+  rows.push(`
+    <tr>
+      <td style="padding:8px 0 0 0;font-family:Arial, Helvetica, sans-serif;">
+        <p style="margin:0;font-size:13px;color:#8A8680;">
+          <a href="${escapeHtml(absoluteEmailLink('/notifications', true))}" style="color:#8A8680;text-decoration:underline;">
+            Open notifications
+          </a>
+        </p>
+      </td>
+    </tr>
+  `)
+
+  rows.push(footerBlock())
+
+  const html = emailShell(rows.join('\n'))
   const text = [
-    'Your Atlas digest',
-    '',
     ...textSections,
     '',
-    `Open notifications: ${absoluteLink('/notifications', true)}`,
-    `Manage email preferences: ${absoluteLink('/account')}`,
+    `Open notifications: ${absoluteEmailLink('/notifications', true)}`,
+    `Manage email preferences: ${absoluteEmailLink('/account')}`,
+    `Open Atlas: ${absoluteEmailLink('/', true)}`,
   ].join('\n')
 
   return { subject, html, text }

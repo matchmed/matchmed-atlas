@@ -7,6 +7,7 @@ export type NotificationType =
   | 'relationship_opportunity_update'
   | 'connect_requested'
   | 'connect_accepted'
+  | 'connect_message'
 
 export type NotificationDeliveryChannel = 'digest' | 'transactional'
 
@@ -84,6 +85,12 @@ export const NOTIFICATION_CATEGORY: Record<
     preferenceField: 'notify_connect_emails',
     channel: 'transactional',
     eligibility: 'Connect physician party',
+  },
+  connect_message: {
+    category: 'connect',
+    preferenceField: 'notify_connect_emails',
+    channel: 'transactional',
+    eligibility: 'Accepted Connect; physician recipient of practice message',
   },
   region_ready_milestone: {
     category: 'disabled',

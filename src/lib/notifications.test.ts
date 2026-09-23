@@ -11,7 +11,7 @@ import {
   highestCrossedRegionMilestone,
   silentBaselineMilestones,
 } from './notifications-contracts.ts'
-import { buildDigestEmail } from './notifications-email.ts'
+import { buildConnectEmail, buildDigestEmail, buildEmployerConnectEmail } from './notifications-email.ts'
 import { isAllowedProfileWriteField } from './profile-writes.ts'
 import { safeNextPath } from './safe-next-path.ts'
 
@@ -191,6 +191,7 @@ describe('physician notifications taxonomy cleanup', () => {
         title: 'New Glaucoma opportunity matches your preferences',
         body: 'AEC added a Glaucoma opportunity.',
         deep_link: '/practices/p1',
+        payload: { clinical_focus: 'Glaucoma' },
       },
       {
         notification_type: 'relationship_opportunity_update',
@@ -209,6 +210,10 @@ describe('physician notifications taxonomy cleanup', () => {
     assert.match(content.subject, /opportunit/i)
     assert.match(content.html, /Career &amp; opportunity updates/)
     assert.match(content.html, /Practice updates you follow/)
+    assert.match(content.html, /View opportunity/)
+    assert.match(content.html, /View practice/)
+    assert.match(content.html, /Atlas by MatchMed/)
+    assert.match(content.html, /src=notification_email/)
     assert.equal(/physician-ready|Network growth|regional/i.test(content.html), false)
     assert.equal(content.html.includes('5 practices in Georgia'), false)
     assert.match(content.text, /Career & opportunity updates/)
@@ -237,6 +242,112 @@ describe('physician notifications taxonomy cleanup', () => {
     assert.equal(careerSlice.includes('Followed update'), false)
     assert.match(followedSlice, /Followed update/)
     assert.equal(followedSlice.includes('Career match'), false)
+  })
+
+  it('renders polished Connect request and accepted emails with button CTAs', () => {
+    const request = buildConnectEmail({
+      title: 'New Connect request',
+      body: 'Arizona Eye Consultants sent you a Connect request.',
+      deepLink: '/connect',
+      notificationType: 'connect_requested',
+    })
+    assert.equal(request.subject, 'New Connect request from Arizona Eye Consultants')
+    assert.match(request.html, /View Connect request/)
+    assert.match(request.html, /would like to connect with you on Atlas/)
+    assert.match(request.html, /src=notification_email/)
+    assert.match(request.html, /Manage email preferences/)
+    assert.equal(request.html.includes('Georgia,serif'), false)
+
+    const accepted = buildConnectEmail({
+      title: 'Connect request accepted',
+      body: 'Arizona Eye Consultants accepted your Connect request.',
+      deepLink: '/connect',
+      notificationType: 'connect_accepted',
+    })
+    assert.equal(accepted.subject, 'Arizona Eye Consultants accepted your Connect request')
+    assert.match(accepted.html, /You’re connected|You.re connected/)
+    assert.match(accepted.html, /Open conversation/)
+  })
+
+  it('renders employer Connect emails via Atlas Resend builders (no physician identity on request)', () => {
+    const requested = buildEmployerConnectEmail({
+      title: 'New Connect request',
+      body: 'A physician sent your practice a Connect request on Atlas.',
+      deepLink: '/practices/abc/manage/connect?thread=rel-1',
+      emailKind: 'connect_requested',
+    })
+    assert.equal(requested.subject, 'New Connect request')
+    assert.match(requested.html, /View Connect request/)
+    assert.match(requested.html, /A physician sent your practice/)
+    assert.equal(requested.html.includes('Conn Phys'), false)
+    assert.equal(requested.html.includes('@matchmed-e2e'), false)
+    assert.match(requested.text, /A physician sent your practice/)
+
+    const accepted = buildEmployerConnectEmail({
+      title: 'Dr. Maya Chen accepted your Connect request',
+      body: 'Dr. Maya Chen accepted your Connect request.',
+      deepLink: '/practices/abc/manage/connect?thread=rel-2',
+      emailKind: 'connect_accepted',
+    })
+    assert.match(accepted.html, /You’re connected|You.re connected/)
+    assert.match(accepted.html, /Open conversation/)
+
+    const message = buildEmployerConnectEmail({
+      title: 'New message from Dr. Maya Chen',
+      body: 'Thanks for connecting.',
+      deepLink: '/practices/abc/manage/connect?thread=rel-2',
+      emailKind: 'connect_message',
+    })
+    assert.equal(message.subject, 'New message from Dr. Maya Chen')
+    assert.match(message.html, /New message/)
+    assert.match(message.html, /Open conversation/)
+  })
+
+  it('improves digest subjects for single and multi career matches', () => {
+    const one = buildDigestEmail([
+      {
+        notification_type: 'opportunity_matched',
+        title: 'New Glaucoma opportunity matches your preferences',
+        body: 'Practice added a Glaucoma opportunity.',
+        payload: { clinical_focus: 'Glaucoma' },
+        deep_link: '/practices/abc',
+      },
+    ])
+    assert.equal(one.subject, 'New Glaucoma opportunity matches your preferences')
+
+    const many = buildDigestEmail([
+      {
+        notification_type: 'opportunity_matched',
+        title: 'A',
+        body: 'a',
+        deep_link: '/practices/a',
+      },
+      {
+        notification_type: 'opportunity_matched',
+        title: 'B',
+        body: 'b',
+        deep_link: '/practices/b',
+      },
+    ])
+    assert.equal(many.subject, '2 new opportunities match your preferences')
+  })
+
+  it('handles long practice names and missing optional metadata without inventing fields', () => {
+    const longName =
+      'Southern Arizona Comprehensive Corneal and Glaucoma Specialty Eye Consultants of Tucson'
+    const content = buildDigestEmail([
+      {
+        notification_type: 'relationship_opportunity_update',
+        title: `${longName} updated an opportunity`,
+        body: 'A practice you follow updated hiring or compensation for a Cornea opportunity.',
+        deep_link: '/practices/long',
+        payload: {},
+      },
+    ])
+    assert.match(content.html, new RegExp(longName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+    // Do not invent structured compensation / hiring metadata when payload lacks it.
+    assert.equal(/\$\d|Hiring within/i.test(content.html), false)
+    assert.match(content.html, /View practice/)
   })
 
   it('extends safeNextPath for notification destinations', () => {
