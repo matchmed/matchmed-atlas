@@ -5,6 +5,13 @@ import { createClient } from '@/lib/supabase'
 import { isAuthPage } from '@/lib/auth-paths'
 import { isPublicDiscoveryPath } from '@/lib/public-routes'
 import { getUnreadNotificationCount } from '@/lib/notifications'
+import { connectListForPhysician } from '@/lib/connect'
+import {
+  CONNECTIONS_ATTENTION_POLL_MS,
+  connectionsAttentionCount,
+  connectionsNavAriaLabel,
+  formatConnectionsBadge,
+} from '@/lib/connect-attention'
 import { useState, useEffect, useRef } from 'react'
 import Logo from './Logo'
 import { PracticesIcon, PhysiciansIcon, FavoritesIcon, JobsIcon } from './nav-icons'
@@ -33,7 +40,7 @@ const primaryTabs = [
   },
   {
     href: '/connect',
-    label: 'Connect',
+    label: 'Connections',
     icon: <PhysiciansIcon />,
   },
 ]
@@ -59,6 +66,7 @@ export default function Nav() {
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [initials, setInitials] = useState('?')
   const [unreadCount, setUnreadCount] = useState(0)
+  const [connectionsAttention, setConnectionsAttention] = useState(0)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const identifiedUserIdRef = useRef<string | null>(null)
 
@@ -94,12 +102,36 @@ export default function Nav() {
         }
         const { count } = await getUnreadNotificationCount()
         setUnreadCount(count)
+        const inbox = await connectListForPhysician()
+        setConnectionsAttention(inbox.error ? 0 : connectionsAttentionCount(inbox.data))
       } else {
         setUnreadCount(0)
+        setConnectionsAttention(0)
       }
     }
     getUser()
   }, [pathname])
+
+  useEffect(() => {
+    if (!userEmail) return
+    const id = window.setInterval(() => {
+      void connectListForPhysician().then((inbox) => {
+        setConnectionsAttention(inbox.error ? 0 : connectionsAttentionCount(inbox.data))
+      })
+    }, CONNECTIONS_ATTENTION_POLL_MS)
+    return () => window.clearInterval(id)
+  }, [userEmail])
+
+  useEffect(() => {
+    function onInboxAttention(event: Event) {
+      const count = (event as CustomEvent<{ count?: number }>).detail?.count
+      if (typeof count === 'number' && Number.isFinite(count)) {
+        setConnectionsAttention(Math.max(0, Math.floor(count)))
+      }
+    }
+    window.addEventListener('atlas:connections-attention', onInboxAttention)
+    return () => window.removeEventListener('atlas:connections-attention', onInboxAttention)
+  }, [])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -123,9 +155,22 @@ export default function Nav() {
   }
 
   function renderDesktopLink(href: string, label: string) {
+    const isConnections = href === '/connect'
+    const badge = isConnections ? formatConnectionsBadge(connectionsAttention) : null
     return (
-      <Link key={href} href={href} className={linkClass(pathname, href)}>
+      <Link
+        key={href}
+        href={href}
+        className={linkClass(pathname, href)}
+        aria-label={isConnections ? connectionsNavAriaLabel(connectionsAttention) : undefined}
+        style={isConnections ? { display: 'inline-flex', alignItems: 'center', gap: 6 } : undefined}
+      >
         {label}
+        {badge && (
+          <span className="nav-count-badge" aria-hidden>
+            {badge}
+          </span>
+        )}
       </Link>
     )
   }
@@ -307,12 +352,26 @@ export default function Nav() {
       {!isAuthPage(pathname) && (
         <nav className="nav-bottom" aria-label="Main navigation">
           <div className="nav-bottom-inner">
-            {primaryTabs.map(tab => (
-              <Link key={tab.href} href={tab.href} className={`nav-bottom-tab ${isActive(pathname, tab.href) ? 'nav-bottom-tab-active' : ''}`}>
-                {tab.icon}
-                {tab.label}
-              </Link>
-            ))}
+            {primaryTabs.map(tab => {
+              const isConnections = tab.href === '/connect'
+              const badge = isConnections ? formatConnectionsBadge(connectionsAttention) : null
+              return (
+                <Link
+                  key={tab.href}
+                  href={tab.href}
+                  className={`nav-bottom-tab ${isActive(pathname, tab.href) ? 'nav-bottom-tab-active' : ''}`}
+                  aria-label={isConnections ? connectionsNavAriaLabel(connectionsAttention) : undefined}
+                >
+                  {tab.icon}
+                  <span className="nav-bottom-label">{tab.label}</span>
+                  {badge && (
+                    <span className="nav-count-badge nav-count-badge-bottom" aria-hidden>
+                      {badge}
+                    </span>
+                  )}
+                </Link>
+              )
+            })}
           </div>
         </nav>
       )}

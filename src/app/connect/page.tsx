@@ -20,6 +20,7 @@ import {
   type ConnectStatus,
   type ConnectThreadSeenState,
 } from '@/lib/connect'
+import { connectionsAttentionCount } from '@/lib/connect-attention'
 
 type InboxFilter = 'all' | 'unread' | 'pending'
 
@@ -195,6 +196,14 @@ export default function ConnectInboxPage() {
   useEffect(() => {
     void loadInbox()
   }, [loadInbox])
+
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent('atlas:connections-attention', {
+        detail: { count: connectionsAttentionCount(rows) },
+      }),
+    )
+  }, [rows])
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)')
