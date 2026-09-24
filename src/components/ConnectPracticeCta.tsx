@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import posthog from 'posthog-js'
+import DisconnectConfirmDialog from '@/components/DisconnectConfirmDialog'
 import {
   CONNECT_INTRO_NOTE_MAX_LEN,
   connectAccept,
@@ -35,10 +36,12 @@ const btnBase = {
  */
 export default function ConnectPracticeCta({
   practiceId,
+  practiceName,
   opportunityId = null,
   source = 'practice_detail',
 }: {
   practiceId: string
+  practiceName?: string | null
   opportunityId?: string | null
   source?: string
 }) {
@@ -49,6 +52,7 @@ export default function ConnectPracticeCta({
   const [error, setError] = useState<string | null>(null)
   const [composing, setComposing] = useState(false)
   const [introNote, setIntroNote] = useState('')
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false)
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -272,7 +276,7 @@ export default function ConnectPracticeCta({
             <button
               type="button"
               disabled={acting}
-              onClick={() => void run(() => connectDisconnect(active.id), 'connect_disconnected')}
+              onClick={() => setConfirmDisconnect(true)}
               style={{
                 ...btnBase,
                 background: '#fff',
@@ -382,6 +386,31 @@ export default function ConnectPracticeCta({
           {error}
         </p>
       )}
+      <DisconnectConfirmDialog
+        open={confirmDisconnect && Boolean(active)}
+        subject={active?.display_name || active?.practice_name || practiceName || 'this practice'}
+        onCancel={() => {
+          if (!acting) setConfirmDisconnect(false)
+        }}
+        onConfirm={async () => {
+          if (!active) return
+          setActing(true)
+          const { error: err } = await connectDisconnect(active.id)
+          if (err) {
+            setActing(false)
+            throw err
+          }
+          posthog.capture('connect_disconnected', {
+            practice_id: practiceId,
+            relationship_id: active.id,
+            opportunity_id: opportunityId ?? undefined,
+            source,
+          })
+          setConfirmDisconnect(false)
+          await refresh()
+          setActing(false)
+        }}
+      />
     </div>
   )
 }

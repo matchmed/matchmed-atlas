@@ -570,7 +570,7 @@ export default function PracticeDetailAuthorized({
             alignItems: 'center',
           }}
         >
-          <ConnectPracticeCta practiceId={practice.id} source="practice_detail" />
+          <ConnectPracticeCta practiceId={practice.id} practiceName={name} source="practice_detail" />
           <button
             onClick={toggleFavorite}
             disabled={favLoading || !profileId}
@@ -680,6 +680,7 @@ export default function PracticeDetailAuthorized({
         <EmployerPhysicianReadySections
           overlay={employerOverlay}
           practiceId={practice.id}
+          practiceName={name}
           showConnect={!isEmployerPreview}
           part="current"
         />

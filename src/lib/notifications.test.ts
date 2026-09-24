@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { describe, it } from 'node:test'
 import {
   MATERIAL_OPPORTUNITY_FIELDS,
@@ -272,7 +273,7 @@ describe('physician notifications taxonomy cleanup', () => {
   it('renders employer Connect emails via Atlas Resend builders (no physician identity on request)', () => {
     const requested = buildEmployerConnectEmail({
       title: 'New request from Dr. Secret Physician',
-      body: 'Dr. Secret Physician wrote: please hire me.',
+      body: 'Dr. Secret Physician wrote: please hire me. Available 2027. I’m interested in learning about your surgical volume and partnership track.',
       deepLink: '/practices/abc/manage/connect?thread=rel-1',
       emailKind: 'connect_requested',
       practiceName: 'North Georgia Eye',
@@ -283,6 +284,8 @@ describe('physician notifications taxonomy cleanup', () => {
     assert.match(requested.html, /A physician sent North Georgia Eye a Connect request on Atlas/)
     assert.equal(requested.html.includes('Secret'), false)
     assert.equal(requested.html.includes('please hire me'), false)
+    assert.equal(requested.html.includes('Available 2027'), false)
+    assert.equal(requested.html.includes('surgical volume'), false)
     assert.equal(requested.text.includes('Secret'), false)
     assert.match(requested.html, /Atlas by MatchMed/)
     assert.match(requested.html, /Arial, Helvetica, sans-serif/)
@@ -325,6 +328,48 @@ describe('physician notifications taxonomy cleanup', () => {
     assert.equal(hidden.subject, 'New message')
     assert.equal(hidden.html.includes('Maya'), false)
     assert.equal(hidden.html.includes('Thanks for connecting'), false)
+  })
+
+  it('keeps pre-acceptance employer email general while the in-app notice can name a broad specialty', () => {
+    const preview = readFileSync(
+      'supabase/migrations/20260924190000_employer_connect_request_preview.sql',
+      'utf8',
+    )
+    const anonymous = readFileSync(
+      'supabase/migrations/20260910170000_drop_open_to_practice_connections.sql',
+      'utf8',
+    )
+    const inbox = readFileSync(
+      'supabase/migrations/20260915010000_connect_messaging_v1.sql',
+      'utf8',
+    )
+
+    assert.match(preview, /v_email_body := format\('A physician sent %s a Connect request on Atlas\.'/)
+    assert.match(preview, /v_notice_body := public\._connect_anonymous_request_notice/)
+    assert.match(preview, /WHEN 'General Ophthalmology \(multiple areas\)' THEN 'comprehensive ophthalmologist'/)
+    assert.match(preview, /An anonymous physician sent %s a Connect request\./)
+    assert.equal(preview.includes('first_name'), false)
+    assert.equal(preview.includes('intro_note'), true)
+    assert.match(preview, /v_payload - 'message_body' - 'body' - 'intro_note'/)
+    assert.equal(preview.includes('p_body'), true)
+
+    const anonStart = anonymous.indexOf('FUNCTION public._connect_anonymous_physician_json')
+    const anonEnd = anonymous.indexOf('FUNCTION public._connect_unlocked_physician_json')
+    const anonFn = anonymous.slice(anonStart, anonEnd)
+    assert.match(anonFn, /clinical_focus/)
+    assert.match(anonFn, /preferred_state/)
+    assert.match(anonFn, /start_year/)
+    assert.match(anonFn, /training_status/)
+    assert.match(anonFn, /practice_setting_preference/)
+    assert.equal(anonFn.includes('first_name'), false)
+    assert.equal(anonFn.includes('email'), false)
+    assert.equal(anonFn.includes('current_practice'), false)
+
+    const listStart = inbox.indexOf('FUNCTION public.connect_list_for_practice')
+    const listFn = inbox.slice(listStart, listStart + 2500)
+    assert.match(listFn, /_connect_anonymous_physician_json/)
+    assert.match(listFn, /_connect_unlocked_physician_json/)
+    assert.match(listFn, /WHEN r\.status = 'accepted'/)
   })
 
   it('keeps employer Connect email disabled unless the flag is exactly true', () => {

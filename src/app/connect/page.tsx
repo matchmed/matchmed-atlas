@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import posthog from 'posthog-js'
+import DisconnectConfirmDialog from '@/components/DisconnectConfirmDialog'
 import {
   CONNECT_MESSAGE_MAX_LEN,
   connectAccept,
@@ -142,6 +143,7 @@ export default function ConnectInboxPage() {
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
   const [actingId, setActingId] = useState<string | null>(null)
+  const [disconnectOpen, setDisconnectOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const openedThreadRef = useRef<string | null>(null)
@@ -765,13 +767,7 @@ export default function ConnectInboxPage() {
                       {activeStatus === 'accepted' && (
                         <MoreMenu
                           disabled={busy}
-                          onDisconnect={() =>
-                            void act(
-                              selected.id,
-                              () => connectDisconnect(selected.id),
-                              'connect_disconnected',
-                            )
-                          }
+                          onDisconnect={() => setDisconnectOpen(true)}
                         />
                       )}
                     </div>
@@ -990,6 +986,24 @@ export default function ConnectInboxPage() {
           </section>
         )}
       </div>
+      <DisconnectConfirmDialog
+        open={disconnectOpen && Boolean(selected)}
+        subject={selected ? practiceTitle(selected) : 'this practice'}
+        onCancel={() => setDisconnectOpen(false)}
+        onConfirm={async () => {
+          if (!selected) return
+          const { error: err } = await connectDisconnect(selected.id)
+          if (err) throw err
+          posthog.capture('connect_disconnected', {
+            relationship_id: selected.id,
+            source: 'physician_inbox',
+          })
+          markedReadRef.current.delete(selected.id)
+          setDisconnectOpen(false)
+          await loadInbox({ silent: true })
+          if (selectedId === selected.id) await loadThread(selected.id, { silent: true })
+        }}
+      />
     </div>
   )
 }
