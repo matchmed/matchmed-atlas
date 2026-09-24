@@ -178,34 +178,66 @@ export function buildConnectEmail(input: {
   return { subject, html, text }
 }
 
+export function employerConnectEmailsEnabled(value: string | undefined): boolean {
+  return value === 'true'
+}
+
 /** Employer-side Connect transactional email (Atlas Resend → practice editors). */
 export function buildEmployerConnectEmail(input: {
   title: string
   body: string
   deepLink: string
   emailKind?: string
+  practiceName?: string | null
+  identityDisclosed?: boolean
 }): { subject: string; html: string; text: string } {
   const link = absoluteEmployersLink(input.deepLink, true)
   const kind = input.emailKind || ''
+  const practice = input.practiceName?.trim() || ''
 
-  let headline = input.title
+  let headline = 'Connect update'
   let ctaLabel = 'Open conversation'
+  let subject = 'Connect update'
+  let bodyCopy = 'There is a Connect update for your practice on Atlas.'
+
   if (kind === 'connect_requested') {
     headline = 'New Connect request'
     ctaLabel = 'View Connect request'
+    subject = practice ? `New Connect request for ${practice}` : 'New Connect request'
+    bodyCopy = practice
+      ? `A physician sent ${practice} a Connect request on Atlas.`
+      : 'A physician sent your practice a Connect request on Atlas.'
   } else if (kind === 'connect_accepted') {
     headline = 'You’re connected'
     ctaLabel = 'Open conversation'
+    subject = input.title || 'Connect request accepted'
+    const accepted = (input.body || '').trim()
+    bodyCopy = practice && accepted && !accepted.includes(practice)
+      ? `${accepted} This update is for ${practice}.`
+      : accepted || (practice ? `A physician accepted a Connect request for ${practice}.` : 'A Connect request was accepted.')
   } else if (kind === 'connect_message') {
     headline = 'New message'
     ctaLabel = 'Open conversation'
+    const disclosed = input.identityDisclosed === true
+    subject = disclosed && input.title ? input.title : 'New message'
+    const who = disclosed ? input.title.replace(/^New message from\s+/i, '').trim() : ''
+    if (disclosed && who && who !== input.title) {
+      bodyCopy = practice
+        ? `${who} sent ${practice} a new message on Atlas.`
+        : `${who} sent your practice a new message on Atlas.`
+    } else {
+      bodyCopy = practice
+        ? `You have a new message for ${practice} on Atlas.`
+        : 'You have a new message on Atlas.'
+      subject = 'New message'
+    }
   }
 
   const html = emailShell(
     [
       emailHeader(),
       emailTitle(headline),
-      emailBody(input.body),
+      emailBody(bodyCopy),
       primaryButton(link, ctaLabel),
       footerBlock({
         preferencesUrl: absoluteEmployersLink('/'),
@@ -219,14 +251,14 @@ export function buildEmployerConnectEmail(input: {
     '',
     headline,
     '',
-    input.body,
+    bodyCopy,
     '',
     `${ctaLabel}: ${link}`,
     '',
     `Open Employers: ${absoluteEmployersLink('/', true)}`,
   ].join('\n')
 
-  return { subject: input.title, html, text }
+  return { subject, html, text }
 }
 
 export type DigestItem = {

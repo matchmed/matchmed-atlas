@@ -3,6 +3,7 @@ import {
   buildConnectEmail,
   buildDigestEmail,
   buildEmployerConnectEmail,
+  employerConnectEmailsEnabled,
   sendResendEmail,
   type DigestItem,
 } from '@/lib/notifications-email'
@@ -135,6 +136,7 @@ export async function runNotificationsCron(options: {
     }
   }
 
+  if (employerConnectEmailsEnabled(process.env.ENABLE_EMPLOYER_CONNECT_EMAILS)) {
   const { data: employerRows, error: employerError } = await supabase.rpc(
     'connect_claim_employer_emails',
     { p_limit: 50 },
@@ -145,11 +147,16 @@ export async function runNotificationsCron(options: {
 
   for (const row of (employerRows as EmployerClaimRow[] | null) ?? []) {
     result.employerClaimed += 1
+    const payload = row.payload ?? {}
+    const practiceName = typeof payload.practice_name === 'string' ? payload.practice_name : null
+    const identityDisclosed = payload.identity_disclosed === true || row.email_kind === 'connect_accepted'
     const content = buildEmployerConnectEmail({
       title: row.title,
       body: row.body,
       deepLink: row.deep_link,
       emailKind: row.email_kind,
+      practiceName,
+      identityDisclosed,
     })
     const send = await sendResendEmail({
       to: row.email,
@@ -179,6 +186,7 @@ export async function runNotificationsCron(options: {
       })
       result.employerFailed += 1
     }
+  }
   }
 
   if (!options.includeDigest) {

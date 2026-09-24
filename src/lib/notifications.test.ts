@@ -11,7 +11,7 @@ import {
   highestCrossedRegionMilestone,
   silentBaselineMilestones,
 } from './notifications-contracts.ts'
-import { buildConnectEmail, buildDigestEmail, buildEmployerConnectEmail } from './notifications-email.ts'
+import { buildConnectEmail, buildDigestEmail, buildEmployerConnectEmail, employerConnectEmailsEnabled } from './notifications-email.ts'
 import { isAllowedProfileWriteField } from './profile-writes.ts'
 import { safeNextPath } from './safe-next-path.ts'
 
@@ -271,36 +271,83 @@ describe('physician notifications taxonomy cleanup', () => {
 
   it('renders employer Connect emails via Atlas Resend builders (no physician identity on request)', () => {
     const requested = buildEmployerConnectEmail({
-      title: 'New Connect request',
-      body: 'A physician sent your practice a Connect request on Atlas.',
+      title: 'New request from Dr. Secret Physician',
+      body: 'Dr. Secret Physician wrote: please hire me.',
       deepLink: '/practices/abc/manage/connect?thread=rel-1',
       emailKind: 'connect_requested',
+      practiceName: 'North Georgia Eye',
+      identityDisclosed: true,
     })
-    assert.equal(requested.subject, 'New Connect request')
+    assert.equal(requested.subject, 'New Connect request for North Georgia Eye')
     assert.match(requested.html, /View Connect request/)
-    assert.match(requested.html, /A physician sent your practice/)
-    assert.equal(requested.html.includes('Conn Phys'), false)
-    assert.equal(requested.html.includes('@matchmed-e2e'), false)
-    assert.match(requested.text, /A physician sent your practice/)
+    assert.match(requested.html, /A physician sent North Georgia Eye a Connect request on Atlas/)
+    assert.equal(requested.html.includes('Secret'), false)
+    assert.equal(requested.html.includes('please hire me'), false)
+    assert.equal(requested.text.includes('Secret'), false)
+    assert.match(requested.html, /Atlas by MatchMed/)
+    assert.match(requested.html, /Arial, Helvetica, sans-serif/)
 
     const accepted = buildEmployerConnectEmail({
       title: 'Dr. Maya Chen accepted your Connect request',
       body: 'Dr. Maya Chen accepted your Connect request.',
       deepLink: '/practices/abc/manage/connect?thread=rel-2',
       emailKind: 'connect_accepted',
+      practiceName: 'North Georgia Eye',
+      identityDisclosed: true,
     })
     assert.match(accepted.html, /You’re connected|You.re connected/)
     assert.match(accepted.html, /Open conversation/)
+    assert.match(accepted.html, /North Georgia Eye/)
+    assert.match(accepted.html, /Arial, Helvetica, sans-serif/)
 
     const message = buildEmployerConnectEmail({
       title: 'New message from Dr. Maya Chen',
       body: 'Thanks for connecting.',
       deepLink: '/practices/abc/manage/connect?thread=rel-2',
       emailKind: 'connect_message',
+      practiceName: 'North Georgia Eye',
+      identityDisclosed: true,
     })
     assert.equal(message.subject, 'New message from Dr. Maya Chen')
     assert.match(message.html, /New message/)
-    assert.match(message.html, /Open conversation/)
+    assert.match(message.html, /North Georgia Eye/)
+    assert.equal(message.html.includes('Thanks for connecting'), false)
+    assert.equal(message.text.includes('Thanks for connecting'), false)
+
+    const hidden = buildEmployerConnectEmail({
+      title: 'New message from Dr. Maya Chen',
+      body: 'Thanks for connecting.',
+      deepLink: '/practices/abc/manage/connect?thread=rel-2',
+      emailKind: 'connect_message',
+      practiceName: 'North Georgia Eye',
+      identityDisclosed: false,
+    })
+    assert.equal(hidden.subject, 'New message')
+    assert.equal(hidden.html.includes('Maya'), false)
+    assert.equal(hidden.html.includes('Thanks for connecting'), false)
+  })
+
+  it('keeps employer Connect email disabled unless the flag is exactly true', () => {
+    assert.equal(employerConnectEmailsEnabled(undefined), false)
+    assert.equal(employerConnectEmailsEnabled(''), false)
+    assert.equal(employerConnectEmailsEnabled('false'), false)
+    assert.equal(employerConnectEmailsEnabled('TRUE'), false)
+    assert.equal(employerConnectEmailsEnabled('true'), true)
+  })
+
+  it('uses the shared Atlas email shell for opportunity digests', () => {
+    const digest = buildDigestEmail([
+      {
+        notification_type: 'opportunity_matched',
+        title: 'New Glaucoma opportunity',
+        body: 'A practice posted a Glaucoma opportunity.',
+        deep_link: '/practices/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+        payload: { clinical_focus: 'Glaucoma' },
+      },
+    ])
+    assert.match(digest.html, /Atlas by MatchMed/)
+    assert.match(digest.html, /Arial, Helvetica, sans-serif/)
+    assert.match(digest.html, /Career (&amp;|&) opportunity updates/)
   })
 
   it('improves digest subjects for single and multi career matches', () => {
@@ -353,6 +400,11 @@ describe('physician notifications taxonomy cleanup', () => {
   it('extends safeNextPath for notification destinations', () => {
     assert.equal(safeNextPath('/opportunities'), '/opportunities')
     assert.equal(safeNextPath('/connect'), '/connect')
+    assert.equal(
+      safeNextPath('/connect?thread=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
+      '/connect?thread=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    )
+    assert.equal(safeNextPath('/connect?thread=not-a-uuid'), '/connect')
     assert.equal(safeNextPath('/notifications'), '/notifications')
     assert.equal(safeNextPath('/account'), '/account')
     assert.equal(
