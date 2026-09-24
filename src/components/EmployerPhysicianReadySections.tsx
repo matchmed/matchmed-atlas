@@ -16,11 +16,13 @@ import { useEffect, useState } from 'react'
 export default function EmployerPhysicianReadySections({
   overlay,
   practiceId,
+  practiceName,
   showConnect = false,
   part = 'all',
 }: {
   overlay: EmployerPracticeOverlay | null | undefined
   practiceId?: string
+  practiceName?: string | null
   /** Authorized practice detail can show Connect per opportunity. */
   showConnect?: boolean
   /** Split claimed-page sections without duplicating opportunity logic. */
@@ -105,6 +107,7 @@ export default function EmployerPhysicianReadySections({
                     {showConnect && practiceId && opp.id && (
                       <ConnectPracticeCta
                         practiceId={practiceId}
+                        practiceName={practiceName}
                         opportunityId={opp.id}
                         source="practice_opportunity"
                       />

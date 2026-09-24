@@ -92,6 +92,7 @@ export default function OpportunityCard({
         <div onClick={(e) => e.stopPropagation()}>
           <ConnectPracticeCta
             practiceId={opportunity.practice_id}
+            practiceName={opportunity.practice_name || 'Practice'}
             opportunityId={opportunity.id}
             source={source}
           />

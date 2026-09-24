@@ -300,7 +300,7 @@ BEGIN
 
   -- 11. Disconnect revokes
   PERFORM pg_temp.set_jwt(u_editor);
-  payload := public.connect_disconnect(rel_id);
+  payload := public.connect_disconnect(rel_id, 'practice');
   PERFORM pg_temp.record(11, 'disconnect', 'disconnected', payload->>'status' = 'disconnected', payload::text);
 
   BEGIN
@@ -504,7 +504,7 @@ BEGIN
   SELECT status INTO err FROM public.connect_relationships WHERE id = rel2;
   PERFORM pg_temp.record(30, 'opt-out leaves accepted Connect intact', 'accepted', err = 'accepted');
   PERFORM pg_temp.set_jwt(u_physician);
-  PERFORM public.connect_disconnect(rel2);
+  PERFORM public.connect_disconnect(rel2, 'physician');
   PERFORM pg_temp.reset_auth();
 
   -- 31. Incomplete practice cannot initiate Connect

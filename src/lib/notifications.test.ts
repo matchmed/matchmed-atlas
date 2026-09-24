@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { describe, it } from 'node:test'
 import {
   MATERIAL_OPPORTUNITY_FIELDS,
@@ -11,7 +12,7 @@ import {
   highestCrossedRegionMilestone,
   silentBaselineMilestones,
 } from './notifications-contracts.ts'
-import { buildDigestEmail } from './notifications-email.ts'
+import { buildConnectEmail, buildDigestEmail, buildEmployerConnectEmail, employerConnectEmailsEnabled } from './notifications-email.ts'
 import { isAllowedProfileWriteField } from './profile-writes.ts'
 import { safeNextPath } from './safe-next-path.ts'
 
@@ -191,6 +192,7 @@ describe('physician notifications taxonomy cleanup', () => {
         title: 'New Glaucoma opportunity matches your preferences',
         body: 'AEC added a Glaucoma opportunity.',
         deep_link: '/practices/p1',
+        payload: { clinical_focus: 'Glaucoma' },
       },
       {
         notification_type: 'relationship_opportunity_update',
@@ -209,6 +211,10 @@ describe('physician notifications taxonomy cleanup', () => {
     assert.match(content.subject, /opportunit/i)
     assert.match(content.html, /Career &amp; opportunity updates/)
     assert.match(content.html, /Practice updates you follow/)
+    assert.match(content.html, /View opportunity/)
+    assert.match(content.html, /View practice/)
+    assert.match(content.html, /Atlas by MatchMed/)
+    assert.match(content.html, /src=notification_email/)
     assert.equal(/physician-ready|Network growth|regional/i.test(content.html), false)
     assert.equal(content.html.includes('5 practices in Georgia'), false)
     assert.match(content.text, /Career & opportunity updates/)
@@ -239,9 +245,211 @@ describe('physician notifications taxonomy cleanup', () => {
     assert.equal(followedSlice.includes('Career match'), false)
   })
 
+  it('renders polished Connect request and accepted emails with button CTAs', () => {
+    const request = buildConnectEmail({
+      title: 'New Connect request',
+      body: 'Arizona Eye Consultants sent you a Connect request.',
+      deepLink: '/connect',
+      notificationType: 'connect_requested',
+    })
+    assert.equal(request.subject, 'New Connect request from Arizona Eye Consultants')
+    assert.match(request.html, /View Connect request/)
+    assert.match(request.html, /would like to connect with you on Atlas/)
+    assert.match(request.html, /src=notification_email/)
+    assert.match(request.html, /Manage email preferences/)
+    assert.equal(request.html.includes('Georgia,serif'), false)
+
+    const accepted = buildConnectEmail({
+      title: 'Connect request accepted',
+      body: 'Arizona Eye Consultants accepted your Connect request.',
+      deepLink: '/connect',
+      notificationType: 'connect_accepted',
+    })
+    assert.equal(accepted.subject, 'Arizona Eye Consultants accepted your Connect request')
+    assert.match(accepted.html, /You’re connected|You.re connected/)
+    assert.match(accepted.html, /Open conversation/)
+  })
+
+  it('renders employer Connect emails via Atlas Resend builders (no physician identity on request)', () => {
+    const requested = buildEmployerConnectEmail({
+      title: 'New request from Dr. Secret Physician',
+      body: 'Dr. Secret Physician wrote: please hire me. Available 2027. I’m interested in learning about your surgical volume and partnership track.',
+      deepLink: '/practices/abc/manage/connect?thread=rel-1',
+      emailKind: 'connect_requested',
+      practiceName: 'North Georgia Eye',
+      identityDisclosed: true,
+    })
+    assert.equal(requested.subject, 'New Connect request for North Georgia Eye')
+    assert.match(requested.html, /View Connect request/)
+    assert.match(requested.html, /A physician sent North Georgia Eye a Connect request on Atlas/)
+    assert.equal(requested.html.includes('Secret'), false)
+    assert.equal(requested.html.includes('please hire me'), false)
+    assert.equal(requested.html.includes('Available 2027'), false)
+    assert.equal(requested.html.includes('surgical volume'), false)
+    assert.equal(requested.text.includes('Secret'), false)
+    assert.match(requested.html, /Atlas by MatchMed/)
+    assert.match(requested.html, /Arial, Helvetica, sans-serif/)
+
+    const accepted = buildEmployerConnectEmail({
+      title: 'Dr. Maya Chen accepted your Connect request',
+      body: 'Dr. Maya Chen accepted your Connect request.',
+      deepLink: '/practices/abc/manage/connect?thread=rel-2',
+      emailKind: 'connect_accepted',
+      practiceName: 'North Georgia Eye',
+      identityDisclosed: true,
+    })
+    assert.match(accepted.html, /You’re connected|You.re connected/)
+    assert.match(accepted.html, /Open conversation/)
+    assert.match(accepted.html, /North Georgia Eye/)
+    assert.match(accepted.html, /Arial, Helvetica, sans-serif/)
+
+    const message = buildEmployerConnectEmail({
+      title: 'New message from Dr. Maya Chen',
+      body: 'Thanks for connecting.',
+      deepLink: '/practices/abc/manage/connect?thread=rel-2',
+      emailKind: 'connect_message',
+      practiceName: 'North Georgia Eye',
+      identityDisclosed: true,
+    })
+    assert.equal(message.subject, 'New message from Dr. Maya Chen')
+    assert.match(message.html, /New message/)
+    assert.match(message.html, /North Georgia Eye/)
+    assert.equal(message.html.includes('Thanks for connecting'), false)
+    assert.equal(message.text.includes('Thanks for connecting'), false)
+
+    const hidden = buildEmployerConnectEmail({
+      title: 'New message from Dr. Maya Chen',
+      body: 'Thanks for connecting.',
+      deepLink: '/practices/abc/manage/connect?thread=rel-2',
+      emailKind: 'connect_message',
+      practiceName: 'North Georgia Eye',
+      identityDisclosed: false,
+    })
+    assert.equal(hidden.subject, 'New message')
+    assert.equal(hidden.html.includes('Maya'), false)
+    assert.equal(hidden.html.includes('Thanks for connecting'), false)
+  })
+
+  it('keeps pre-acceptance employer email general while the in-app notice can name a broad specialty', () => {
+    const preview = readFileSync(
+      'supabase/migrations/20260924190000_employer_connect_request_preview.sql',
+      'utf8',
+    )
+    const anonymous = readFileSync(
+      'supabase/migrations/20260910170000_drop_open_to_practice_connections.sql',
+      'utf8',
+    )
+    const inbox = readFileSync(
+      'supabase/migrations/20260915010000_connect_messaging_v1.sql',
+      'utf8',
+    )
+
+    assert.match(preview, /v_email_body := format\('A physician sent %s a Connect request on Atlas\.'/)
+    assert.match(preview, /v_notice_body := public\._connect_anonymous_request_notice/)
+    assert.match(preview, /WHEN 'General Ophthalmology \(multiple areas\)' THEN 'comprehensive ophthalmologist'/)
+    assert.match(preview, /An anonymous physician sent %s a Connect request\./)
+    assert.equal(preview.includes('first_name'), false)
+    assert.equal(preview.includes('intro_note'), true)
+    assert.match(preview, /v_payload - 'message_body' - 'body' - 'intro_note'/)
+    assert.equal(preview.includes('p_body'), true)
+
+    const anonStart = anonymous.indexOf('FUNCTION public._connect_anonymous_physician_json')
+    const anonEnd = anonymous.indexOf('FUNCTION public._connect_unlocked_physician_json')
+    const anonFn = anonymous.slice(anonStart, anonEnd)
+    assert.match(anonFn, /clinical_focus/)
+    assert.match(anonFn, /preferred_state/)
+    assert.match(anonFn, /start_year/)
+    assert.match(anonFn, /training_status/)
+    assert.match(anonFn, /practice_setting_preference/)
+    assert.equal(anonFn.includes('first_name'), false)
+    assert.equal(anonFn.includes('email'), false)
+    assert.equal(anonFn.includes('current_practice'), false)
+
+    const listStart = inbox.indexOf('FUNCTION public.connect_list_for_practice')
+    const listFn = inbox.slice(listStart, listStart + 2500)
+    assert.match(listFn, /_connect_anonymous_physician_json/)
+    assert.match(listFn, /_connect_unlocked_physician_json/)
+    assert.match(listFn, /WHEN r\.status = 'accepted'/)
+  })
+
+  it('keeps employer Connect email disabled unless the flag is exactly true', () => {
+    assert.equal(employerConnectEmailsEnabled(undefined), false)
+    assert.equal(employerConnectEmailsEnabled(''), false)
+    assert.equal(employerConnectEmailsEnabled('false'), false)
+    assert.equal(employerConnectEmailsEnabled('TRUE'), false)
+    assert.equal(employerConnectEmailsEnabled('true'), true)
+  })
+
+  it('uses the shared Atlas email shell for opportunity digests', () => {
+    const digest = buildDigestEmail([
+      {
+        notification_type: 'opportunity_matched',
+        title: 'New Glaucoma opportunity',
+        body: 'A practice posted a Glaucoma opportunity.',
+        deep_link: '/practices/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+        payload: { clinical_focus: 'Glaucoma' },
+      },
+    ])
+    assert.match(digest.html, /Atlas by MatchMed/)
+    assert.match(digest.html, /Arial, Helvetica, sans-serif/)
+    assert.match(digest.html, /Career (&amp;|&) opportunity updates/)
+  })
+
+  it('improves digest subjects for single and multi career matches', () => {
+    const one = buildDigestEmail([
+      {
+        notification_type: 'opportunity_matched',
+        title: 'New Glaucoma opportunity matches your preferences',
+        body: 'Practice added a Glaucoma opportunity.',
+        payload: { clinical_focus: 'Glaucoma' },
+        deep_link: '/practices/abc',
+      },
+    ])
+    assert.equal(one.subject, 'New Glaucoma opportunity matches your preferences')
+
+    const many = buildDigestEmail([
+      {
+        notification_type: 'opportunity_matched',
+        title: 'A',
+        body: 'a',
+        deep_link: '/practices/a',
+      },
+      {
+        notification_type: 'opportunity_matched',
+        title: 'B',
+        body: 'b',
+        deep_link: '/practices/b',
+      },
+    ])
+    assert.equal(many.subject, '2 new opportunities match your preferences')
+  })
+
+  it('handles long practice names and missing optional metadata without inventing fields', () => {
+    const longName =
+      'Southern Arizona Comprehensive Corneal and Glaucoma Specialty Eye Consultants of Tucson'
+    const content = buildDigestEmail([
+      {
+        notification_type: 'relationship_opportunity_update',
+        title: `${longName} updated an opportunity`,
+        body: 'A practice you follow updated hiring or compensation for a Cornea opportunity.',
+        deep_link: '/practices/long',
+        payload: {},
+      },
+    ])
+    assert.match(content.html, new RegExp(longName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+    // Do not invent structured compensation / hiring metadata when payload lacks it.
+    assert.equal(/\$\d|Hiring within/i.test(content.html), false)
+    assert.match(content.html, /View practice/)
+  })
+
   it('extends safeNextPath for notification destinations', () => {
     assert.equal(safeNextPath('/opportunities'), '/opportunities')
     assert.equal(safeNextPath('/connect'), '/connect')
+    assert.equal(
+      safeNextPath('/connect?thread=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
+      '/connect?thread=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    )
+    assert.equal(safeNextPath('/connect?thread=not-a-uuid'), '/connect')
     assert.equal(safeNextPath('/notifications'), '/notifications')
     assert.equal(safeNextPath('/account'), '/account')
     assert.equal(

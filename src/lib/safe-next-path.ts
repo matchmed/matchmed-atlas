@@ -55,6 +55,15 @@ export function safeNextPath(raw: string | null | undefined): string | null {
   }
 
   if (PROFILE_PATH.test(pathOnly) || ALLOWED_APP_PATHS.has(pathOnly)) {
+    if (pathOnly === '/connect') {
+      const thread = new URLSearchParams(value.split('?')[1] ?? '').get('thread')
+      if (
+        thread &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(thread)
+      ) {
+        return `/connect?thread=${thread}`
+      }
+    }
     return pathOnly
   }
   return null
