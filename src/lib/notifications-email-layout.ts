@@ -158,9 +158,23 @@ export function sectionHeading(text: string): string {
 }
 
 export function emailFooter(input: {
-  preferencesUrl: string
+  preferencesUrl?: string
   openAtlasUrl: string
+  openLabel?: string
+  reason?: string
+  showPreferences?: boolean
 }): string {
+  const openLabel = input.openLabel?.trim() || 'Open Atlas'
+  const reason =
+    input.reason?.trim() ||
+    'You’re receiving this because of your Atlas notification preferences.'
+  const includePreferences = input.showPreferences !== false && Boolean(input.preferencesUrl?.trim())
+  const links = includePreferences
+    ? `<a href="${escapeHtml(input.preferencesUrl || '')}" style="color:${EMAIL_THEME.subtle};text-decoration:underline;">Manage email preferences</a>
+          &nbsp;·&nbsp;
+          <a href="${escapeHtml(input.openAtlasUrl)}" style="color:${EMAIL_THEME.subtle};text-decoration:underline;">${escapeHtml(openLabel)}</a>`
+    : `<a href="${escapeHtml(input.openAtlasUrl)}" style="color:${EMAIL_THEME.subtle};text-decoration:underline;">${escapeHtml(openLabel)}</a>`
+
   return `
     <tr>
       <td style="padding:28px 0 0 0;border-top:1px solid ${EMAIL_THEME.divider};font-family:${EMAIL_THEME.font};">
@@ -168,19 +182,18 @@ export function emailFooter(input: {
           Atlas by MatchMed
         </p>
         <p style="margin:0 0 12px 0;font-size:12px;line-height:1.5;color:${EMAIL_THEME.subtle};">
-          You’re receiving this because of your Atlas notification preferences.
+          ${escapeHtml(reason)}
         </p>
         <p style="margin:0;font-size:12px;line-height:1.6;color:${EMAIL_THEME.subtle};">
-          <a href="${escapeHtml(input.preferencesUrl)}" style="color:${EMAIL_THEME.subtle};text-decoration:underline;">Manage email preferences</a>
-          &nbsp;·&nbsp;
-          <a href="${escapeHtml(input.openAtlasUrl)}" style="color:${EMAIL_THEME.subtle};text-decoration:underline;">Open Atlas</a>
+          ${links}
         </p>
       </td>
     </tr>
   `.trim()
 }
 
-export function emailShell(contentRowsHtml: string): string {
+export function emailShell(contentRowsHtml: string, options?: { preheader?: string }): string {
+  const preheader = options?.preheader?.trim() || 'Atlas notification'
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -192,7 +205,7 @@ export function emailShell(contentRowsHtml: string): string {
 </head>
 <body style="margin:0;padding:0;background:${EMAIL_THEME.pageBg};">
   <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">
-    Atlas notification
+    ${escapeHtml(preheader)}
   </div>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${EMAIL_THEME.pageBg};margin:0;padding:0;width:100%;">
     <tr>

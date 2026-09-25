@@ -13,8 +13,14 @@ import {
   silentBaselineMilestones,
 } from './notifications-contracts.ts'
 import { buildConnectEmail, buildDigestEmail, buildEmployerConnectEmail, employerConnectEmailsEnabled } from './notifications-email.ts'
+import { emailFooter, emailShell } from './notifications-email-layout.ts'
 import { isAllowedProfileWriteField } from './profile-writes.ts'
 import { safeNextPath } from './safe-next-path.ts'
+
+function hiddenPreheader(html: string): string {
+  const match = html.match(/mso-hide:all;">\s*([^<]*?)\s*<\/div>/)
+  return match?.[1]?.replace(/\s+/g, ' ').trim() ?? ''
+}
 
 describe('physician notifications taxonomy cleanup', () => {
   it('maps every notification_type to exactly one category ownership', () => {
@@ -246,28 +252,33 @@ describe('physician notifications taxonomy cleanup', () => {
   })
 
   it('renders polished Connect request and accepted emails with button CTAs', () => {
+    const thread = '00000000-0000-4000-8000-0000000000aa'
     const request = buildConnectEmail({
       title: 'New Connect request',
-      body: 'Arizona Eye Consultants sent you a Connect request.',
+      body: 'North Georgia Eye sent you a Connect request.',
       deepLink: '/connect',
       notificationType: 'connect_requested',
+      connectId: thread,
     })
-    assert.equal(request.subject, 'New Connect request from Arizona Eye Consultants')
+    assert.equal(request.subject, 'New Connect request from North Georgia Eye')
     assert.match(request.html, /View Connect request/)
     assert.match(request.html, /would like to connect with you on Atlas/)
-    assert.match(request.html, /src=notification_email/)
+    assert.match(request.html, new RegExp(`/connect\\?thread=${thread}&amp;src=notification_email`))
     assert.match(request.html, /Manage email preferences/)
+    assert.match(request.html, /Open Atlas/)
     assert.equal(request.html.includes('Georgia,serif'), false)
 
     const accepted = buildConnectEmail({
       title: 'Connect request accepted',
-      body: 'Arizona Eye Consultants accepted your Connect request.',
+      body: 'North Georgia Eye accepted your Connect request.',
       deepLink: '/connect',
       notificationType: 'connect_accepted',
+      connectId: thread,
     })
-    assert.equal(accepted.subject, 'Arizona Eye Consultants accepted your Connect request')
+    assert.equal(accepted.subject, 'North Georgia Eye accepted your Connect request')
     assert.match(accepted.html, /You’re connected|You.re connected/)
     assert.match(accepted.html, /Open conversation/)
+    assert.match(accepted.html, new RegExp(`/connect\\?thread=${thread}&amp;src=notification_email`))
   })
 
   it('renders employer Connect emails via Atlas Resend builders (no physician identity on request)', () => {
@@ -300,7 +311,10 @@ describe('physician notifications taxonomy cleanup', () => {
     })
     assert.match(accepted.html, /You’re connected|You.re connected/)
     assert.match(accepted.html, /Open conversation/)
-    assert.match(accepted.html, /North Georgia Eye/)
+    assert.match(accepted.html, /Dr\. Maya Chen accepted your Connect request on Atlas\./)
+    assert.equal(accepted.html.includes('This update is for'), false)
+    assert.equal(accepted.text.includes('This update is for'), false)
+    assert.match(accepted.subject, /North Georgia Eye/)
     assert.match(accepted.html, /Arial, Helvetica, sans-serif/)
 
     const message = buildEmployerConnectEmail({
@@ -327,7 +341,140 @@ describe('physician notifications taxonomy cleanup', () => {
     })
     assert.equal(hidden.subject, 'New message')
     assert.equal(hidden.html.includes('Maya'), false)
+    assert.equal(hidden.text.includes('Maya'), false)
     assert.equal(hidden.html.includes('Thanks for connecting'), false)
+    assert.equal(hiddenPreheader(hidden.html).includes('Maya'), false)
+  })
+
+  it('uses Connect preheaders, employer footer, and thread links without leaking notes', () => {
+    const practice = 'North Georgia Eye'
+    const physician = 'Dr. Maya Chen'
+    const thread = '00000000-0000-4000-8000-0000000000aa'
+    const intro = 'Intro note that must stay out of email.'
+    const transcript = 'Message body that must stay in the thread.'
+    const employerDeep = `/practices/00000000-0000-4000-8000-0000000000bb/manage/connect?thread=${thread}`
+    const physicianHref = `https://atlas.matchmed.app/connect?thread=${thread}&src=notification_email`
+    const physicianHrefHtml = physicianHref.replace('&', '&amp;')
+
+    const employerRequest = buildEmployerConnectEmail({
+      title: `New request from ${physician}`,
+      body: intro,
+      deepLink: employerDeep,
+      emailKind: 'connect_requested',
+      practiceName: practice,
+      identityDisclosed: true,
+    })
+    const employerAccepted = buildEmployerConnectEmail({
+      title: `Connect accepted by ${physician}`,
+      body: `${physician} accepted your Connect request on Atlas. This update is for ${practice}. ${transcript}`,
+      deepLink: employerDeep,
+      emailKind: 'connect_accepted',
+      practiceName: practice,
+      identityDisclosed: true,
+    })
+    const employerMessage = buildEmployerConnectEmail({
+      title: `New message from ${physician}`,
+      body: transcript,
+      deepLink: employerDeep,
+      emailKind: 'connect_message',
+      practiceName: practice,
+      identityDisclosed: true,
+    })
+    const physicianRequest = buildConnectEmail({
+      title: 'New Connect request',
+      body: `${practice} sent you a Connect request.`,
+      deepLink: '/connect',
+      notificationType: 'connect_requested',
+      connectId: thread,
+    })
+    const physicianRequestLeak = buildConnectEmail({
+      title: `New Connect request ${intro}`,
+      body: intro,
+      deepLink: '/connect',
+      notificationType: 'connect_requested',
+      connectId: thread,
+    })
+    const physicianAccepted = buildConnectEmail({
+      title: 'Connect request accepted',
+      body: `${practice} accepted your Connect request.`,
+      deepLink: '/connect',
+      notificationType: 'connect_accepted',
+      connectId: thread,
+    })
+    const physicianMessage = buildConnectEmail({
+      title: `New message from ${practice}`,
+      body: `${practice} sent you a new message on Atlas.`,
+      deepLink: `/connect?thread=${thread}`,
+      notificationType: 'connect_message',
+      connectId: thread,
+    })
+
+    assert.equal(hiddenPreheader(employerRequest.html), `A physician wants to connect with ${practice}.`)
+    assert.equal(
+      hiddenPreheader(employerAccepted.html),
+      `${physician} accepted ${practice}’s Connect request.`,
+    )
+    assert.equal(hiddenPreheader(employerMessage.html), `${physician} sent ${practice} a new message.`)
+    assert.equal(hiddenPreheader(physicianRequest.html), `${practice} would like to connect with you.`)
+    assert.equal(hiddenPreheader(physicianAccepted.html), `You’re now connected with ${practice}.`)
+    assert.equal(hiddenPreheader(physicianMessage.html), `${practice} sent you a new message.`)
+
+    for (const email of [employerRequest, employerAccepted, employerMessage]) {
+      assert.match(email.html, new RegExp(`you manage ${practice} on Atlas`))
+      assert.match(email.text, new RegExp(`you manage ${practice} on Atlas`))
+      assert.match(email.html, /Open practice dashboard/)
+      assert.match(email.text, /Open practice dashboard: https:\/\/employers\.matchmed\.app\/\?src=notification_email/)
+      assert.equal(email.html.includes('Manage email preferences'), false)
+      assert.equal(email.text.includes('Manage email preferences'), false)
+      assert.equal(email.html.includes('>Open Atlas<'), false)
+    }
+
+    for (const email of [physicianRequest, physicianAccepted, physicianMessage]) {
+      assert.match(email.html, /your Atlas notification preferences/)
+      assert.match(email.text, /Manage email preferences: https:\/\/atlas\.matchmed\.app\/account/)
+      assert.match(email.text, /Open Atlas: https:\/\/atlas\.matchmed\.app\/\?src=notification_email/)
+      assert.equal(email.html.includes('Open practice dashboard'), false)
+      assert.equal(email.html.includes(physicianHrefHtml), true)
+      assert.equal(email.text.includes(physicianHref), true)
+      assert.equal(email.html.includes(`thread=${thread}&amp;thread=`), false)
+      assert.equal(email.text.includes(`thread=${thread}&thread=`), false)
+    }
+
+    assert.match(employerAccepted.html, /Dr\. Maya Chen accepted your Connect request on Atlas\./)
+    assert.equal(employerAccepted.html.includes('This update is for'), false)
+    assert.match(employerAccepted.subject, /North Georgia Eye/)
+    assert.equal(employerRequest.html.includes('Maya'), false)
+    assert.equal(employerRequest.text.includes('Maya'), false)
+    assert.equal(employerRequest.html.includes(intro), false)
+    assert.equal(employerAccepted.html.includes(transcript), false)
+    assert.equal(employerMessage.html.includes(transcript), false)
+    assert.equal(employerMessage.text.includes(transcript), false)
+    assert.equal(physicianRequestLeak.html.includes(intro), false)
+    assert.equal(physicianRequestLeak.text.includes(intro), false)
+    assert.equal(physicianRequestLeak.html.includes('Intro note'), false)
+
+    const digest = buildDigestEmail([
+      {
+        notification_type: 'opportunity_matched',
+        title: 'New Glaucoma opportunity',
+        body: 'A practice posted a Glaucoma opportunity.',
+        deep_link: '/practices/abc',
+      },
+    ])
+    assert.equal(hiddenPreheader(digest.html), 'Atlas notification')
+    assert.match(digest.html, /Manage email preferences/)
+    assert.match(digest.html, />Open Atlas</)
+    assert.equal(digest.html.includes('Open practice dashboard'), false)
+
+    const shell = emailShell('<tr><td>Hello</td></tr>')
+    assert.equal(hiddenPreheader(shell), 'Atlas notification')
+    const footer = emailFooter({
+      preferencesUrl: 'https://atlas.matchmed.app/account',
+      openAtlasUrl: 'https://atlas.matchmed.app/?src=notification_email',
+    })
+    assert.match(footer, /your Atlas notification preferences/)
+    assert.match(footer, /Manage email preferences/)
+    assert.match(footer, />Open Atlas</)
   })
 
   it('keeps pre-acceptance employer email general while the in-app notice can name a broad specialty', () => {
