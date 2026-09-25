@@ -86,6 +86,28 @@ function extractPracticeNameFromConnectBody(body: string): string | null {
   return null
 }
 
+function threadDeepLink(deepLink: string, connectId?: string | null): string {
+  const path = deepLink.trim() || '/connect'
+  const id = connectId?.trim()
+  if (!id || /[?&]thread=/.test(path)) return path
+  const join = path.includes('?') ? '&' : '?'
+  return `${path}${join}thread=${encodeURIComponent(id)}`
+}
+
+/** Name only from a structured title. Message text and intro notes are never parsed. */
+function disclosedPhysicianName(title: string, kind: 'accepted' | 'message'): string | null {
+  const trimmed = title.trim()
+  const raw =
+    kind === 'message'
+      ? trimmed.match(/^New message from\s+(.+)$/i)?.[1]
+      : trimmed.match(/^Connect accepted by\s+(.+)$/i)?.[1] ||
+        trimmed.match(/^(.+?)\s+accepted your Connect request\.?$/i)?.[1]
+  const who = raw?.replace(/\s+/g, ' ').trim() || ''
+  if (!who || who.length > 80) return null
+  if (/[.!?]/.test(who.replace(/^Dr\./i, ''))) return null
+  return who
+}
+
 function employersOrigin(): string {
   const raw =
     process.env.NEXT_PUBLIC_EMPLOYERS_URL ||
@@ -117,21 +139,29 @@ export function buildConnectEmail(input: {
   body: string
   deepLink: string
   notificationType?: string
+  connectId?: string | null
 }): { subject: string; html: string; text: string } {
   const type = input.notificationType || ''
-  const link = absoluteEmailLink(input.deepLink || '/connect', true)
+  const link = absoluteEmailLink(threadDeepLink(input.deepLink || '/connect', input.connectId), true)
   const practiceName = extractPracticeNameFromConnectBody(input.body)
+  const practice = practiceName || 'a practice'
 
   let headline = 'New Connect request'
   let ctaLabel = 'View Connect request'
   let subject = 'New Connect request'
-  let bodyCopy = input.body
+  let bodyCopy = `${practice === 'a practice' ? 'A practice' : practice} would like to connect with you on Atlas.`
+  let preheader = practiceName
+    ? `${practiceName} would like to connect with you.`
+    : 'A practice would like to connect with you.'
 
   if (type === 'connect_message' || /new message/i.test(input.title)) {
     headline = 'New message'
     ctaLabel = 'Open conversation'
-    subject = input.title || (practiceName ? `New message from ${practiceName}` : 'New message on Atlas')
-    bodyCopy = input.body
+    subject = practiceName ? `New message from ${practiceName}` : 'New message on Atlas'
+    bodyCopy = practiceName
+      ? `${practiceName} sent you a new message on Atlas.`
+      : 'You have a new message on Atlas.'
+    preheader = practiceName ? `${practiceName} sent you a new message.` : 'You have a new message on Atlas.'
   } else if (type === 'connect_accepted' || /accepted/i.test(input.title)) {
     headline = 'You’re connected'
     ctaLabel = 'Open conversation'
@@ -140,16 +170,14 @@ export function buildConnectEmail(input: {
       : 'Your Connect request was accepted'
     bodyCopy = practiceName
       ? `${practiceName} accepted your Connect request.`
-      : input.body
-  } else {
-    headline = 'New Connect request'
-    ctaLabel = 'View Connect request'
-    subject = practiceName
-      ? `New Connect request from ${practiceName}`
-      : 'New Connect request'
-    bodyCopy = practiceName
-      ? `${practiceName} would like to connect with you on Atlas.`
-      : input.body
+      : 'Your Connect request was accepted.'
+    preheader = practiceName
+      ? `You’re now connected with ${practiceName}.`
+      : 'You’re now connected.'
+  } else if (practiceName) {
+    subject = `New Connect request from ${practiceName}`
+    bodyCopy = `${practiceName} would like to connect with you on Atlas.`
+    preheader = `${practiceName} would like to connect with you.`
   }
 
   const html = emailShell(
@@ -160,10 +188,13 @@ export function buildConnectEmail(input: {
       primaryButton(link, ctaLabel),
       footerBlock(),
     ].join('\n'),
+    { preheader },
   )
 
   const text = [
     'Atlas by MatchMed',
+    '',
+    preheader,
     '',
     headline,
     '',
@@ -171,6 +202,7 @@ export function buildConnectEmail(input: {
     '',
     `${ctaLabel}: ${link}`,
     '',
+    'You’re receiving this because of your Atlas notification preferences.',
     `Manage email preferences: ${absoluteEmailLink('/account')}`,
     `Open Atlas: ${absoluteEmailLink('/', true)}`,
   ].join('\n')
@@ -194,60 +226,77 @@ export function buildEmployerConnectEmail(input: {
   const link = absoluteEmployersLink(input.deepLink, true)
   const kind = input.emailKind || ''
   const practice = input.practiceName?.trim() || ''
+  const practiceLabel = practice || 'your practice'
+  const dashboardUrl = absoluteEmployersLink('/', true)
 
   let headline = 'Connect update'
   let ctaLabel = 'Open conversation'
   let subject = 'Connect update'
   let bodyCopy = 'There is a Connect update for your practice on Atlas.'
+  let preheader = 'There is a Connect update for your practice.'
 
   if (kind === 'connect_requested') {
     headline = 'New Connect request'
     ctaLabel = 'View Connect request'
     subject = practice ? `New Connect request for ${practice}` : 'New Connect request'
-    bodyCopy = practice
-      ? `A physician sent ${practice} a Connect request on Atlas.`
-      : 'A physician sent your practice a Connect request on Atlas.'
+    bodyCopy = `A physician sent ${practiceLabel} a Connect request on Atlas.`
+    preheader = `A physician wants to connect with ${practiceLabel}.`
   } else if (kind === 'connect_accepted') {
     headline = 'You’re connected'
     ctaLabel = 'Open conversation'
-    subject = input.title || 'Connect request accepted'
-    const accepted = (input.body || '').trim()
-    bodyCopy = practice && accepted && !accepted.includes(practice)
-      ? `${accepted} This update is for ${practice}.`
-      : accepted || (practice ? `A physician accepted a Connect request for ${practice}.` : 'A Connect request was accepted.')
+    const who = input.identityDisclosed === false ? null : disclosedPhysicianName(input.title, 'accepted')
+    subject = who && practice
+      ? `Connect accepted by ${who} for ${practice}`
+      : who
+        ? `Connect accepted by ${who}`
+        : practice
+          ? `Connect request accepted for ${practice}`
+          : 'Connect request accepted'
+    bodyCopy = who
+      ? `${who} accepted your Connect request on Atlas.`
+      : `A physician accepted a Connect request for ${practiceLabel}.`
+    preheader = who
+      ? `${who} accepted ${practiceLabel}’s Connect request.`
+      : `A physician accepted ${practiceLabel}’s Connect request.`
   } else if (kind === 'connect_message') {
     headline = 'New message'
     ctaLabel = 'Open conversation'
-    const disclosed = input.identityDisclosed === true
-    subject = disclosed && input.title ? input.title : 'New message'
-    const who = disclosed ? input.title.replace(/^New message from\s+/i, '').trim() : ''
-    if (disclosed && who && who !== input.title) {
-      bodyCopy = practice
-        ? `${who} sent ${practice} a new message on Atlas.`
-        : `${who} sent your practice a new message on Atlas.`
+    const who =
+      input.identityDisclosed === true ? disclosedPhysicianName(input.title, 'message') : null
+    if (who) {
+      subject = `New message from ${who}`
+      bodyCopy = `${who} sent ${practiceLabel} a new message on Atlas.`
+      preheader = `${who} sent ${practiceLabel} a new message.`
     } else {
+      subject = 'New message'
       bodyCopy = practice
         ? `You have a new message for ${practice} on Atlas.`
         : 'You have a new message on Atlas.'
-      subject = 'New message'
+      preheader = practice ? `You have a new message for ${practice}.` : 'You have a new message.'
     }
   }
 
+  const reason = `You’re receiving this because you manage ${practiceLabel} on Atlas.`
   const html = emailShell(
     [
       emailHeader(),
       emailTitle(headline),
       emailBody(bodyCopy),
       primaryButton(link, ctaLabel),
-      footerBlock({
-        preferencesUrl: absoluteEmployersLink('/'),
-        openUrl: absoluteEmployersLink('/', true),
+      emailFooter({
+        openAtlasUrl: dashboardUrl,
+        openLabel: 'Open practice dashboard',
+        reason,
+        showPreferences: false,
       }),
     ].join('\n'),
+    { preheader },
   )
 
   const text = [
     'Atlas by MatchMed',
+    '',
+    preheader,
     '',
     headline,
     '',
@@ -255,7 +304,8 @@ export function buildEmployerConnectEmail(input: {
     '',
     `${ctaLabel}: ${link}`,
     '',
-    `Open Employers: ${absoluteEmployersLink('/', true)}`,
+    reason,
+    `Open practice dashboard: ${dashboardUrl}`,
   ].join('\n')
 
   return { subject, html, text }

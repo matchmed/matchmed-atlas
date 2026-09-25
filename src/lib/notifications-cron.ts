@@ -100,11 +100,14 @@ export async function runNotificationsCron(options: {
       continue
     }
 
+    const txnPayload = row.payload ?? {}
+    const connectId = typeof txnPayload.connect_id === 'string' ? txnPayload.connect_id : null
     const content = buildConnectEmail({
       title: row.title,
       body: row.body,
       deepLink: row.deep_link,
       notificationType: row.notification_type,
+      connectId,
     })
     const send = await sendResendEmail({
       to: row.email,
