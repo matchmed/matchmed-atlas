@@ -13,6 +13,7 @@ import {
   normalizePracticeLocation,
   type PracticeLocation,
 } from '@/lib/practice-locations'
+import { getPhysicianInitials } from '@/lib/physician-initials'
 import { nameToColor, getInitials, scoreColor, scoreBg } from '@/lib/utils'
 import { resolvePracticePublicName } from '@/lib/practice-display-name'
 import PracticeErrorReportModal from '@/components/PracticeErrorReportModal'
@@ -452,7 +453,7 @@ export default function PracticeDetailAuthorized({
             flexShrink: 0,
           }}
         >
-          {getInitials(n)}
+          {getPhysicianInitials(n)}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
@@ -491,7 +492,7 @@ export default function PracticeDetailAuthorized({
     return (
       <div key={a.id} onClick={() => canOpenPhysician && router.push(`/physicians/${doctorId}`)} style={{ background: '#ffffff', border: '1px solid #DDD8D0', borderRadius: 10, padding: '14px 16px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 14, cursor: canOpenPhysician ? 'pointer' : 'default' }}>
         <div style={{ width: 40, height: 40, borderRadius: '50%', background: bg2, color: fg2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
-          {getInitials(n)}
+          {getPhysicianInitials(n)}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n}</div>
