@@ -5,7 +5,8 @@ import {
   publicGetPhysician,
 } from '@/lib/public-search'
 import UnlockAnalysisCta from '@/components/UnlockAnalysisCta'
-import { nameToColor, getInitials } from '@/lib/utils'
+import { getPhysicianInitials } from '@/lib/physician-initials'
+import { nameToColor } from '@/lib/utils'
 
 export default async function PhysicianDetailPublic({ id }: { id: string }) {
   const supabase = await createClient()
@@ -21,7 +22,7 @@ export default async function PhysicianDetailPublic({ id }: { id: string }) {
 
   const name = doctor.physician_name || 'Physician'
   const [fg, bg] = nameToColor(name)
-  const initials = getInitials(name)
+  const initials = getPhysicianInitials(name)
   const nextPath = `/physicians/${doctor.id}`
   const affiliations = doctor.current_affiliations || []
 

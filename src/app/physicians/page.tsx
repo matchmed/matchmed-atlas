@@ -2,7 +2,8 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { getInitials, nameToColor } from '@/lib/utils'
+import { getPhysicianInitials } from '@/lib/physician-initials'
+import { nameToColor } from '@/lib/utils'
 import { loadAtlasCache, peekAtlasCache, saveAtlasCache } from '@/lib/atlas-cache'
 import { replaceListParams, pageFromParams } from '@/lib/list-url'
 import { useListSearch } from '@/lib/use-list-search'
@@ -24,7 +25,7 @@ interface Doctor {
 function PhysicianCard({ doctor, onOpen }: { doctor: Doctor; onOpen: () => void }) {
   const name = doctor.physician_name || '—'
   const [fg, bg] = nameToColor(name)
-  const initials = getInitials(name)
+  const initials = getPhysicianInitials(name)
 
   return (
     <button type="button" className="practice-card" onClick={onOpen}>

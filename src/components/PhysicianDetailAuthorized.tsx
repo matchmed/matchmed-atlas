@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { nameToColor, getInitials } from '@/lib/utils'
+import { getPhysicianInitials } from '@/lib/physician-initials'
+import { nameToColor } from '@/lib/utils'
 import Link from 'next/link'
 
 interface Doctor {
@@ -53,7 +54,7 @@ export default function PhysicianDetailAuthorized() {
 
   const name = doctor.physician_name || '—'
   const [fg, bg] = nameToColor(name)
-  const initials = getInitials(name)
+  const initials = getPhysicianInitials(name)
   const onRoster = affiliations.filter(a => (a.status || '').toLowerCase() === 'on roster')
   const notRoster = affiliations.filter(a => (a.status || '').toLowerCase() !== 'on roster')
 
