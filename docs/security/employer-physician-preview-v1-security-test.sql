@@ -114,7 +114,10 @@ BEGIN
     'complete anonymous json hides identity and keeps preview fields',
     'no identity keys',
     pg_temp.identity_hidden(anon)
-      AND anon->>'training_status' = 'Fellow'
+      AND anon->>'initials' = 'SP'
+      AND NOT (anon ? 'training_status')
+      AND NOT (anon ? 'first_name')
+      AND NOT (anon ? 'last_name')
       AND anon->>'start_year' = '2027'
       AND anon->'clinical_focus' ? 'General Ophthalmology (multiple areas)'
       AND anon->'preferred_state' ? 'GA'
@@ -133,8 +136,9 @@ BEGIN
     'partial anonymous json keeps specialty and omits empty preview values',
     'cornea only',
     pg_temp.identity_hidden(anon)
+      AND anon->>'initials' = 'SP'
+      AND NOT (anon ? 'training_status')
       AND anon->'clinical_focus' ? 'Corneal Disease'
-      AND anon->>'training_status' IS NULL
       AND anon->>'start_year' IS NULL
       AND (anon->'preferred_state' = 'null'::jsonb OR anon->>'preferred_state' IS NULL),
     'keys only'
@@ -149,8 +153,31 @@ BEGIN
     'missing preview fields still hide identity',
     'no identity keys',
     pg_temp.identity_hidden(anon)
+      AND anon->>'initials' = 'SP'
+      AND NOT (anon ? 'first_name')
       AND (anon->'clinical_focus' = 'null'::jsonb OR anon->>'clinical_focus' IS NULL),
     'keys only'
+  );
+
+  PERFORM pg_temp.record(
+    8,
+    'initials are first name then last name',
+    'FJ',
+    public._connect_physician_initials('Finny', 'John') = 'FJ'
+      AND public._connect_physician_initials('Finny Michael', 'John') = 'FJ'
+      AND public._connect_physician_initials('  finny  ', ' john ') = 'FJ'
+      AND public._connect_physician_initials('Mary-Jane', 'Smith-Jones') = 'MS',
+    public._connect_physician_initials('Finny', 'John')
+  );
+  PERFORM pg_temp.record(
+    9,
+    'missing name parts are safe',
+    'F J or ?',
+    public._connect_physician_initials('Finny', NULL) = 'F'
+      AND public._connect_physician_initials(NULL, 'John') = 'J'
+      AND public._connect_physician_initials(NULL, NULL) = '?'
+      AND public._connect_physician_initials('', '   ') = '?',
+    public._connect_physician_initials(NULL, NULL)
   );
 
   PERFORM pg_temp.reset_auth();
@@ -163,6 +190,16 @@ BEGIN
     err := SQLSTATE;
   END;
   PERFORM pg_temp.record(4, 'signed-out practice list denied', '42501', ok, err);
+
+  BEGIN
+    PERFORM public.connect_list_anonymous_physicians(gen_random_uuid());
+    ok := false;
+    err := 'no exception';
+  EXCEPTION WHEN OTHERS THEN
+    ok := SQLSTATE = '42501';
+    err := SQLSTATE;
+  END;
+  PERFORM pg_temp.record(10, 'signed-out discovery denied', '42501', ok, err);
 
   SELECT l.practice_id INTO practice_a
   FROM public.employer_organization_practices AS l
@@ -234,6 +271,16 @@ BEGIN
   END;
   PERFORM pg_temp.record(5, 'unauthorized editor cannot list the practice inbox', '42501', ok, err);
 
+  BEGIN
+    PERFORM public.connect_list_anonymous_physicians(practice_a);
+    ok := false;
+    err := 'no exception';
+  EXCEPTION WHEN OTHERS THEN
+    ok := SQLSTATE = '42501';
+    err := SQLSTATE;
+  END;
+  PERFORM pg_temp.record(11, 'unauthorized discovery denied', '42501', ok, err);
+
   PERFORM pg_temp.reset_auth();
   PERFORM pg_temp.set_jwt(u_editor);
   listed := public.connect_list_for_practice(practice_a);
@@ -251,7 +298,8 @@ BEGIN
     'authorized editor pending inbox returns preview without identity',
     'no identity keys',
     pg_temp.identity_hidden(anon)
-      AND anon->>'training_status' = 'Fellow'
+      AND anon->>'initials' = 'SP'
+      AND NOT (anon ? 'training_status')
       AND anon->>'start_year' = '2027'
       AND NOT ('first_name' = ANY (keys) OR 'email' = ANY (keys) OR 'current_practice' = ANY (keys)),
     'keys only'
@@ -278,6 +326,39 @@ BEGIN
   );
 
   PERFORM pg_temp.reset_auth();
+  INSERT INTO public.connect_relationship_events (
+    relationship_id, event_type, actor_user_id, actor_side
+  ) VALUES (
+    rel_id, 'accepted', u_editor, 'practice'
+  );
+  PERFORM pg_temp.set_jwt(u_editor);
+  PERFORM public.connect_disconnect(rel_id, 'practice');
+  listed := public.connect_list_for_practice(practice_a);
+  anon := (
+    SELECT elem->'physician'
+    FROM jsonb_array_elements(listed) AS elem
+    WHERE elem->>'id' = rel_id::text
+  );
+  PERFORM pg_temp.record(
+    12,
+    'disconnected historically accepted identity stays unlocked',
+    'first name present',
+    anon->>'first_name' = 'Secret' AND anon->>'email' = 'preview.phys@example.test',
+    CASE WHEN anon->>'first_name' IS NULL THEN 'locked' ELSE 'unlocked' END
+  );
+
+  PERFORM pg_temp.reset_auth();
+  PERFORM pg_temp.record(
+    13,
+    'notice and email functions do not gain initials or message text',
+    'unchanged privacy',
+    position('_connect_physician_initials' in pg_get_functiondef('public._connect_enqueue_employer_emails(uuid, uuid, text, text, text, text, jsonb, text)'::regprocedure)) = 0
+      AND position('_connect_physician_initials' in pg_get_functiondef('public._connect_anonymous_request_notice(text, text[])'::regprocedure)) = 0
+      AND position('intro_note' in pg_get_functiondef('public._notification_on_connect_event()'::regprocedure)) = 0
+      AND public._connect_anonymous_request_notice('Vision Surgery', ARRAY['General Ophthalmology (multiple areas)'])
+        = 'An anonymous comprehensive ophthalmologist sent Vision Surgery a Connect request.',
+    'functions only'
+  );
 END;
 $preview$;
 
