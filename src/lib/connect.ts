@@ -37,7 +37,8 @@ export type ConnectRelationshipSummary = {
 
 export type ConnectAnonymousPhysician = {
   physician_profile_id: string
-  training_status: string | null
+  initials?: string | null
+  training_status?: string | null
   clinical_focus: string[] | null
   preferred_state: string[] | null
   start_year: string | number | null

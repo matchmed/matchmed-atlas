@@ -483,7 +483,7 @@ describe('physician notifications taxonomy cleanup', () => {
       'utf8',
     )
     const anonymous = readFileSync(
-      'supabase/migrations/20260910170000_drop_open_to_practice_connections.sql',
+      'supabase/migrations/20260930120000_connect_anonymous_physician_initials.sql',
       'utf8',
     )
     const inbox = readFileSync(
@@ -501,16 +501,21 @@ describe('physician notifications taxonomy cleanup', () => {
     assert.equal(preview.includes('p_body'), true)
 
     const anonStart = anonymous.indexOf('FUNCTION public._connect_anonymous_physician_json')
-    const anonEnd = anonymous.indexOf('FUNCTION public._connect_unlocked_physician_json')
+    const anonEnd = anonymous.indexOf('FUNCTION public.connect_list_anonymous_physicians')
     const anonFn = anonymous.slice(anonStart, anonEnd)
     assert.match(anonFn, /clinical_focus/)
     assert.match(anonFn, /preferred_state/)
     assert.match(anonFn, /start_year/)
-    assert.match(anonFn, /training_status/)
+    assert.match(anonFn, /initials/)
+    assert.match(anonFn, /_connect_physician_initials/)
     assert.match(anonFn, /practice_setting_preference/)
-    assert.equal(anonFn.includes('first_name'), false)
-    assert.equal(anonFn.includes('email'), false)
+    assert.equal(anonFn.includes('training_status'), false)
+    assert.equal(anonFn.includes("'first_name'"), false)
+    assert.equal(anonFn.includes("'last_name'"), false)
+    assert.equal(anonFn.includes("'email'"), false)
     assert.equal(anonFn.includes('current_practice'), false)
+    assert.equal(preview.includes('_connect_physician_initials'), false)
+    assert.equal(preview.includes("'initials'"), false)
 
     const listStart = inbox.indexOf('FUNCTION public.connect_list_for_practice')
     const listFn = inbox.slice(listStart, listStart + 2500)
