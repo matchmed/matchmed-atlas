@@ -129,11 +129,9 @@ function SectionBlock({
 
 export default function SponsorVendorPageClient({
   slug,
-  reportedIn,
   initialPage,
 }: {
   slug: string
-  reportedIn: string | null
   initialPage: SponsorPage | null
 }) {
   const [fetchedPage, setFetchedPage] = useState<SponsorPage | null>(null)
@@ -256,12 +254,6 @@ export default function SponsorVendorPageClient({
             )
           })}
         </div>
-        {reportedIn && (
-          <p className="sponsor-practice-context">
-            Referring link category context: {reportedIn}. This label is display-only from the
-            link you followed and is not independently verified on this page.
-          </p>
-        )}
       </header>
 
       <nav className="sponsor-section-nav" aria-label="Partner page sections">

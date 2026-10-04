@@ -1,5 +1,7 @@
 -- MAT-16 sponsor vendor pages security matrix (transactional; rolls back).
--- Prerequisites: apply 20260910120000_sponsor_vendor_pages_v1.sql
+-- Prerequisites: 20260910120000 and 20261003170000_sponsor_publication_v1.sql.
+-- Product reads now require audience flags plus approved published content.
+-- Directory and page slugs are public slugs (bausch-lomb), not vendors.slug.
 --
 --   npx supabase db query --linked -f docs/security/sponsor-vendor-pages-v1-security-test.sql
 --
@@ -106,7 +108,28 @@ BEGIN
   INSERT INTO public.sponsor_vendor_profiles (vendor_id, is_active, short_description, sort_order)
   VALUES (vendor_bl, true, 'Test sponsor', 10)
   ON CONFLICT (vendor_id) DO UPDATE
-  SET is_active = true, short_description = EXCLUDED.short_description, updated_at = now();
+  SET is_active = true,
+      short_description = EXCLUDED.short_description,
+      atlas_enabled = true,
+      employers_enabled = true,
+      directory_visible = true,
+      public_slug = 'bausch-lomb',
+      updated_at = now();
+
+  UPDATE public.sponsor_vendor_content
+  SET publication_state = 'published',
+      verification_state = 'verified',
+      audience = 'both',
+      illustrative = false,
+      company_approved_at = now(),
+      company_approval_reference = 'mat16-rollback-only',
+      company_approval_recorded_by = u_phys,
+      matchmed_approved_at = now(),
+      matchmed_approved_by = u_phys,
+      published_at = now()
+  WHERE vendor_id = vendor_bl
+    AND is_active = true
+    AND publication_state = 'draft';
 
   -- Inactive sponsor should not list
   INSERT INTO public.sponsor_vendor_profiles (vendor_id, is_active, short_description, sort_order)
@@ -118,7 +141,7 @@ BEGIN
   PERFORM pg_temp.set_jwt(u_phys);
   payload := public.list_active_atlas_sponsors();
   ok := EXISTS (
-    SELECT 1 FROM jsonb_array_elements(payload) AS e WHERE e->>'slug' = 'bausch_plus_lomb'
+    SELECT 1 FROM jsonb_array_elements(payload) AS e WHERE e->>'slug' = 'bausch-lomb'
   );
   PERFORM pg_temp.record(1, 'active sponsor appears in list_active_atlas_sponsors', 'included', ok, payload::text);
   PERFORM pg_temp.reset_auth();
@@ -138,14 +161,14 @@ BEGIN
   payload := public.list_active_atlas_sponsors();
   ok := EXISTS (
     SELECT 1 FROM jsonb_array_elements(payload) AS e
-    WHERE e->>'slug' = 'bausch_plus_lomb' AND e ? 'display_label'
+    WHERE e->>'slug' = 'bausch-lomb' AND e ? 'display_label'
   );
   PERFORM pg_temp.record(3, 'directory payload has slug + display_label', 'present', ok, payload::text);
   PERFORM pg_temp.reset_auth();
 
   -- 4. Sponsor page has five section types present in content contract
   PERFORM pg_temp.set_jwt(u_phys);
-  payload := public.get_atlas_sponsor_page('bausch_plus_lomb');
+  payload := public.get_atlas_sponsor_page('bausch-lomb');
   ok := payload IS NOT NULL
     AND payload ? 'disclosure_text'
     AND EXISTS (SELECT 1 FROM jsonb_array_elements(payload->'sections') e WHERE e->>'section_type' = 'whats_new')
@@ -158,14 +181,14 @@ BEGIN
 
   -- 5. Disclosure renders
   PERFORM pg_temp.set_jwt(u_phys);
-  payload := public.get_atlas_sponsor_page('bausch_plus_lomb');
+  payload := public.get_atlas_sponsor_page('bausch-lomb');
   ok := (payload->>'disclosure_text') ILIKE '%does not affect%';
   PERFORM pg_temp.record(5, 'sponsor disclosure present', 'independence language', ok, payload->>'disclosure_text');
   PERFORM pg_temp.reset_auth();
 
   -- 6. Active sponsor slug resolvable for practice tech links
   slugs := public.list_active_sponsor_slugs();
-  ok := 'bausch_plus_lomb' = ANY (slugs);
+  ok := 'bausch-lomb' = ANY (slugs);
   PERFORM pg_temp.record(6, 'active sponsor slug available for tech link resolution', 'present', ok, array_to_string(slugs, ','));
 
   -- 7. Inactive slug not linkable
@@ -192,7 +215,7 @@ BEGIN
 
   -- 10. No physician-private keys in sponsor read contracts
   PERFORM pg_temp.set_jwt(u_phys);
-  payload := public.get_atlas_sponsor_page('bausch_plus_lomb') || public.list_active_atlas_sponsors();
+  payload := public.get_atlas_sponsor_page('bausch-lomb') || public.list_active_atlas_sponsors();
   ok := NOT EXISTS (
     SELECT 1
     FROM unnest(ARRAY[
@@ -231,7 +254,7 @@ BEGIN
 
   BEGIN
     EXECUTE 'SET LOCAL ROLE anon';
-    payload := public.get_atlas_sponsor_page('bausch_plus_lomb');
+    payload := public.get_atlas_sponsor_page('bausch-lomb');
     ok := false;
     err := 'unexpected success';
   EXCEPTION WHEN OTHERS THEN
@@ -245,7 +268,7 @@ BEGIN
   BEGIN
     EXECUTE 'SET LOCAL ROLE anon';
     slugs := public.list_active_sponsor_slugs();
-    ok := 'bausch_plus_lomb' = ANY (slugs);
+    ok := 'bausch-lomb' = ANY (slugs);
     err := array_to_string(slugs, ',');
   EXCEPTION WHEN OTHERS THEN
     ok := false;
@@ -264,7 +287,7 @@ BEGIN
   -- Deactivate as elevated role (physician JWT cannot write sponsor profiles under RLS).
   UPDATE public.sponsor_vendor_profiles SET is_active = false WHERE vendor_id = vendor_bl;
   PERFORM pg_temp.set_jwt(u_phys);
-  payload := public.get_atlas_sponsor_page('bausch_plus_lomb');
+  payload := public.get_atlas_sponsor_page('bausch-lomb');
   ok := payload IS NULL;
   PERFORM pg_temp.record(15, 'inactive sponsor slug returns null page', 'null', ok, coalesce(payload::text, 'null'));
   PERFORM pg_temp.reset_auth();
@@ -311,7 +334,7 @@ BEGIN
     ok := vendor_active_before IS NOT DISTINCT FROM vendor_active_after
       AND infra_before = infra_after
       AND categories_before = categories_after
-      AND NOT ('bausch_plus_lomb' = ANY (slugs));
+      AND NOT ('bausch-lomb' = ANY (slugs));
 
     PERFORM pg_temp.record(
       17,
@@ -331,7 +354,7 @@ BEGIN
     vendor_bl, 'whats_new', 'INACTIVE_CONTENT_SHOULD_NOT_APPEAR', 'hidden', NULL, 9999, false
   );
   PERFORM pg_temp.set_jwt(u_phys);
-  payload := public.get_atlas_sponsor_page('bausch_plus_lomb');
+  payload := public.get_atlas_sponsor_page('bausch-lomb');
   ok := NOT EXISTS (
     SELECT 1 FROM jsonb_array_elements(payload->'sections') AS e
     WHERE e->>'title' = 'INACTIVE_CONTENT_SHOULD_NOT_APPEAR'
@@ -347,7 +370,7 @@ BEGIN
 
   -- 19. list_active_sponsor_slugs returns only text slugs (no content/commercial blob)
   slugs := public.list_active_sponsor_slugs();
-  ok := 'bausch_plus_lomb' = ANY (slugs)
+  ok := 'bausch-lomb' = ANY (slugs)
     AND array_length(slugs, 1) IS NOT NULL
     AND NOT EXISTS (
       SELECT 1 FROM unnest(slugs) AS s(slug)

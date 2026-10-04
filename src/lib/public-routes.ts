@@ -1,6 +1,9 @@
 /**
  * Public discovery route helpers (proxy allowlist + chrome + privacy).
  */
+import { PUBLIC_SPONSOR_BRIEFS_ANONYMOUS } from './sponsor-launch'
+
+const PUBLIC_BRIEF = /^\/partners\/[a-z0-9]+(?:-[a-z0-9]+)*\/briefs\/[0-9]{4}-[0-9]{2}$/
 
 const UUID =
   '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
@@ -20,6 +23,11 @@ export function isEmployerPreviewPath(pathname: string): boolean {
 
 export function isPublicPhysicianDetailPath(pathname: string): boolean {
   return PHYSICIAN_DETAIL.test(pathname)
+}
+
+/** Canonical public brief. Anonymous access stays off until launch flips the flag. */
+export function isPublicSponsorBriefPath(pathname: string): boolean {
+  return PUBLIC_SPONSOR_BRIEFS_ANONYMOUS && PUBLIC_BRIEF.test(pathname)
 }
 
 /** Anonymous practice/physician profile pages (excludes public home). */
@@ -52,6 +60,7 @@ export function isAnonymousAllowlistedPath(pathname: string): boolean {
   if (isPublicPracticeDetailPath(pathname)) return true
   if (isEmployerPreviewPath(pathname)) return true
   if (isPublicPhysicianDetailPath(pathname)) return true
+  if (isPublicSponsorBriefPath(pathname)) return true
   return false
 }
 
@@ -63,5 +72,6 @@ export function isPublicDiscoveryPath(pathname: string): boolean {
   if (pathname === '/') return true
   if (isPublicPracticeDetailPath(pathname)) return true
   if (isPublicPhysicianDetailPath(pathname)) return true
+  if (isPublicSponsorBriefPath(pathname)) return true
   return false
 }

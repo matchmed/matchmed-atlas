@@ -1,6 +1,7 @@
 import {
   isPublicPracticeDetailPath,
   isPublicPhysicianDetailPath,
+  isPublicSponsorBriefPath,
 } from '@/lib/public-routes'
 
 /**
@@ -23,6 +24,7 @@ export function isOnboardingExemptPath(pathname: string): boolean {
   // Incomplete users may open public profile shells (RPC-only / locked analysis).
   if (isPublicPracticeDetailPath(pathname)) return true
   if (isPublicPhysicianDetailPath(pathname)) return true
+  if (isPublicSponsorBriefPath(pathname)) return true
   return false
 }
 

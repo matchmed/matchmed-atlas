@@ -120,3 +120,20 @@ export async function fetchActiveSponsorSlugs(): Promise<{
   if (error) return { data: new Set(), error: error.message }
   return { data: asSlugSet(data), error: null }
 }
+
+/** Map vendors.slug to the public sponsor slug. Href must use public_slug only. */
+export async function fetchSponsorLinkTargets(
+  audience: 'physician' | 'employer' = 'physician',
+): Promise<{ data: Map<string, string>; error: string | null }> {
+  const supabase = createClient()
+  const { data, error } = await supabase.rpc('list_sponsor_link_targets', { p_audience: audience })
+  if (error) return { data: new Map(), error: error.message }
+  const map = new Map<string, string>()
+  if (Array.isArray(data)) {
+    for (const row of data) {
+      const record = row as { vendor_slug?: string; public_slug?: string }
+      if (record.vendor_slug && record.public_slug) map.set(record.vendor_slug, record.public_slug)
+    }
+  }
+  return { data: map, error: null }
+}

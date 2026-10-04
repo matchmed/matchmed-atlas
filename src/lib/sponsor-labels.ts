@@ -30,15 +30,9 @@ export function isSponsorSectionType(value: string): value is SponsorSectionType
   return (SPONSOR_SECTION_TYPES as readonly string[]).includes(value)
 }
 
-/** Canonical Atlas route for a vendor slug (vendors.slug uses underscores). */
-export function sponsorPageHref(
-  slug: string,
-  opts?: { reportedIn?: string | null },
-): string {
-  const base = `/partners/${encodeURIComponent(slug)}`
-  const reportedIn = sanitizeReportedInCategory(opts?.reportedIn)
-  if (!reportedIn) return base
-  return `${base}?reported_in=${encodeURIComponent(reportedIn)}`
+/** Canonical partner route. Uses the public sponsor slug, never vendors.slug or query context. */
+export function sponsorPageHref(publicSlug: string): string {
+  return `/partners/${encodeURIComponent(publicSlug)}`
 }
 
 /**

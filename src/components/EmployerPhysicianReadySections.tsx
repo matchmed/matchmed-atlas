@@ -8,7 +8,7 @@ import {
 } from '@/lib/opportunity-labels'
 import { ownershipLabel } from '@/lib/practice-detail-presentation'
 import { sponsorPageHref } from '@/lib/sponsor-labels'
-import { fetchActiveSponsorSlugs } from '@/lib/sponsors'
+import { fetchSponsorLinkTargets } from '@/lib/sponsors'
 import type { EmployerPracticeOverlay } from '@/lib/public-search'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -28,12 +28,12 @@ export default function EmployerPhysicianReadySections({
   /** Split claimed-page sections without duplicating opportunity logic. */
   part?: 'all' | 'current' | 'opportunities' | 'supporting' | 'technology'
 }) {
-  const [sponsorSlugs, setSponsorSlugs] = useState<Set<string>>(new Set())
+  const [sponsorLinks, setSponsorLinks] = useState<Map<string, string>>(new Map())
 
   useEffect(() => {
     let cancelled = false
-    void fetchActiveSponsorSlugs().then(({ data }) => {
-      if (!cancelled) setSponsorSlugs(data)
+    void fetchSponsorLinkTargets('physician').then(({ data }) => {
+      if (!cancelled) setSponsorLinks(data)
     })
     return () => {
       cancelled = true
@@ -165,18 +165,13 @@ export default function EmployerPhysicianReadySections({
                     {cat.vendors.map((v, idx) => {
                       const label = v.vendor_label || v.other_vendor_name
                       if (!label) return null
-                      const slug = v.vendor_slug
-                      const isSponsor = Boolean(slug && sponsorSlugs.has(slug))
+                      const vendorSlug = v.vendor_slug
+                      const publicSlug = vendorSlug ? sponsorLinks.get(vendorSlug) : undefined
                       return (
-                        <span key={`${cat.category_slug}-${slug ?? label}-${idx}`}>
+                        <span key={`${cat.category_slug}-${vendorSlug ?? label}-${idx}`}>
                           {idx > 0 ? ' · ' : null}
-                          {isSponsor && slug ? (
-                            <Link
-                              href={sponsorPageHref(slug, {
-                                reportedIn: cat.category_label,
-                              })}
-                              className="practice-tech-sponsor-link"
-                            >
+                          {publicSlug ? (
+                            <Link href={sponsorPageHref(publicSlug)} className="practice-tech-sponsor-link">
                               {label}
                             </Link>
                           ) : (

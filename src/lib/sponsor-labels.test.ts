@@ -21,12 +21,9 @@ describe('sponsor-labels', () => {
     assert.equal(isSponsorSectionType('ads'), false)
   })
 
-  it('builds canonical partner href from vendor slug', () => {
-    assert.equal(sponsorPageHref('bausch_plus_lomb'), '/partners/bausch_plus_lomb')
-    assert.equal(
-      sponsorPageHref('bausch_plus_lomb', { reportedIn: 'IOL / Lens Platforms' }),
-      '/partners/bausch_plus_lomb?reported_in=IOL%20%2F%20Lens%20Platforms',
-    )
+  it('builds a public partner href without technology context', () => {
+    assert.equal(sponsorPageHref('bausch-lomb'), '/partners/bausch-lomb')
+    assert.equal(sponsorPageHref('bausch-lomb').includes('?'), false)
   })
 
   it('sanitizes reported_in as display-only context', () => {
