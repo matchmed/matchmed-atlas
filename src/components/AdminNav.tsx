@@ -7,6 +7,7 @@ const links = [
   { href: '/admin', label: 'Admin' },
   { href: '/admin/reports', label: 'Reports' },
   { href: '/admin/report-builder', label: 'Report Builder' },
+  { href: '/admin/sponsors', label: 'Sponsors' },
 ]
 
 export default function AdminNav({ newReportCount }: { newReportCount: number }) {
