@@ -558,6 +558,25 @@ isOneToOne: false
                   Relationships: [
 
                   ]
+                },"partner_inquiries": {
+                  Row: {
+                    "company_name_snapshot": string,"consented_at": string,"contact_name": string,"contacted_at": string | null,"created_at": string,"id": string,"interest_area": string,"internal_notes": string | null,"message": string | null,"proposed_company_name": string | null,"role_title": string | null,"source": string,"status": string,"updated_at": string,"vendor_id": string | null,"work_email": string
+                  }
+                  Insert: {
+                    "company_name_snapshot": string,"consented_at": string,"contact_name": string,"contacted_at"?: string | null,"created_at"?: string,"id"?: string,"interest_area": string,"internal_notes"?: string | null,"message"?: string | null,"proposed_company_name"?: string | null,"role_title"?: string | null,"source": string,"status"?: string,"updated_at"?: string,"vendor_id"?: string | null,"work_email": string
+                  }
+                  Update: {
+                    "company_name_snapshot"?: string,"consented_at"?: string,"contact_name"?: string,"contacted_at"?: string | null,"created_at"?: string,"id"?: string,"interest_area"?: string,"internal_notes"?: string | null,"message"?: string | null,"proposed_company_name"?: string | null,"role_title"?: string | null,"source"?: string,"status"?: string,"updated_at"?: string,"vendor_id"?: string | null,"work_email"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "partner_inquiries_vendor_id_fkey"
+      columns: ["vendor_id"]
+isOneToOne: false
+      referencedRelation: "vendors"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"physician_notification_email_batches": {
                   Row: {
                     "batch_kind": string,"created_at": string,"error_detail": string | null,"id": string,"physician_profile_id": string,"provider_message_id": string | null,"sent_at": string | null,"status": string
@@ -1472,11 +1491,19 @@ isOneToOne: false
 "revoke_practice_claim":
 { Args: { "p_claim_id": string,"p_notes"?: string }; Returns: undefined
                            },
+"search_partner_inquiry_vendors":
+{ Args: { "p_query": string }; Returns: {
+              "display_label": string,"id": string
+            }[]
+                           },
 "self_leave_organization":
 { Args: { "p_organization_id": string }; Returns: undefined
                            },
 "sponsor_https_url_problem":
 { Args: { "p_url": string }; Returns: string
+                           },
+"submit_partner_inquiry":
+{ Args: { "p_consent": boolean,"p_contact_name": string,"p_interest_area": string,"p_message": string,"p_proposed_company_name": string,"p_role_title": string,"p_source": string,"p_vendor_id": string,"p_work_email": string }; Returns: Json
                            },
 "verify_claimant_work_email_manual":
 { Args: { "p_claim_id": string }; Returns: undefined
